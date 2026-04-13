@@ -1,5 +1,5 @@
 // backend/src/models/Product.ts
-import pool from '../db/pool.js';
+import pool from '../db/pool';
 
 export interface ProductData {
     id?: number;
@@ -206,7 +206,7 @@ export class Product {
             query += ' ORDER BY name';
 
             const result = await client.query(query, values);
-            return result.rows.map(row => new Product(row));
+            return result.rows.map((row: any) => new Product(row));
         } finally {
             client.release();
         }

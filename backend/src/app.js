@@ -69,17 +69,16 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(
-
+    console.log(`
                                                   
-INVENTORY MANAGEMENT SYSTEM API                    
-Server running on port: ${PORT}                        
- Environment: ${process.env.NODE_ENV || 'development'}                    
+INVENTORY MANAGEMENT SYSTEM API
+Server running on port: ${PORT}
+ Environment: ${process.env.NODE_ENV || 'development'}
                                                   
-Health Check: http://localhost:${PORT}/api/health      
- Users API:    http://localhost:${PORT}/api/users       
+Health Check: http://localhost:${PORT}/api/health
+ Users API:    http://localhost:${PORT}/api/users
 
-    );
+    `);
 });
 
 module.exports = app;
