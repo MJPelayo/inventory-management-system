@@ -27,12 +27,12 @@ app.get('/api/health', (req, res) => {
         status: 'OK', 
         message: 'Inventory Management System API is running',
         timestamp: new Date().toISOString(),
-        database: pool.options.database
+        database: process.env.DB_NAME || 'inventory_db' // Fixed: Use env var
     });
 });
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (req, res) => { // Fixed: Swapped (res, req) to (req, res)
     res.json({
         name: 'Inventory Management System API',
         version: '1.0.0',
@@ -70,16 +70,16 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`
-╔═══════════════════════════════════════════════════════╗
-║                                                       ║
-║   INVENTORY MANAGEMENT SYSTEM API                    ║
-║   Server running on port: ${PORT}                        ║
-║   Environment: ${process.env.NODE_ENV || 'development'}                    ║
-║                                                       ║
-║   Health Check: http://localhost:${PORT}/api/health      ║
-║   Users API:    http://localhost:${PORT}/api/users       ║
-║                                                       ║
-╚═══════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║   INVENTORY MANAGEMENT SYSTEM API                                 ║
+║   Server running on port: ${PORT}                                 ║
+║   Environment: ${process.env.NODE_ENV || 'development'}           ║   
+║                                                                   ║
+║   Health Check: http://localhost:${PORT}/api/health               ║
+║   Users API:    http://localhost:${PORT}/api/users                ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
     `);
 });
 
