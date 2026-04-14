@@ -123,13 +123,44 @@ main {
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
+    margin-top: 10px;
+}
+
+.modal-content label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+/* Button Styles */
+.btn {
+    display: block;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    margin-top: 20px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #0055aa;
+}
+
+/* Error Message Styles */
+.error-message {
+    color: red;
+    margin-top: 10px;
+    display: none;
 }
 
 .close {
     color: #aaa;
     float: right;
     font-size: 28px;
-    font-weight: bold;
 }
 
 .close:hover,

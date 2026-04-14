@@ -67,19 +67,25 @@
                     <h2>Add New User</h2>
                     <form id="addUserForm">
                         <label for="name">Name:</label>
-                        <input type="text" id="name" name="name" required>
+                        <input type="text" id="name" name="name">
 
                         <label for="email">Email:</label>
-                        <input type="email" id="email" name="email" required>
+                        <input type="email" id="email" name="email">
+
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password">
 
                         <label for="role">Role:</label>
-                        <select id="role" name="role" required>
+                        <select id="role" name="role">
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
-                            <option value="user">Sales</option>
-                            <option value="user">Supply</option>
-                            <option value="user">Warehouse</option>
+                            <option value="sales">Sales</option>
+                            <option value="supply">Supply</option>
+                            <option value="warehouse">Warehouse</option>
                         </select>
+
+                        <!-- Error message placeholder -->
+                        <div id="formErrorMsg" class="error-message"></div>
 
                         <button type="submit" class="btn">Add User</button>
                     </form>
