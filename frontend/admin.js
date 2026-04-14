@@ -33,3 +33,26 @@ async function loadUsers() {
 }
 
 document.addEventListener("DOMContentLoaded", loadUsers);
+
+// Modal handling
+const modal = document.getElementById("addUserModal");
+const addUserBtn = document.getElementById("addUserBtn");
+const closeModal = document.getElementById("closeModal");
+
+// Open modal
+addUserBtn.addEventListener("click", () => {
+    modal.style.display = "block";
+});
+
+// Close modal
+closeModal.addEventListener("click", () => {
+    modal.style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target === modal) {
+        modal.style.display = "none";
+    }
+});
+
+
