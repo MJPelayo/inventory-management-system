@@ -35,6 +35,11 @@
             <section class="main-content">
                 <h2>Admin Dashboard</h2>
                 <p>Welcome to the Admin Dashboard!</p>
+                <div class="action-buttons">
+                    <button id="addUserBtn" class="btn">
+                        <span class="btn-icon">+</span> Add New User
+                    </button>
+                </div>
             </section>
 
             <!-- User Table -->
@@ -54,6 +59,33 @@
                     </tbody>
                 </table>
             </section>
+
+            <!-- Add User Modal -->
+            <section id="addUserModal" class="modal">
+                <div class="modal-content">
+                    <span id="closeModal" class="close">&times;</span>
+                    <h2>Add New User</h2>
+                    <form id="addUserForm">
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" name="name" required>
+
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+
+                        <label for="role">Role:</label>
+                        <select id="role" name="role" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="user">Sales</option>
+                            <option value="user">Supply</option>
+                            <option value="user">Warehouse</option>
+                        </select>
+
+                        <button type="submit" class="btn">Add User</button>
+                    </form>
+                </div>
+            </section>
+
         </div>
         <script src="admin.js"></script>
     </main>
