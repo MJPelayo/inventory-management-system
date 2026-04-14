@@ -1,38 +1,8 @@
-// backend/src/models/Product.ts
-import pool from '../db/pool';
+// backend/src/models/Product.js
+const pool = require('../db/pool');
 
-export interface ProductData {
-    id?: number;
-    name: string;
-    description?: string;
-    sku: string;
-    price: number;
-    cost: number;
-    category_id?: number;
-    supplier_id?: number;
-    brand?: string;
-    image_url?: string;
-    is_active?: boolean;
-    created_at?: Date;
-    updated_at?: Date;
-}
-
-export class Product {
-    private id: number | null;
-    private name: string;
-    private description: string | null;
-    private sku: string;
-    private price: number;
-    private cost: number;
-    private category_id: number | null;
-    private supplier_id: number | null;
-    private brand: string | null;
-    private image_url: string | null;
-    private is_active: boolean;
-    private created_at: Date | null;
-    private updated_at: Date | null;
-
-    constructor(data: ProductData) {
+class Product {
+    constructor(data) {
         this.id = data.id || null;
         this.name = data.name;
         this.description = data.description || null;
@@ -49,33 +19,33 @@ export class Product {
     }
 
     // Getters
-    getId(): number | null { return this.id; }
-    getName(): string { return this.name; }
-    getSku(): string { return this.sku; }
-    getPrice(): number { return this.price; }
-    getCost(): number { return this.cost; }
-    getProfitMargin(): number { 
+    getId() { return this.id; }
+    getName() { return this.name; }
+    getSku() { return this.sku; }
+    getPrice() { return this.price; }
+    getCost() { return this.cost; }
+    getProfitMargin() { 
         if (this.price === 0) return 0;
         return ((this.price - this.cost) / this.price) * 100;
     }
-    isActive(): boolean { return this.is_active; }
+    isActive() { return this.is_active; }
 
     // Setters with validation
-    setName(name: string): void {
+    setName(name) {
         if (!name || name.length < 2) {
             throw new Error('Product name must be at least 2 characters');
         }
         this.name = name;
     }
 
-    setSku(sku: string): void {
+    setSku(sku) {
         if (!sku || sku.length < 2) {
             throw new Error('SKU must be at least 2 characters');
         }
         this.sku = sku;
     }
 
-    setPrice(price: number): void {
+    setPrice(price) {
         if (price < 0) {
             throw new Error('Price cannot be negative');
         }
@@ -85,7 +55,7 @@ export class Product {
         this.price = price;
     }
 
-    setCost(cost: number): void {
+    setCost(cost) {
         if (cost < 0) {
             throw new Error('Cost cannot be negative');
         }
@@ -96,7 +66,7 @@ export class Product {
     }
 
     // Business Logic
-    applyDiscount(percentage: number): number {
+    applyDiscount(percentage) {
         if (percentage < 0 || percentage > 100) {
             throw new Error('Discount must be between 0 and 100');
         }
@@ -104,7 +74,7 @@ export class Product {
     }
 
     // CRUD Operations
-    async save(): Promise<Product> {
+    async save() {
         const client = await pool.connect();
         try {
             if (this.id) {
@@ -146,7 +116,7 @@ export class Product {
         }
     }
 
-    static async findById(id: number): Promise<Product | null> {
+    static async findById(id) {
         const client = await pool.connect();
         try {
             const result = await client.query(
@@ -164,7 +134,7 @@ export class Product {
         }
     }
 
-    static async findBySku(sku: string): Promise<Product | null> {
+    static async findBySku(sku) {
         const client = await pool.connect();
         try {
             const result = await client.query('SELECT * FROM products WHERE sku = $1', [sku]);
@@ -175,44 +145,39 @@ export class Product {
         }
     }
 
-    static async findAll(filters?: { 
-        category_id?: number; 
-        supplier_id?: number;
-        is_active?: boolean;
-        search?: string;
-    }): Promise<Product[]> {
+    static async findAll(filters = {}) {
         const client = await pool.connect();
         try {
             let query = 'SELECT * FROM products WHERE 1=1';
-            const values: any[] = [];
+            const values = [];
             let paramCount = 1;
 
-            if (filters?.category_id) {
+            if (filters.category_id) {
                 query += ` AND category_id = $${paramCount++}`;
                 values.push(filters.category_id);
             }
-            if (filters?.supplier_id) {
+            if (filters.supplier_id) {
                 query += ` AND supplier_id = $${paramCount++}`;
                 values.push(filters.supplier_id);
             }
-            if (filters?.is_active !== undefined) {
+            if (filters.is_active !== undefined) {
                 query += ` AND is_active = $${paramCount++}`;
                 values.push(filters.is_active);
             }
-            if (filters?.search) {
+            if (filters.search) {
                 query += ` AND (name ILIKE $${paramCount++} OR sku ILIKE $${paramCount++})`;
                 values.push(`%${filters.search}%`, `%${filters.search}%`);
             }
             query += ' ORDER BY name';
 
             const result = await client.query(query, values);
-            return result.rows.map((row: any) => new Product(row));
+            return result.rows.map(row => new Product(row));
         } finally {
             client.release();
         }
     }
 
-    static async deleteById(id: number): Promise<boolean> {
+    static async deleteById(id) {
         const client = await pool.connect();
         try {
             // Check if product has inventory first
@@ -231,7 +196,7 @@ export class Product {
         }
     }
 
-    async getInventory(): Promise<any[]> {
+    async getInventory() {
         const client = await pool.connect();
         try {
             const result = await client.query(
@@ -247,7 +212,7 @@ export class Product {
         }
     }
 
-    toJSON(): object {
+    toJSON() {
         return {
             id: this.id,
             name: this.name,
@@ -266,3 +231,5 @@ export class Product {
         };
     }
 }
+
+module.exports = { Product };

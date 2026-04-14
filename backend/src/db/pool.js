@@ -4,9 +4,9 @@ require('dotenv').config();
 
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'password',
+    password: process.env.DB_PASSWORD || '0012172004',
     host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432', 10),
+    port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME || 'inventory_db',
     max: 20,
     idleTimeoutMillis: 30000,

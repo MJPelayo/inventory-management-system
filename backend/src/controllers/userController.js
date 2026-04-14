@@ -1,5 +1,5 @@
 // backend/src/controllers/userController.js
-const { User } = require('../../dist/models/User');
+const { User } = require('../models/User');
 
 const userController = {
     // Get all users
