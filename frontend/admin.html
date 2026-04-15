@@ -16,15 +16,52 @@
         <nav id="sideNav" class="side-nav">
             <ul class="nav-menu">
                 <li>
-                    <a href="admin.html" class="nav-link active">
-                         <span class="nav-icon">👥</span>
-                        <span class="nav-text">Users</span>
+                    <a class="nav-link active" href="admin.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span class="nav-text">Dashboard</span>
                     </a>
                 </li>
                 <li>
-                    <a href="products.html" class="nav-link">
-                        <span class="nav-icon">📦</span>
+                    <a class="nav-link" href="products.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"></path>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
                         <span class="nav-text">Products</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" href="#">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        <span class="nav-text">Warehouses</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" href="#">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="nav-text">Suppliers</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" href="#">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        <span class="nav-text">Reports</span>
                     </a>
                 </li>
             </ul>
@@ -34,13 +71,18 @@
             <!-- Main Content -->
             <section class="main-content">
                 <h2>Admin Dashboard</h2>
-                <p>Welcome to the Admin Dashboard!</p>
-                <div class="action-buttons">
-                    <button id="addUserBtn" class="btn">
-                        <span class="btn-icon">+</span> Add New User
-                    </button>
+                <p>Manage users and their permissions.</p>
+                <div class="AddButtonContainer">
+                    <button id="addUserBtn" class="AddBtn">Add New User</button>
                 </div>
             </section>
+
+            <!-- Search bar (Products-style toolbar) -->
+            <div class="toolbar">
+                <div class="search-wrap">
+                    <input type="text" id="userSearch" placeholder="Search name or email..." />
+                </div>
+            </div>
 
             <!-- User Table -->
             <section class="user-table">
@@ -54,9 +96,7 @@
                             <th>Role</th>
                         </tr>
                     </thead>
-                    <tbody id="userTableBody">
-                        <!-- User data will be populated here -->
-                    </tbody>
+                    <tbody id="userTableBody"></tbody>
                 </table>
             </section>
 
@@ -65,29 +105,27 @@
                 <div class="modal-content">
                     <span id="closeModal" class="close">&times;</span>
                     <h2>Add New User</h2>
+                    <div id="formErrorMsg" class="error-message"></div>
                     <form id="addUserForm">
-                        <label for="name">Name:</label>
-                        <input type="text" id="name" name="name">
+                        <label for="name">Name</label>
+                        <input id="name" type="text" required />
 
-                        <label for="email">Email:</label>
-                        <input type="email" id="email" name="email">
+                        <label for="email">Email</label>
+                        <input id="email" type="email" required />
 
-                        <label for="password">Password:</label>
-                        <input type="password" id="password" name="password">
+                        <label for="password">Password</label>
+                        <input id="password" type="password" required />
 
-                        <label for="role">Role:</label>
-                        <select id="role" name="role">
+                        <label for="role">Role</label>
+                        <select id="role" required>
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
                             <option value="sales">Sales</option>
-                            <option value="supply">Supply</option>
                             <option value="warehouse">Warehouse</option>
+                            <option value="supply">Supply</option>
                         </select>
 
-                        <!-- Error message placeholder -->
-                        <div id="formErrorMsg" class="error-message"></div>
-
-                        <button type="submit" class="btn">Add User</button>
+                        <button type="submit" class="AddBtn">Save User</button>
                     </form>
                 </div>
             </section>
