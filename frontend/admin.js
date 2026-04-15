@@ -145,3 +145,87 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
     }
     
 }); 
+
+// Edit/ Delete User info
+const userTableBody = document.getElementById("userTableBody");
+const editUserModal = document.getElementById("editUserModal");
+const closeEditModal = document.getElementById("closeEditModal");
+const editUserForm = document.getElementById("editUserForm");
+const editFormErrorMsg = document.getElementById("editFormErrorMsg");
+
+if (userTableBody) {
+    userTableBody.addEventListener("click", async (e) => {
+        const editBtn = e.target.closest(".btn-edit");
+        const deleteBtn = e.target.closest(".btn-delete");
+
+        // Open Edit User modal and populate fields
+        if (editBtn) {
+            document.getElementById("editUserId").value = editBtn.dataset.id;
+            document.getElementById("editName").value = editBtn.dataset.name || "";
+            document.getElementById("editEmail").value = editBtn.dataset.email || "";
+            document.getElementById("editRole").value = (editBtn.dataset.role || "").toLowerCase();
+            editFormErrorMsg.style.display = "none";
+            editFormErrorMsg.textContent = "";
+            editUserModal.style.display = "block";
+            return;
+        }
+
+        // Ask for confirmation before deleting
+        if (deleteBtn) {
+            const id = deleteBtn.dataset.id;
+            if (!confirm("Delete this user?")) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/users/${id}`, { method: "DELETE" });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                await loadUsers();
+            } catch (err) {
+                console.error("Delete failed:", err);
+                alert("Failed to delete user.");
+            }
+        }
+    });
+}
+
+// Handle Edit User form submission
+if (closeEditModal && editUserModal) {
+    closeEditModal.addEventListener("click", () => {
+        editUserModal.style.display = "none";
+    });
+}
+
+if (editUserForm) {
+    editUserForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById("editUserId").value;
+        const name = document.getElementById("editName").value.trim();
+        const email = document.getElementById("editEmail").value.trim();
+        const role = document.getElementById("editRole").value.trim().toLowerCase();
+
+        editFormErrorMsg.style.display = "none";
+        editFormErrorMsg.textContent = "";
+
+        try {
+            const res = await fetch(`${API_BASE}/api/users/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, role })
+            });
+
+             if (!res.ok) {
+                const errJson = await res.json();
+                editFormErrorMsg.textContent = errJson.message || errJson.error || "Failed to update user.";
+                editFormErrorMsg.style.display = "block";
+                return;
+            }
+
+            editUserModal.style.display = "none";
+            await loadUsers();
+        } catch (err) {
+            console.error("Update failed:", err);
+            editFormErrorMsg.textContent = "Failed to update user.";
+            editFormErrorMsg.style.display = "block";
+        }
+    });
+}

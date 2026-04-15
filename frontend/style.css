@@ -286,7 +286,8 @@ main {
     color: #7a766d;
 }
 
-#addUserForm label {
+#addUserForm label,
+#editUserForm label {
     display: block;
     margin: 10px 0 6px;
     font-size: 12px;
@@ -294,7 +295,9 @@ main {
 }
 
 #addUserForm input,
-#addUserForm select {
+#addUserForm select,
+#editUserForm input,
+#editUserForm select {
     width: 100%;
     padding: 9px 10px;
     border: 1px solid #e3e1d8;
@@ -305,7 +308,9 @@ main {
 }
 
 #addUserForm input:focus,
-#addUserForm select:focus {
+#addUserForm select:focus,
+#editUserForm input:focus,
+#editUserForm select:focus {
     outline: none;
     border-color: #b8b4a8;
     box-shadow: 0 0 0 3px rgba(27, 26, 24, 0.08);
