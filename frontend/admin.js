@@ -20,6 +20,19 @@ async function loadUsers() {
                 <td>${u.name ?? ""}</td>
                 <td>${u.email ?? ""}</td>
                 <td>${u.role ?? ""}</td>
+                <!-- row actions (edit/delete) -->
+                <td>
+                    <div class="row-actions">
+                            <button class="btn-edit"
+                                    data-id="${u.id}"
+                                    data-name="${u.name ?? ""}"
+                                    data-email="${u.email ?? ""}"
+                                    data-role="${u.role ?? ""}">
+                                Edit
+                            </button>
+                            <button class="btn-delete" data-id="${u.id}">Delete</button>
+                        </div>
+                </td>
             </tr>
         `).join("");
 
@@ -27,14 +40,12 @@ async function loadUsers() {
             tbody.innerHTML = `<tr><td colspan="4">No users found.</td></tr>`;
         }
     } catch (err) {
-        console.error("Failed to load users:", err);
-        tbody.innerHTML = `<tr><td colspan="4">Failed to load users.</td></tr>`;
-    }
+        console.error("Failed to load users:", err);    }
 }
 
 document.addEventListener("DOMContentLoaded", loadUsers);
 
-// Modal handling
+// Add UserModal handling
 const modal = document.getElementById("addUserModal");
 const addUserBtn = document.getElementById("addUserBtn");
 const closeModal = document.getElementById("closeModal");
@@ -59,7 +70,7 @@ window.addEventListener("click", (e) => {
     }
 });
 
-// Handle form submission
+// Handle Add User form submission
 document.getElementById("addUserForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 

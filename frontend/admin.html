@@ -94,6 +94,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="userTableBody"></tbody>
@@ -101,7 +102,7 @@
             </section>
 
             <!-- Add User Modal -->
-            <section id="addUserModal" class="modal">
+            <div  id="addUserModal" class="modal">
                 <div class="modal-content">
                     <span id="closeModal" class="close">&times;</span>
                     <h2>Add New User</h2>
@@ -128,8 +129,34 @@
                         <button type="submit" class="AddBtn">Save User</button>
                     </form>
                 </div>
-            </section>
+            </div>
 
+            <!-- Edit User Modal -->
+            <div  id="editUserModal" class="modal">
+                <div class="modal-content">
+                    <span id="closeEditModal" class="close">&times;</span>
+                    <h2>Edit User</h2>
+                    <div id="editFormErrorMsg" class="error-message"></div>
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId" />
+                        <label for="editName">Name</label>
+                        <input id="editName" type="text" required />
+
+                        <label for="editEmail">Email</label>
+                        <input id="editEmail" type="email" required />
+
+                        <label for="editRole">Role</label>
+                        <select id="editRole" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="sales">Sales</option>
+                            <option value="warehouse">Warehouse</option>
+                            <option value="supply">Supply</option>
+                        </select>
+                        <button type="submit" class="AddBtn">Save Changes</button>
+                    </form>
+                </div>
+            </div>
         </div>
         <script src="admin.js"></script>
     </main>
