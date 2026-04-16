@@ -30,26 +30,26 @@ npm install
 ## Testing APIs
 
 # 1. Health check
-curl http://localhost:3000/api/health
+curl.exe http://localhost:3000/api/health
 
 # 2. Get all users
-curl http://localhost:3000/api/users
+curl.exe http://localhost:3000/api/users
 
 # 3. Get user by ID
-curl http://localhost:3000/api/users/1
+curl.exe http://localhost:3000/api/users/1
 
 # 4. Create new user
-curl -X POST http://localhost:3000/api/users \
+curl.exe -X POST http://localhost:3000/api/users \
   -H "Content-Type: application/json" \
   -d '{"name":"John","email":"john@test.com","password":"123","role":"sales"}'
 
 # 5. Update user
-curl -X PUT http://localhost:3000/api/users/5 \
+curl.exe -X PUT http://localhost:3000/api/users/5 \
   -H "Content-Type: application/json" \
   -d '{"name":"Updated Name","role":"warehouse"}'
 
 # 6. Delete user
-curl -X DELETE http://localhost:3000/api/users/5
+curl.exe -X DELETE http://localhost:3000/api/users/5
 
 ## 📁 Project Structure
 
