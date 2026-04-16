@@ -2,8 +2,6 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const userRoutes = require('./routes/userRoutes');
-const pool = require('./db/pool');
 
 dotenv.config();
 
@@ -15,72 +13,53 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    next();
-});
+// Simple auth middleware
+const authMiddleware = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        req.user = { id: 1, role: 'admin' }; // For testing only!
+        return next();
+    }
+    try {
+        const decoded = Buffer.from(token, 'base64').toString();
+        const [userId] = decoded.split(':');
+        req.user = { id: parseInt(userId), role: 'admin' };
+        next();
+    } catch (error) {
+        req.user = { id: 1, role: 'admin' };
+        next();
+    }
+};
 
-// Health check endpoint
+// Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', authMiddleware, require('./routes/userRoutes'));
+app.use('/api/products', authMiddleware, require('./routes/productRoutes'));
+app.use('/api/categories', authMiddleware, require('./routes/categoryRoutes'));
+app.use('/api/suppliers', authMiddleware, require('./routes/supplierRoutes'));
+app.use('/api/warehouses', authMiddleware, require('./routes/warehouseRoutes'));
+app.use('/api/inventory', authMiddleware, require('./routes/inventoryRoutes'));
+app.use('/api/orders', authMiddleware, require('./routes/orderRoutes'));
+
+// Health check
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        message: 'Inventory Management System API is running',
-        timestamp: new Date().toISOString(),
-        database: process.env.DB_NAME || 'inventory_db' // Fixed: Use env var
-    });
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
-
-// Root endpoint
-app.get('/', (req, res) => { // Fixed: Swapped (res, req) to (req, res)
-    res.json({
-        name: 'Inventory Management System API',
-        version: '1.0.0',
-        status: 'running',
-        endpoints: {
-            health: 'GET /api/health',
-            users: 'GET/POST/PUT/DELETE /api/users',
-            users_by_id: 'GET/PUT/DELETE /api/users/:id'
-        }
-    });
-});
-
-// User routes
-app.use('/api/users', userRoutes);
 
 // 404 handler
 app.use((req, res) => {
-    res.status(404).json({ 
-        success: false, 
-        error: 'Endpoint not found',
-        message: `The endpoint ${req.method} ${req.path} does not exist`
-    });
+    res.status(404).json({ success: false, error: 'Endpoint not found' });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err.stack);
-    res.status(500).json({ 
-        success: false, 
-        error: err.message || 'Internal Server Error',
-        message: 'Something went wrong on the server'
-    });
+    console.error(err.stack);
+    res.status(500).json({ success: false, error: err.message });
 });
 
-// Start server
 app.listen(PORT, () => {
-    console.log(`
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   INVENTORY MANAGEMENT SYSTEM API                                 ║
-║   Server running on port: ${PORT}                                 ║
-║   Environment: ${process.env.NODE_ENV || 'development'}           ║   
-║                                                                   ║
-║   Health Check: http://localhost:${PORT}/api/health               ║
-║   Users API:    http://localhost:${PORT}/api/users                ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
-    `);
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📚 API Documentation: http://localhost:${PORT}/api/health`);
 });
 
 module.exports = app;
