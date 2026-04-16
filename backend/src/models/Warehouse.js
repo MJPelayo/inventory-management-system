@@ -96,6 +96,29 @@ class Warehouse {
         }
     }
 
+    async checkInventory() {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                'SELECT COUNT(*) as count FROM inventory WHERE warehouse_id = $1',
+                [this.id]
+            );
+            return parseInt(result.rows[0].count) > 0;
+        } finally {
+            client.release();
+        }
+    }
+
+    async delete() {
+        const client = await pool.connect();
+        try {
+            const result = await client.query('DELETE FROM warehouses WHERE id = $1 RETURNING id', [this.id]);
+            return result.rows.length > 0;
+        } finally {
+            client.release();
+        }
+    }
+
     toJSON() {
         return {
             id: this.id,

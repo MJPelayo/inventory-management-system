@@ -1,111 +1,138 @@
-// backend/src/controllers/productController.js
-const { Product } = require('../models/Product');
-const { Inventory } = require('../models/Inventory');
+// backend/src/controllers/authController.js
+const { User } = require('../models/User');
 
-const productController = {
-    async getAllProducts(req, res) {
+const authController = {
+    async register(req, res) {
         try {
-            const { category_id, supplier_id, is_active, search } = req.query;
-            const products = await Product.findAll({ 
-                category_id: category_id ? parseInt(category_id) : undefined,
-                supplier_id: supplier_id ? parseInt(supplier_id) : undefined,
-                is_active: is_active === 'true' ? true : is_active === 'false' ? false : undefined,
-                search
-            });
-            res.status(200).json({
-                success: true,
-                data: products.map(p => p.toJSON()),
-                count: products.length
-            });
-        } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
-        }
-    },
-    
-    async getProductById(req, res) {
-        try {
-            const product = await Product.findById(parseInt(req.params.id));
-            if (!product) {
-                return res.status(404).json({ success: false, error: 'Product not found' });
+            const { name, email, password, role, department } = req.body;
+            
+            // Validate required fields
+            if (!name || !email || !password || !role) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Name, email, password, and role are required' 
+                });
             }
             
-            const inventory = await product.getInventory();
-            const productData = product.toJSON();
-            productData.inventory = inventory;
-            
-            res.status(200).json({ success: true, data: productData });
-        } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
-        }
-    },
-    
-    async createProduct(req, res) {
-        try {
-            const { name, sku, price, cost, category_id, supplier_id, brand, description } = req.body;
-            
-            const existing = await Product.findBySku(sku);
+            // Check if email exists
+            const existing = await User.findByEmail(email);
             if (existing) {
-                return res.status(400).json({ success: false, error: 'SKU already exists' });
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Email already exists' 
+                });
             }
             
-            const product = new Product({
-                name, sku, price, cost, category_id, supplier_id, brand, description
+            const user = new User({
+                name,
+                email,
+                password_hash: password, // In production, hash this with bcrypt
+                role,
+                department
             });
             
-            const saved = await product.save();
-            res.status(201).json({ success: true, data: saved.toJSON() });
-        } catch (error) {
-            res.status(400).json({ success: false, error: error.message });
-        }
-    },
-    
-    async updateProduct(req, res) {
-        try {
-            const product = await Product.findById(parseInt(req.params.id));
-            if (!product) {
-                return res.status(404).json({ success: false, error: 'Product not found' });
-            }
-            
-            const { name, price, cost, category_id, supplier_id, brand, is_active } = req.body;
-            if (name) product.setName(name);
-            if (price) product.setPrice(price);
-            if (cost) product.setCost(cost);
-            if (category_id !== undefined) product.category_id = category_id;
-            if (supplier_id !== undefined) product.supplier_id = supplier_id;
-            if (brand !== undefined) product.brand = brand;
-            if (is_active !== undefined) product.is_active = is_active;
-            
-            const updated = await product.save();
-            res.status(200).json({ success: true, data: updated.toJSON() });
-        } catch (error) {
-            res.status(400).json({ success: false, error: error.message });
-        }
-    },
-    
-    async deleteProduct(req, res) {
-        try {
-            const deleted = await Product.deleteById(parseInt(req.params.id));
-            if (!deleted) {
-                return res.status(404).json({ success: false, error: 'Product not found' });
-            }
-            res.status(200).json({ success: true, message: 'Product deleted successfully' });
-        } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
-        }
-    },
-    
-    async getLowStockProducts(req, res) {
-        try {
-            const lowStock = await Inventory.getLowStock();
-            res.status(200).json({
-                success: true,
-                data: lowStock,
-                count: lowStock.length
+            const saved = await user.save();
+            res.status(201).json({ 
+                success: true, 
+                data: saved.toJSON(),
+                message: 'User registered successfully'
             });
         } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
+            res.status(400).json({ 
+                success: false, 
+                error: error.message,
+                message: 'Failed to register user'
+            });
+        }
+    },
+
+    async login(req, res) {
+        try {
+            const { email, password } = req.body;
+            
+            if (!email || !password) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Email and password are required' 
+                });
+            }
+            
+            const user = await User.findByEmail(email);
+            if (!user) {
+                return res.status(401).json({ 
+                    success: false, 
+                    error: 'Invalid credentials' 
+                });
+            }
+            
+            if (!user.isActive()) {
+                return res.status(401).json({ 
+                    success: false, 
+                    error: 'Account is deactivated' 
+                });
+            }
+            
+            // Simple password check (in production, use bcrypt.compare)
+            if (user.getPasswordHash() !== password) {
+                return res.status(401).json({ 
+                    success: false, 
+                    error: 'Invalid credentials' 
+                });
+            }
+            
+            user.updateLastLogin();
+            await user.save();
+            
+            // Create a simple token (in production, use JWT)
+            const token = Buffer.from(`${user.id}:${user.email}`).toString('base64');
+            
+            res.status(200).json({ 
+                success: true, 
+                data: {
+                    user: user.toJSON(),
+                    token
+                },
+                message: 'Login successful'
+            });
+        } catch (error) {
+            res.status(500).json({ 
+                success: false, 
+                error: error.message,
+                message: 'Failed to login'
+            });
+        }
+    },
+
+    async getMe(req, res) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ 
+                    success: false, 
+                    error: 'Unauthorized' 
+                });
+            }
+            
+            const user = await User.findById(userId);
+            if (!user) {
+                return res.status(404).json({ 
+                    success: false, 
+                    error: 'User not found' 
+                });
+            }
+            
+            res.status(200).json({ 
+                success: true, 
+                data: user.toJSON()
+            });
+        } catch (error) {
+            res.status(500).json({ 
+                success: false, 
+                error: error.message,
+                message: 'Failed to retrieve user'
+            });
         }
     }
 };
 
-module.exports = productController;
+module.exports = authController;
