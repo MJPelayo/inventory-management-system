@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productroutes');
 const warehouseRoutes = require('./routes/Warehouseroutes');
+const supplierRoutes = require('./routes/supplierRoutes');
 const pool = require('./db/pool');
 
 dotenv.config();
@@ -42,7 +43,10 @@ app.get('/', (req, res) => { // Fixed: Swapped (res, req) to (req, res)
         endpoints: {
             health: 'GET /api/health',
             users: 'GET/POST/PUT/DELETE /api/users',
-            users_by_id: 'GET/PUT/DELETE /api/users/:id'
+            users_by_id: 'GET/PUT/DELETE /api/users/:id',
+            products: 'GET/POST/PUT/DELETE /api/products',
+            warehouses: 'GET/POST/PUT/DELETE /api/warehouses',
+            suppliers: 'GET/POST/PUT/DELETE /api/suppliers'
         }
     });
 });
@@ -55,6 +59,9 @@ app.use('/api/products', productRoutes);
 
 // Warehouse routes
 app.use('/api/warehouses', warehouseRoutes);
+
+// Supplier routes
+app.use('/api/suppliers', supplierRoutes);
 
 // 404 handler
 app.use((req, res) => {

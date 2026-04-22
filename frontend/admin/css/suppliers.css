@@ -179,3 +179,36 @@ main {
 .supplier-table tbody tr:hover {
     background: #fbfaf8;
 }
+
+/* Action buttons */
+.row-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-edit,
+.btn-delete {
+    border: 1px solid #d7d4ca;
+    background: #fff;
+    color: #1b1a18;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.btn-edit:hover {
+    background: #f2f1ec;
+}
+
+.btn-delete {
+    border-color: #f0c6cc;
+    color: #8d1f2d;
+}
+
+.btn-delete:hover {
+    background: #ffe7ea;
+}
+
