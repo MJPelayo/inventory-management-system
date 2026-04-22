@@ -1,4 +1,4 @@
-console.log("admin screen");
+//console.log("admin screen");
 
 const API_BASE = "http://localhost:3000";
 
