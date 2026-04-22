@@ -4,6 +4,7 @@
 
 ### 1️⃣ **Database Setup (pgAdmin4)**
 
+**Option A: Manual Setup**
 ```
 # Open pgAdmin4
 # Right-click Databases → Create → Database
@@ -15,6 +16,18 @@
 # Copy entire database/schema.sql
 # Press F5 to execute
 ```
+
+**Option B: Automated Reset Script**
+```bash
+# Navigate to backend folder first
+cd backend
+
+# Run the reset script
+node scripts/quick-reset.js
+```
+This script automatically drops and recreates all tables using [`database/schema.sql`](database/schema.sql).
+
+⚠️ **Important:** The script must be run from the `backend` directory because it uses the `pg` module installed in `backend/node_modules`.
 
 ### 2️⃣ **Start Server**
 
@@ -407,6 +420,31 @@ Error: listen EADDRINUSE: address already in use :::3000
 Error: Cannot find module 'xxx'
 ```
 **Solution:** Run `npm install` in the backend directory
+
+---
+
+## 🔧 Database Reset
+
+### Using the Reset Script
+To quickly reset the database (drops and recreates all tables):
+
+```bash
+# Navigate to backend folder first
+cd backend
+
+# Run the reset script
+node scripts/quick-reset.js
+```
+
+The [`backend/scripts/quick-reset.js`](backend/scripts/quick-reset.js) script will:
+1. Drop all existing tables and ENUM types
+2. Connect to PostgreSQL using your `.env` configuration
+3. Read and execute the entire [`database/schema.sql`](database/schema.sql)
+4. Recreate all tables with sample data
+
+**Note:** This will delete all existing data in the database!
+
+⚠️ **Important:** The script must be run from the `backend` directory because it depends on the `pg` module installed in `backend/node_modules`.
 
 ---
 

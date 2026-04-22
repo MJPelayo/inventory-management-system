@@ -13,11 +13,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Simple auth middleware
+// Simple auth middleware (keep your existing one)
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        req.user = { id: 1, role: 'admin' }; // For testing only!
+        req.user = { id: 1, role: 'admin' };
         return next();
     }
     try {
@@ -31,7 +31,7 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-// Routes
+// Routes (your existing routes)
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', authMiddleware, require('./routes/userRoutes'));
 app.use('/api/products', authMiddleware, require('./routes/productRoutes'));
@@ -40,14 +40,10 @@ app.use('/api/suppliers', authMiddleware, require('./routes/supplierRoutes'));
 app.use('/api/warehouses', authMiddleware, require('./routes/warehouseRoutes'));
 app.use('/api/inventory', authMiddleware, require('./routes/inventoryRoutes'));
 app.use('/api/orders', authMiddleware, require('./routes/orderRoutes'));
+
 // ===== CHECKPOINT 3 - NEW ROUTES =====
-// Reports (requires authentication)
 app.use('/api/reports', authMiddleware, require('./routes/reportRoutes'));
-
-// Export data (Admin only - auth middleware handles role check inside)
 app.use('/api/export', authMiddleware, require('./routes/exportRoutes'));
-
-// ===== END NEW ROUTES =====
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -63,11 +59,6 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ success: false, error: err.message });
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📚 API Documentation: http://localhost:${PORT}/api/health`);
 });
 
 module.exports = app;
