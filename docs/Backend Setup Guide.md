@@ -391,13 +391,15 @@ The database includes 12 tables:
 After setup, verify everything works:
 
 - [ ] Database connection successful (check terminal for ✅ message)
-- [ ] Health check returns `{"status":"OK"}`
-- [ ] Users API returns sample users
-- [ ] Products API returns sample products
-- [ ] Categories API returns category hierarchy
-- [ ] Suppliers API returns sample suppliers
-- [ ] Warehouses API returns sample warehouses
-- [ ] Inventory API shows stock levels
+- [ ] Health check returns `{"status":"OK"}` at http://localhost:3000/api/health
+- [ ] Users API returns sample users at http://localhost:3000/api/users
+- [ ] Products API returns sample products at http://localhost:3000/api/products
+- [ ] Categories API returns category hierarchy at http://localhost:3000/api/categories
+- [ ] Suppliers API returns sample suppliers at http://localhost:3000/api/suppliers
+- [ ] Warehouses API returns sample warehouses at http://localhost:3000/api/warehouses
+- [ ] Inventory API shows stock levels at http://localhost:3000/api/inventory/warehouse/1
+
+**Note:** Most endpoints (except `/api/health`) require authentication. The server uses a fallback authentication that grants admin access when no valid token is provided (see [`backend/src/app.js`](backend/src/app.js:17-32)).
 
 ---
 
@@ -448,22 +450,119 @@ The [`backend/scripts/quick-reset.js`](backend/scripts/quick-reset.js) script wi
 
 ---
 
-## 📝 Notes for Checkpoint 1
+## 📝 Current Implementation Status
 
-This is **Checkpoint 1 (Phase 2)** of the Inventory Management System. The following features are implemented:
+This is **Checkpoint 3** of the Inventory Management System. The following features are implemented:
 
-✅ User management with role-based access  
-✅ Product catalog with categories and suppliers  
-✅ Multi-warehouse inventory tracking  
-✅ Stock movement audit trail  
-✅ Sales order processing  
-✅ Supply/purchase order management  
-✅ Low stock alerts  
-✅ Stock receiving and transfers  
+### Core Features
+✅ User management with role-based access (admin, sales, warehouse, supply)
+✅ Product catalog with categories and suppliers
+✅ Multi-warehouse inventory tracking
+✅ Stock movement audit trail
+✅ Sales order processing
+✅ Supply/purchase order management
+✅ Low stock alerts
+✅ Stock receiving and transfers
 
-**Coming in next phase:**
+### Checkpoint 3 - New Features
+✅ **Reporting System** - Sales, Inventory, and Supplier performance reports ([`backend/src/routes/reportRoutes.js`](backend/src/routes/reportRoutes.js))
+✅ **Data Export** - CSV export for users, products, and inventory ([`backend/src/routes/exportRoutes.js`](backend/src/routes/exportRoutes.js))
+✅ **Audit Logging** - Track all user actions for security ([`database/schema.sql`](database/schema.sql:238-249))
+✅ **Product Requests** - Sales team can request new products from Supply ([`database/schema.sql`](database/schema.sql:252-266))
+✅ **Adjustment Reasons** - Standard reasons for stock adjustments ([`database/schema.sql`](database/schema.sql:269-285))
+
+### Database Tables (15 total)
+1. **users** - User accounts with roles
+2. **categories** - Product categories with hierarchical structure
+3. **suppliers** - Supplier information
+4. **warehouses** - Warehouse locations and capacity
+5. **products** - Product catalog
+6. **inventory** - Product quantities per warehouse
+7. **product_locations** - Detailed storage locations (aisle, shelf, layer)
+8. **sales_orders** - Customer sales orders
+9. **supply_orders** - Purchase orders to suppliers
+10. **order_items** - Order line items (polymorphic)
+11. **stock_movements** - Audit trail for inventory changes
+12. **discount_approvals** - Discount approval workflow
+13. **audit_logs** - User action tracking (Checkpoint 3)
+14. **product_requests** - New product requests (Checkpoint 3)
+15. **adjustment_reasons** - Stock adjustment reasons (Checkpoint 3)
+
+### API Endpoints Summary
+
+| Module | Method | Endpoint | Auth Required | Description |
+|--------|--------|----------|---------------|-------------|
+| **Health** | GET | `/api/health` | ❌ | Server health check |
+| **Auth** | POST | `/api/auth/register` | ❌ | Register new user |
+| **Auth** | POST | `/api/auth/login` | ❌ | User login |
+| **Auth** | GET | `/api/auth/me` | ✅ | Get current user |
+| **Users** | GET | `/api/users` | ✅ | Get all users |
+| **Users** | GET | `/api/users/:id` | ✅ | Get user by ID |
+| **Users** | POST | `/api/users` | ✅ | Create user |
+| **Users** | PUT | `/api/users/:id` | ✅ | Update user |
+| **Users** | DELETE | `/api/users/:id` | ✅ | Delete user |
+| **Products** | GET | `/api/products` | ✅ | Get all products |
+| **Products** | GET | `/api/products/:id` | ✅ | Get product by ID |
+| **Products** | GET | `/api/products/low-stock` | ✅ | Get low stock products |
+| **Products** | POST | `/api/products` | ✅ | Create product |
+| **Products** | PUT | `/api/products/:id` | ✅ | Update product |
+| **Products** | DELETE | `/api/products/:id` | ✅ | Delete product |
+| **Categories** | GET | `/api/categories` | ✅ | Get all categories |
+| **Categories** | GET | `/api/categories/tree` | ✅ | Get category hierarchy |
+| **Categories** | GET | `/api/categories/:id` | ✅ | Get category by ID |
+| **Categories** | POST | `/api/categories` | ✅ | Create category |
+| **Categories** | PUT | `/api/categories/:id` | ✅ | Update category |
+| **Categories** | DELETE | `/api/categories/:id` | ✅ | Delete category |
+| **Suppliers** | GET | `/api/suppliers` | ✅ | Get all suppliers |
+| **Suppliers** | GET | `/api/suppliers/:id` | ✅ | Get supplier by ID |
+| **Suppliers** | POST | `/api/suppliers` | ✅ | Create supplier |
+| **Suppliers** | PUT | `/api/suppliers/:id` | ✅ | Update supplier |
+| **Suppliers** | DELETE | `/api/suppliers/:id` | ✅ | Delete supplier |
+| **Warehouses** | GET | `/api/warehouses` | ✅ | Get all warehouses |
+| **Warehouses** | GET | `/api/warehouses/:id` | ✅ | Get warehouse by ID |
+| **Warehouses** | POST | `/api/warehouses` | ✅ | Create warehouse |
+| **Warehouses** | PUT | `/api/warehouses/:id` | ✅ | Update warehouse |
+| **Warehouses** | DELETE | `/api/warehouses/:id` | ✅ | Delete warehouse |
+| **Inventory** | GET | `/api/inventory/warehouse/:id` | ✅ | Get warehouse inventory |
+| **Inventory** | GET | `/api/inventory/low-stock` | ✅ | Get low stock items |
+| **Inventory** | GET | `/api/inventory/movements` | ✅ | Get stock movements |
+| **Inventory** | POST | `/api/inventory/receive` | ✅ | Receive stock |
+| **Inventory** | POST | `/api/inventory/transfer` | ✅ | Transfer stock |
+| **Orders** | GET | `/api/orders/sales` | ✅ | Get sales orders |
+| **Orders** | GET | `/api/orders/sales/:id` | ✅ | Get sales order by ID |
+| **Orders** | POST | `/api/orders/sales` | ✅ | Create sales order |
+| **Orders** | PUT | `/api/orders/sales/:id/status` | ✅ | Update order status |
+| **Orders** | GET | `/api/orders/supply` | ✅ | Get supply orders |
+| **Orders** | GET | `/api/orders/supply/:id` | ✅ | Get supply order by ID |
+| **Orders** | POST | `/api/orders/supply` | ✅ | Create supply order |
+| **Orders** | POST | `/api/orders/supply/:id/receive` | ✅ | Receive supply order |
+| **Reports** | GET | `/api/reports/sales` | ✅ | Sales report (Admin/Sales) |
+| **Reports** | GET | `/api/reports/inventory` | ✅ | Inventory report (Admin/Warehouse) |
+| **Reports** | GET | `/api/reports/suppliers` | ✅ | Supplier report (Admin/Supply) |
+| **Export** | GET | `/api/export/users` | Admin Only | Export users to CSV |
+| **Export** | GET | `/api/export/products` | Admin Only | Export products to CSV |
+| **Export** | GET | `/api/export/inventory` | Admin Only | Export inventory to CSV |
+
+### Authentication
+
+The system uses JWT-based authentication with role-based access control ([`backend/src/middleware/auth.js`](backend/src/middleware/auth.js)):
+
+- **Public endpoints**: `/api/health`, `/api/auth/register`, `/api/auth/login`
+- **Protected endpoints**: All other endpoints require a valid JWT token
+- **Role-based access**: Some endpoints restrict access to specific roles (e.g., reports, exports)
+
+```bash
+# Login to get token
+curl.exe -X POST http://localhost:3000/api/auth/login ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"admin@ims.com\",\"password\":\"admin123\"}"
+
+# Use token in subsequent requests
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/users
+```
+
+### Coming Soon
 - Frontend UI integration
-- Advanced reporting
 - Email notifications
 - Barcode scanning
 - Advanced analytics dashboard
