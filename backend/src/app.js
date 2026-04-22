@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const userRoutes = require('./routes/userRoutes');
+const productRoutes = require('./routes/productroutes');
+const warehouseRoutes = require('./routes/Warehouseroutes');
 const pool = require('./db/pool');
 
 dotenv.config();
@@ -47,6 +49,12 @@ app.get('/', (req, res) => { // Fixed: Swapped (res, req) to (req, res)
 
 // User routes
 app.use('/api/users', userRoutes);
+
+// Product routes
+app.use('/api/products', productRoutes);
+
+// Warehouse routes
+app.use('/api/warehouses', warehouseRoutes);
 
 // 404 handler
 app.use((req, res) => {
