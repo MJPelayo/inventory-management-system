@@ -231,6 +231,59 @@ CREATE TABLE discount_approvals (
 );
 
 -- =====================================================
+-- CHECKPOINT 3 - NEW TABLES
+-- =====================================================
+
+-- 13. audit_logs - Track all user actions for security
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id INTEGER,
+    old_data JSONB,
+    new_data JSONB,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. product_requests - Sales team can request new products from Supply
+CREATE TABLE IF NOT EXISTS product_requests (
+    id SERIAL PRIMARY KEY,
+    product_name VARCHAR(200) NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    customer_name VARCHAR(100),
+    priority VARCHAR(20) DEFAULT 'normal',
+    budget_limit DECIMAL(10,2),
+    requested_by INTEGER REFERENCES users(id),
+    status VARCHAR(20) DEFAULT 'pending',
+    approved_by INTEGER REFERENCES users(id),
+    approved_at TIMESTAMP,
+    rejection_reason TEXT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. adjustment_reasons - Standard reasons for stock adjustments
+CREATE TABLE IF NOT EXISTS adjustment_reasons (
+    id SERIAL PRIMARY KEY,
+    reason_code VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT NOT NULL,
+    requires_approval BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Insert default adjustment reasons
+INSERT INTO adjustment_reasons (reason_code, description, requires_approval) VALUES
+('DAMAGE', 'Product damaged in warehouse - regular write-off', FALSE),
+('THEFT', 'Product stolen - requires manager approval', TRUE),
+('COUNT_ERROR', 'Physical count mismatch during inventory', FALSE),
+('EXPIRED', 'Product reached expiration date', FALSE),
+('QUALITY_ISSUE', 'Quality control failure - needs inspection', TRUE),
+('RETURN_TO_SUPPLIER', 'Returning defective items to supplier', FALSE);
+
+-- =====================================================
 -- INDEXES for performance
 -- =====================================================
 CREATE INDEX idx_users_email ON users(email);
@@ -244,6 +297,10 @@ CREATE INDEX idx_sales_orders_status ON sales_orders(status);
 CREATE INDEX idx_stock_movements_product ON stock_movements(product_id);
 CREATE INDEX idx_stock_movements_timestamp ON stock_movements(created_at);
 CREATE INDEX idx_product_locations_warehouse ON product_locations(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_product_requests_status ON product_requests(status);
+CREATE INDEX IF NOT EXISTS idx_product_requests_requested_by ON product_requests(requested_by);
 
 -- =====================================================
 -- TRIGGER FUNCTION for updated_at
