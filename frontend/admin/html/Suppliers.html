@@ -4,8 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suppliers</title>
+    <link rel="stylesheet" href="../css/navbarStyle.css">
+    <link rel="stylesheet" href="../css/suppliers.css">
+
 </head>
 <body>
-    <h1>Suppliers</h1>
+    <header>
+        <h1>Inventory Management System</h1>
+    </header>
+    <main>
+        <!-- Side Navigation -->
+        <nav id="sideNav" class="side-nav">
+            <ul class="nav-menu">
+                <li>
+                    <a class="nav-link" href="Reports.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" href="Users.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span class="nav-text">Users</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" href="Products.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"></path>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                        <span class="nav-text">Products</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link" href="Warehouses.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        <span class="nav-text">Warehouses</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link active" href="Suppliers.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="nav-text">Suppliers</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="content-area">
+            <!-- Main Content -->
+            <section class="main-content">
+                <h2>Suppliers</h2>
+                <p>Manage and view supplier information.</p>
+                <div class="AddButtonContainer">
+                    <button id="addSupplierBtn" class="AddBtn">Add New Supplier</button>
+                </div>
+            </section>
+
+            <!-- Search bar (Products-style toolbar) -->
+            <div class="toolbar">
+                <div class="search-wrap">
+                    <input type="text" id="supplierSearch" placeholder="Search supplier..." />
+                </div>
+            </div>
+
+            <!-- Supplier Table -->
+            <section class="supplier-table">
+                <h3>Supplier Management</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Payment Terms</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplierTableBody"></tbody>
+                </table>
+            </section>
+            
+        </div>
+
+    </main>
 </body>
 </html>

@@ -36,15 +36,9 @@ function renderKpis({ products, users, warehouses }) {
     const activeProducts = products.filter((p) => p.is_active).length;
     const totalUsers = users.length;
 
-    // Calculate average warehouse utilization (only for warehouses with capacity > 0)
-    const warehousesWithCapacity = warehouses.filter((w) => Number(w.capacity) > 0);
-    const avgUtilization = warehousesWithCapacity.length
-        ? warehousesWithCapacity.reduce((acc, w) => {
-            const occupancy = Number(w.current_occupancy) || 0;
-            const capacity = Number(w.capacity) || 0;
-            return acc + (capacity ? (occupancy / capacity) * 100 : 0);
-        }, 0) / warehousesWithCapacity.length
-        : 0;
+    // palceholder for total supplier count 
+    const totalSuppliers = 0; // TODO: fetch and calculate this from API
+    const activeSuppliers = 0; // TODO: fetch and calculate this from API
 
     // Count active users and warehouses
     const activeUsers = users.filter((u) => u.is_active).length;
@@ -68,9 +62,9 @@ function renderKpis({ products, users, warehouses }) {
             <div class="stat-sub">${activeUsers} active users</div>
         </div>
         <div class="stat">
-            <div class="stat-label">Avg warehouse use</div>
-            <div class="stat-value">${formatPercent(avgUtilization)}</div>
-            <div class="stat-sub">${activeWarehouses}/${warehouses.length} active warehouses</div>
+            <div class="stat-label">Total Suppliers</div>
+            <div class="stat-value">${totalSuppliers}</div>
+            <div class="stat-sub">${activeSuppliers} active suppliers</div>
         </div>
     `;
 }
