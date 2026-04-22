@@ -40,6 +40,14 @@ app.use('/api/suppliers', authMiddleware, require('./routes/supplierRoutes'));
 app.use('/api/warehouses', authMiddleware, require('./routes/warehouseRoutes'));
 app.use('/api/inventory', authMiddleware, require('./routes/inventoryRoutes'));
 app.use('/api/orders', authMiddleware, require('./routes/orderRoutes'));
+// ===== CHECKPOINT 3 - NEW ROUTES =====
+// Reports (requires authentication)
+app.use('/api/reports', authMiddleware, require('./routes/reportRoutes'));
+
+// Export data (Admin only - auth middleware handles role check inside)
+app.use('/api/export', authMiddleware, require('./routes/exportRoutes'));
+
+// ===== END NEW ROUTES =====
 
 // Health check
 app.get('/api/health', (req, res) => {
