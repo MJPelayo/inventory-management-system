@@ -2,6 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const { authenticateToken, authorize } = require('../middleware/auth');
+
+// Bulk price update (admin only)
+router.put('/bulk-price', authenticateToken, authorize('admin'), productController.bulkUpdatePrices);
 
 router.get('/', productController.getAllProducts);
 router.get('/low-stock', productController.getLowStockProducts);
