@@ -245,6 +245,48 @@ curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/au
 
 ---
 
+## 🔑 Credentials & Testing
+
+### View All Credentials
+
+Run the following command anytime to see all system credentials:
+
+```bash
+npm run show-creds
+```
+
+**Credentials are also printed automatically on server startup.**
+
+### Reset Password
+
+To reset any user's password:
+
+```bash
+npm run reset-password admin@ims.com admin123
+```
+
+**Usage:** `npm run reset-password <email> <newPassword>`
+
+### Test Login
+
+Test the login endpoint with curl:
+
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@ims.com","password":"admin123"}'
+```
+
+For Windows CMD (use `^` for line continuation):
+
+```bash
+curl.exe -X POST http://localhost:3000/api/auth/login ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"admin@ims.com\",\"password\":\"admin123\"}"
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
