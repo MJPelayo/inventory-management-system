@@ -7,7 +7,9 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "test": "jest",
-    "db:init": "psql -d inventory_db -f schema.sql"
+    "db:init": "psql -d inventory_db -f database/schema.sql",
+    "reset-password": "node scripts/reset-password.js",
+    "show-creds": "node scripts/show-credentials.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
