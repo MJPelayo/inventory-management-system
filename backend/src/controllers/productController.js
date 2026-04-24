@@ -1,6 +1,7 @@
 // backend/src/controllers/productController.js
 const { Product } = require('../models/Product');
 const { Inventory } = require('../models/Inventory');
+const pool = require('../db/pool');
 
 const productController = {
     // Get all products
@@ -110,6 +111,67 @@ const productController = {
             });
         } catch (error) {
             res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
+    // Bulk update prices
+    async bulkUpdatePrices(req, res) {
+        try {
+            const { updates } = req.body;
+
+            if (!updates || !Array.isArray(updates) || updates.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Updates array is required'
+                });
+            }
+
+            const client = await pool.connect();
+            const results = [];
+            const errors = [];
+
+            try {
+                await client.query('BEGIN');
+
+                for (const update of updates) {
+                    const { id, price } = update;
+
+                    if (!id || price === undefined || price < 0) {
+                        errors.push({ id, error: 'Invalid price or ID' });
+                        continue;
+                    }
+
+                    const product = await Product.findById(id);
+                    if (!product) {
+                        errors.push({ id, error: 'Product not found' });
+                        continue;
+                    }
+
+                    product.setPrice(price);
+                    const updated = await product.save();
+                    results.push(updated.toJSON());
+                }
+
+                await client.query('COMMIT');
+
+                res.status(200).json({
+                    success: true,
+                    data: {
+                        updated: results,
+                        failed: errors,
+                        total_updated: results.length,
+                        total_failed: errors.length
+                    },
+                    message: `Updated ${results.length} products`
+                });
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            res.status(400).json({ success: false, error: error.message });
         }
     }
 };
