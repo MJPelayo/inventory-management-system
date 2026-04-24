@@ -9,6 +9,10 @@ router.get('/sales', orderController.getSalesOrders);
 router.get('/sales/:id', orderController.getSalesOrderById);
 router.put('/sales/:id/status', orderController.updateOrderStatus);
 
+// Discount Approval
+router.post('/sales/:id/request-discount', orderController.requestDiscountApproval);
+router.post('/sales/:id/approve-discount', orderController.approveDiscount);
+
 // Supply Orders
 router.post('/supply', orderController.createSupplyOrder);
 router.get('/supply', orderController.getSupplyOrders);

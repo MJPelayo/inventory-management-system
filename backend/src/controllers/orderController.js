@@ -1,6 +1,7 @@
 // backend/src/controllers/orderController.js
 const { SalesOrder } = require('../models/SalesOrder');
 const { SupplyOrder } = require('../models/SupplyOrder');
+const pool = require('../db/pool');
 
 const orderController = {
     // ============ SALES ORDERS ============
@@ -73,6 +74,108 @@ const orderController = {
                 success: true,
                 message: `Order status updated to ${status}`
             });
+        } catch (error) {
+            res.status(400).json({ success: false, error: error.message });
+        }
+    },
+
+    // ============ DISCOUNT APPROVAL ============
+    
+    async requestDiscountApproval(req, res) {
+        try {
+            const orderId = parseInt(req.params.id);
+            const { requested_discount, reason } = req.body;
+            const userId = req.user.id;
+            
+            const order = await SalesOrder.findById(orderId);
+            if (!order) {
+                return res.status(404).json({ success: false, error: 'Order not found' });
+            }
+            
+            // Check if discount already approved
+            const existing = await pool.query(
+                'SELECT * FROM discount_approvals WHERE order_id = $1 AND approved = false',
+                [orderId]
+            );
+            
+            if (existing.rows.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'A discount request is already pending for this order'
+                });
+            }
+            
+            // Create discount approval request
+            await pool.query(`
+                INSERT INTO discount_approvals (order_id, requested_by, requested_discount, reason)
+                VALUES ($1, $2, $3, $4)
+            `, [orderId, userId, requested_discount, reason]);
+            
+            // Get admin users to notify (in real app, send email)
+            const admins = await pool.query('SELECT email FROM users WHERE role = $1', ['admin']);
+            
+            res.status(200).json({
+                success: true,
+                message: `Discount request of ${requested_discount}% submitted for approval`,
+                admins_notified: admins.rows.map(a => a.email)
+            });
+        } catch (error) {
+            res.status(400).json({ success: false, error: error.message });
+        }
+    },
+
+    async approveDiscount(req, res) {
+        try {
+            const orderId = parseInt(req.params.id);
+            const { approve } = req.body; // true or false
+            const adminId = req.user.id;
+            
+            // Get the pending request
+            const request = await pool.query(
+                `SELECT * FROM discount_approvals
+                 WHERE order_id = $1 AND approved = false`,
+                [orderId]
+            );
+            
+            if (request.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'No pending discount request found for this order'
+                });
+            }
+            
+            if (approve) {
+                // Update the order with approved discount
+                await pool.query(`
+                    UPDATE sales_orders
+                    SET discount_amount = $1,
+                        discount_approved_by = $2,
+                        total_amount = subtotal - $1 + tax + shipping_cost
+                    WHERE id = $3
+                `, [request.rows[0].requested_discount, adminId, orderId]);
+                
+                // Update approval record
+                await pool.query(`
+                    UPDATE discount_approvals
+                    SET approved = true, approved_by = $1, approval_date = CURRENT_TIMESTAMP
+                    WHERE order_id = $2
+                `, [adminId, orderId]);
+                
+                res.status(200).json({
+                    success: true,
+                    message: `Discount of ${request.rows[0].requested_discount}% approved`
+                });
+            } else {
+                // Reject the request
+                await pool.query(`
+                    DELETE FROM discount_approvals WHERE order_id = $1
+                `, [orderId]);
+                
+                res.status(200).json({
+                    success: true,
+                    message: 'Discount request rejected'
+                });
+            }
         } catch (error) {
             res.status(400).json({ success: false, error: error.message });
         }
