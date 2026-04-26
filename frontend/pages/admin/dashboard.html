@@ -1,0 +1,56 @@
+<!-- frontend/pages/admin/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Inventory Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <!-- Sidebar -->
+            <aside id="sidebar"></aside>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Admin Dashboard</h1>
+                        <p class="page-subtitle">System overview and key metrics</p>
+                    </div>
+                </div>
+                
+                <!-- KPI Cards -->
+                <div class="stats-grid" id="kpiGrid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Activity</h3>
+                            <a href="reports.html" class="link">View all →</a>
+                        </div>
+                        <div class="card-body" id="recentActivity">
+                            <div class="loading">Loading recent activity...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/admin.js"></script>
+</body>
+</html>
