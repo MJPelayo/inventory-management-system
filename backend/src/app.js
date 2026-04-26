@@ -48,6 +48,9 @@ app.use('/api/orders', authenticateToken, require('./routes/orderRoutes'));
 app.use('/api/reports', authenticateToken, require('./routes/reportRoutes'));
 app.use('/api/export', authenticateToken, require('./routes/exportRoutes'));
 
+// Audit Log Routes (admin only)
+app.use('/api/audit-logs', require('./routes/auditLogRoutes'));
+
 // Health check (public endpoint)
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
