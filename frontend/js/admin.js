@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function loadDashboardData() {
     const kpiGrid = document.getElementById('kpiGrid');
+    if (!kpiGrid) return;
     
     try {
         // Fetch data in parallel
@@ -96,6 +97,7 @@ async function loadDashboardData() {
  */
 async function loadRecentActivity() {
     const container = document.getElementById('recentActivity');
+    if (!container) return;
     
     try {
         // Try to fetch audit logs, fallback to mock data if not available
@@ -107,10 +109,10 @@ async function loadRecentActivity() {
         } catch (e) {
             // Mock data for demo
             activities = [
-                { action: 'User logged in', user: 'admin@ims.com', timestamp: new Date().toISOString(), entity_type: 'auth' },
-                { action: 'Product created', user: 'admin@ims.com', timestamp: new Date(Date.now() - 3600000).toISOString(), entity_type: 'product' },
-                { action: 'Inventory updated', user: 'warehouse@ims.com', timestamp: new Date(Date.now() - 7200000).toISOString(), entity_type: 'inventory' },
-                { action: 'Order placed', user: 'sales@ims.com', timestamp: new Date(Date.now() - 86400000).toISOString(), entity_type: 'order' }
+                { action: 'User logged in', user: 'admin@ims.com', created_at: new Date().toISOString(), entity_type: 'auth' },
+                { action: 'Product created', user: 'admin@ims.com', created_at: new Date(Date.now() - 3600000).toISOString(), entity_type: 'product' },
+                { action: 'Inventory updated', user: 'warehouse@ims.com', created_at: new Date(Date.now() - 7200000).toISOString(), entity_type: 'inventory' },
+                { action: 'Order placed', user: 'sales@ims.com', created_at: new Date(Date.now() - 86400000).toISOString(), entity_type: 'order' }
             ];
         }
         
@@ -132,10 +134,10 @@ async function loadRecentActivity() {
                 <tbody>
                     ${activities.map(activity => `
                         <tr>
-                            <td>${activity.action}</td>
-                            <td>${activity.user_email || activity.user || 'System'}</td>
-                            <td>${activity.entity_type || 'system'}</td>
-                            <td>${new Date(activity.timestamp).toLocaleString()}</td>
+                            <td>${escapeHtml(activity.action)}</td>
+                            <td>${escapeHtml(activity.user_email || activity.user || 'System')}</td>
+                            <td><span class="badge">${escapeHtml(activity.entity_type || 'system')}</span></td>
+                            <td>${new Date(activity.created_at).toLocaleString()}</td>
                         </tr>
                     `).join('')}
                 </tbody>
