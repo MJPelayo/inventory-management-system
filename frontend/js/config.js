@@ -7,8 +7,8 @@
  */
 
 const CONFIG = {
-    // API Base URL - change this for production
-    API_BASE_URL: 'http://localhost:3000/api',
+    // API Base URL - use relative path since frontend and backend are on same port
+    API_BASE_URL: '/api',
     
     // Token storage key
     TOKEN_KEY: 'ims_auth_token',

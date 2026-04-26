@@ -4,6 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
 const pool = require('./db/pool');
+const path = require('path');  // IMPORTANT: Add this for file serving
 
 dotenv.config();
 
@@ -14,6 +15,21 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================
+// SERVE STATIC FRONTEND FILES
+// ============================================
+
+// Serve static files from the frontend directory
+// This will serve CSS, JS, and HTML files directly
+app.use(express.static(path.join(__dirname, '../../frontend')));
+
+// Also serve the pages directory
+app.use('/pages', express.static(path.join(__dirname, '../../frontend/pages')));
+
+// ============================================
+// API ROUTES (Your existing backend routes)
+// ============================================
 
 // Import auth middleware (proper JWT-based authentication)
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
@@ -37,9 +53,26 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ success: false, error: 'Endpoint not found' });
+// ============================================
+// CLIENT-SIDE ROUTING (Catch-all for frontend)
+// ============================================
+
+// For any other route that's not an API route, serve the frontend
+// This allows your frontend to handle its own routing (like dashboard.html, users.html, etc.)
+app.get('*', (req, res, next) => {
+    // Skip API routes (already handled above)
+    if (req.path.startsWith('/api/')) {
+        return next();
+    }
+    
+    // If the request is for a specific file that exists, let express.static handle it
+    // Otherwise, serve index.html for client-side routing
+    res.sendFile(path.join(__dirname, '../../frontend/index.html'));
+});
+
+// 404 handler for API routes only
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ success: false, error: 'API endpoint not found' });
 });
 
 // Error handler
