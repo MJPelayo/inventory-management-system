@@ -9,7 +9,9 @@
     "test": "jest",
     "db:init": "psql -d inventory_db -f database/schema.sql",
     "reset-password": "node scripts/reset-password.js",
-    "show-creds": "node scripts/show-credentials.js"
+    "show-creds": "node scripts/show-credentials.js",
+    "full-reset": "node scripts/full-reset.js",
+    "db:reset": "npm run full-reset"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
