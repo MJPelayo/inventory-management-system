@@ -1,5 +1,90 @@
-// suppliers.js - handles supplier management in admin panel
 const API_BASE = "http://localhost:3000";
+let allSuppliers = [];
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function getFilteredSuppliers() {
+    const search = document.getElementById("supplierSearch").value.toLowerCase().trim();
+    const statusFilter = document.getElementById("supplierStatusFilter").value;
+    const sort = document.getElementById("supplierSort").value;
+
+    let list = allSuppliers.filter((supplier) => {
+        const matchSearch = !search ||
+            String(supplier.name ?? "").toLowerCase().includes(search) ||
+            String(supplier.contact_person ?? "").toLowerCase().includes(search) ||
+            String(supplier.email ?? "").toLowerCase().includes(search) ||
+            String(supplier.payment_terms ?? "").toLowerCase().includes(search);
+
+        const matchStatus = statusFilter === "all" ||
+            (statusFilter === "active" ? supplier.is_active : !supplier.is_active);
+
+        return matchSearch && matchStatus;
+    });
+
+    list.sort((a, b) => {
+        if (sort === "payment_terms") {
+            return String(a.payment_terms ?? "").localeCompare(String(b.payment_terms ?? ""));
+        }
+        if (sort === "rating-desc") {
+            return Number(b.rating ?? 0) - Number(a.rating ?? 0);
+        }
+        return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+    });
+
+    return list;
+}
+
+function renderSuppliers() {
+    const tbody = document.getElementById("supplierTableBody");
+    if (!tbody) return;
+
+    const suppliers = getFilteredSuppliers();
+
+    if (!suppliers.length) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">No suppliers found. Try adjusting your search or filters.</div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = suppliers.map((s) => `
+        <tr>
+            <td>${escapeHtml(s.id ?? "")}</td>
+            <td>${escapeHtml(s.name ?? "")}</td>
+            <td>${escapeHtml(s.contact_person ?? "")}</td>
+            <td>${escapeHtml(s.phone ?? "")}</td>
+            <td>${escapeHtml(s.email ?? "")}</td>
+            <td>${s.is_active ? "Active" : "Inactive"}</td>
+            <td>${escapeHtml(s.payment_terms ?? "")}</td>
+            <td>
+                <div class="row-actions">
+                    <button class="btn-edit"
+                            data-id="${s.id}"
+                            data-name="${escapeHtml(s.name ?? "") }"
+                            data-contact-person="${escapeHtml(s.contact_person ?? "") }"
+                            data-phone="${escapeHtml(s.phone ?? "") }"
+                            data-email="${escapeHtml(s.email ?? "") }"
+                            data-address="${escapeHtml(s.address ?? "") }"
+                            data-tax-id="${escapeHtml(s.tax_id ?? "") }"
+                            data-is-active="${s.is_active ? "true" : "false"}"
+                            data-payment-terms="${escapeHtml(s.payment_terms ?? "") }"
+                            data-min-order="${s.minimum_order ?? ""}"
+                            data-total-orders="${s.total_orders ?? ""}"
+                            data-lead-time-days="${s.lead_time_days ?? ""}"
+                            data-on-time-deliveries="${s.on_time_deliveries ?? ""}"
+                            data-rating="${s.rating ?? ""}">
+                        Edit
+                    </button>
+                    <button class="btn-delete" data-id="${s.id}">Delete</button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
+}
 
 // Load suppliers and display in table
 async function loadSuppliers() {
@@ -11,52 +96,22 @@ async function loadSuppliers() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const json = await res.json();
-        const suppliers = Array.isArray(json.data) ? json.data : [];
-
-        tbody.innerHTML = suppliers.map((s) => `
-            <tr>
-                <td>${s.id ?? ""}</td>
-                <td>${s.name ?? ""}</td>
-                <td>${s.contact_person ?? ""}</td>
-                <td>${s.phone ?? ""}</td>
-                <td>${s.email ?? ""}</td>
-                <td>${s.is_active ? "Active" : "Inactive"}</td>
-                <td>${s.payment_terms ?? ""}</td>
-                <!-- row actions (edit/delete) -->
-                <td>
-                    <div class="row-actions">
-                            <button class="btn-edit"
-                                    data-id="${s.id}"
-                                    data-name="${s.name ?? ""}"
-                                    data-contact-person="${s.contact_person ?? ""}"
-                                    data-phone="${s.phone ?? ""}"
-                                    data-email="${s.email ?? ""}"
-                                    data-address="${s.address ?? ""}"
-                                    data-tax-id="${s.tax_id ?? ""}"
-                                    data-is-active="${s.is_active ?? ""}"
-                                    data-payment-terms="${s.payment_terms ?? ""}"
-                                    data-min-order="${s.minimum_order ?? ""}"
-                                    data-total-orders="${s.total_orders ?? ""}"
-                                    data-lead-time-days="${s.lead_time_days ?? ""}"
-                                    data-on-time-deliveries="${s.on_time_deliveries ?? ""}"
-                                    data-rating="${s.rating ?? ""}">
-                                Edit
-                            </button>
-                            <button class="btn-delete" data-id="${s.id}">Delete</button>
-                        </div>
-                </td>
-            </tr>
-        `).join("");
-
-        if (!suppliers.length) {
-            tbody.innerHTML = `<tr><td colspan="8">No suppliers found.</td></tr>`;
-        }
+        allSuppliers = Array.isArray(json.data) ? json.data : [];
+        renderSuppliers();
     } catch (err) {
         console.error("Failed to load suppliers:", err);
     }
 }
 
 document.addEventListener("DOMContentLoaded", loadSuppliers);
+document.addEventListener("DOMContentLoaded", () => {
+    const toolbarInputs = ["supplierSearch", "supplierStatusFilter", "supplierSort"];
+    toolbarInputs.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", renderSuppliers);
+        if (el) el.addEventListener("change", renderSuppliers);
+    });
+});
 
 // Add SupplierModal handling
 const modal = document.getElementById("addSupplierModal");

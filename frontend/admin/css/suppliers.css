@@ -139,6 +139,25 @@ main {
     box-shadow: 0 0 0 3px rgba(27, 26, 24, 0.08);
 }
 
+#supplierStatusFilter,
+#supplierSort {
+    background: #fff;
+    border: 1px solid #e3e1d8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: #1b1a18;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+#supplierStatusFilter:focus,
+#supplierSort:focus {
+    border-color: #1b1a18;
+    box-shadow: 0 0 0 3px rgba(27, 26, 24, 0.08);
+}
+
 /* Supplier table card */
 .supplier-table {
     background: #fff;
@@ -178,6 +197,33 @@ main {
 
 .supplier-table tbody tr:hover {
     background: #fbfaf8;
+}
+
+/* Toolbar + search bar */
+.toolbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.search-wrap {
+    width: min(420px, 100%);
+}
+
+#supplierSearch {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e3e1d8;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+}
+
+#supplierSearch:focus {
+    outline: none;
+    border-color: #b8b4a8;
+    box-shadow: 0 0 0 3px rgba(27, 26, 24, 0.08);
 }
 
 /* Action buttons */

@@ -83,6 +83,16 @@
                 <div class="search-wrap">
                     <input type="text" id="supplierSearch" placeholder="Search supplier..." />
                 </div>
+                <select id="supplierStatusFilter" onchange="renderSuppliers()" style="width:140px;">
+                    <option value="all">All status</option>
+                    <option value="active">Active only</option>
+                    <option value="inactive">Inactive only</option>
+                </select>
+                <select id="supplierSort" onchange="renderSuppliers()" style="width:160px;">
+                    <option value="name">Sort: Name A–Z</option>
+                    <option value="payment_terms">Sort: Payment terms</option>
+                    <option value="rating-desc">Sort: Rating high–low</option>
+                </select>
             </div>
 
             <!-- Supplier Table -->
