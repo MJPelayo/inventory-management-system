@@ -1,6 +1,77 @@
 //console.log("admin screen");
 
 const API_BASE = "http://localhost:3000";
+let allUsers = [];
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function getFilteredUsers() {
+    const search = document.getElementById("userSearch").value.toLowerCase().trim();
+    const statusFilter = document.getElementById("userStatusFilter").value;
+    const sort = document.getElementById("userSort").value;
+
+    let list = allUsers.filter((user) => {
+        const matchSearch = !search ||
+            String(user.name ?? "").toLowerCase().includes(search) ||
+            String(user.email ?? "").toLowerCase().includes(search) ||
+            String(user.role ?? "").toLowerCase().includes(search);
+
+        const matchStatus = statusFilter === "all" ||
+            (statusFilter === "active" ? user.is_active : !user.is_active);
+
+        return matchSearch && matchStatus;
+    });
+
+    list.sort((a, b) => {
+        if (sort === "email") return String(a.email ?? "").localeCompare(String(b.email ?? ""));
+        if (sort === "role") return String(a.role ?? "").localeCompare(String(b.role ?? ""));
+        return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+    });
+
+    return list;
+}
+
+function renderUsers() {
+    const tbody = document.getElementById("userTableBody");
+    if (!tbody) return;
+
+    const users = getFilteredUsers();
+
+    if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No users found. Try adjusting your search or filters.</div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = users.map((u) => `
+        <tr>
+            <td>${escapeHtml(u.id ?? "")}</td>
+            <td>${escapeHtml(u.name ?? "")}</td>
+            <td>${escapeHtml(u.email ?? "")}</td>
+            <td>${escapeHtml(u.role ?? "")}</td>
+            <td>${u.is_active ? "Active" : "Inactive"}</td>
+            <!-- row actions (edit/delete) -->
+            <td>
+                <div class="row-actions">
+                    <button class="btn-edit"
+                            data-id="${u.id}"
+                            data-name="${escapeHtml(u.name ?? "") }"
+                            data-email="${escapeHtml(u.email ?? "") }"
+                            data-role="${escapeHtml(u.role ?? "") }"
+                            data-status="${u.is_active ? "true" : "false"}">
+                        Edit
+                    </button>
+                    <button class="btn-delete" data-id="${u.id}">Delete</button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
+}
 
 // Load users and display in table
 async function loadUsers() {
@@ -12,40 +83,21 @@ async function loadUsers() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const json = await res.json();
-        const users = Array.isArray(json.data) ? json.data : [];
-
-        tbody.innerHTML = users.map((u) => `
-            <tr>
-                <td>${u.id ?? ""}</td>
-                <td>${u.name ?? ""}</td>
-                <td>${u.email ?? ""}</td>
-                <td>${u.role ?? ""}</td>
-                <td>${u.is_active ? "Active" : "Inactive"}</td>
-                <!-- row actions (edit/delete) -->
-                <td>
-                    <div class="row-actions">
-                            <button class="btn-edit"
-                                    data-id="${u.id}"
-                                    data-name="${u.name ?? ""}"
-                                    data-email="${u.email ?? ""}"
-                                    data-role="${u.role ?? ""}"
-                                    data-status="${u.is_active ?? "true"}">
-                                Edit
-                            </button>
-                            <button class="btn-delete" data-id="${u.id}">Delete</button>
-                        </div>
-                </td>
-            </tr>
-        `).join("");
-
-        if (!users.length) {
-            tbody.innerHTML = `<tr><td colspan="4">No users found.</td></tr>`;
-        }
+        allUsers = Array.isArray(json.data) ? json.data : [];
+        renderUsers();
     } catch (err) {
         console.error("Failed to load users:", err);    }
 }
 
 document.addEventListener("DOMContentLoaded", loadUsers);
+document.addEventListener("DOMContentLoaded", () => {
+    const toolbarInputs = ["userSearch", "userStatusFilter", "userSort"];
+    toolbarInputs.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", renderUsers);
+        if (el) el.addEventListener("change", renderUsers);
+    });
+});
 
 // Add UserModal handling
 const modal = document.getElementById("addUserModal");

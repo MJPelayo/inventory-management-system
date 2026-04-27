@@ -90,6 +90,16 @@
                 <div class="search-wrap">
                     <input type="text" id="userSearch" placeholder="Search name or email..." />
                 </div>
+                <select id="userStatusFilter" onchange="renderUsers()" style="width:140px;">
+                    <option value="all">All status</option>
+                    <option value="active">Active only</option>
+                    <option value="inactive">Inactive only</option>
+                </select>
+                <select id="userSort" onchange="renderUsers()" style="width:160px;">
+                    <option value="name">Sort: Name A–Z</option>
+                    <option value="email">Sort: Email A–Z</option>
+                    <option value="role">Sort: Role A–Z</option>
+                </select>
             </div>
 
             <!-- User Table -->
