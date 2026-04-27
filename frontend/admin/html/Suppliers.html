@@ -106,7 +106,97 @@
             </section>
         </div>
 
-        <!-- Add New Supplier Modal goes here -->
+        <!-- Add New Supplier Modal-->
+        <div  id="addSupplierModal" class="modal">
+            <div class="modal-content">
+                <span id="closeModal" class="close">&times;</span>
+                <h2>Add New Supplier</h2>
+
+                <form id="addSupplierForm">
+                    <div class="supplier-form-grid">
+                        <div class="form-field">
+                            <label for="name">Name</label>
+                            <input id="name" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="contact">Contact Person</label>
+                            <input id="contact" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="phone">Phone</label>
+                            <input id="phone" type="text"/>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="email">Email</label>
+                            <input id="email" type="email" />
+                        </div>
+
+                        <div class="form-field field-full">
+                            <label for="address">Address</label>
+                            <input id="address" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="taxId">Tax ID</label>
+                            <input id="taxId" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="paymentTerms">Payment Terms</label>
+                            <select id="paymentTerms">
+                                <option value="">Select Payment Terms</option>
+                                <option value="DOR">Due on Receipt</option>
+                                <option value="advance">50% Advance</option>
+                                <option value="COD">Cash on Delivery</option>
+                                <option value="EOM">End of Month</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="minOrder">Minimum Order Quantity</label>
+                            <input id="minOrder" type="number" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="totalOrder">Total Order Quantity</label>
+                            <input id="totalOrder" type="number" />
+                        </div>                        
+
+                        <div class="form-field field-full metrics-row">
+                            <div class="form-field">
+                                <label for="status">Status</label>
+                                <select id="status">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="leadTime">Lead Time Days</label>
+                                <input id="leadTime" type="number" />
+                            </div>
+
+                            <div class="form-field">
+                                <label for="onTimeDelivery">On-Time Deliveries</label>
+                                <input id="onTimeDelivery" type="number" />
+                            </div>
+
+                            <div class="form-field">
+                                <label for="qualityRating">Quality Rating (0-5)</label>
+                                <input id="qualityRating" type="number" step="0.1" min="0" max="5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="formErrorMsg" class="error-message"></div>
+
+                    <button type="submit" class="AddBtn">Save Supplier</button>
+                </form>
+            </div>
+        </div>
         <!-- Edit Supplier Modal goes here -->
 
     </main>

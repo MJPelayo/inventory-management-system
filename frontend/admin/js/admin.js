@@ -98,10 +98,10 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
 
     // Validate role selection
     if (!allowedRoles.includes(role)) {
-    errorMsg.textContent = "Please select a valid role.";
-    errorMsg.style.display = "block";
-    return;
-}
+        errorMsg.textContent = "Please select a valid role.";
+        errorMsg.style.display = "block";
+        return;
+    }
 
     // validation passed — send to backend to create user
     try {
