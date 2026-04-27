@@ -127,29 +127,71 @@
                     <h2>Add New User</h2>
 
                     <form id="addUserForm">
-                        <label for="name">Name</label>
-                        <input id="name" type="text"/>
+                        <div class="user-form-grid">
+                            <div class="form-field">
+                                <label for="name">Name</label>
+                                <input id="name" type="text"/>
+                            </div>
 
-                        <label for="email">Email</label>
-                        <input id="email" type="email"/>
+                            <div class="form-field">
+                                <label for="email">Email</label>
+                                <input id="email" type="email"/>
+                            </div>
 
-                        <label for="password">Password</label>
-                        <input id="password" type="password"/>
+                            <div class="form-field">
+                                <label for="password">Password</label>
+                                <input id="password" type="password"/>
+                            </div>
 
-                        <label for="role">Role</label>
-                        <select id="role">
-                            <option value="">Select Role</option>
-                            <option value="admin">Admin</option>
-                            <option value="sales">Sales</option>
-                            <option value="warehouse">Warehouse</option>
-                            <option value="supply">Supply</option>
-                        </select>
+                            <div class="form-field">
+                                <label for="role">Role</label>
+                                <select id="role">
+                                    <option value="">Select Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="sales">Sales</option>
+                                    <option value="warehouse">Warehouse</option>
+                                    <option value="supply">Supply</option>
+                                </select>
+                            </div>
 
-                        <label for="status">Status</label>
-                        <select id="status">
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
+                            <div class="form-field">
+                                <label for="department">Department</label>
+                                <input id="department" type="text"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="salesTarget">Sales Target</label>
+                                <input id="salesTarget" type="number" step="0.01"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="commissionRate">Commission Rate ($)</label>
+                                <input id="commissionRate" type="number" step="0.01"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="warehouseId">Warehouse ID</label>
+                                <input id="warehouseId" type="number"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="shift">Shift</label>
+                                <input id="shift" type="text"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="purchaseBudget">Purchase Budget ($)</label>
+                                <input id="purchaseBudget" type="number" step="0.01"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="status">Status</label>
+                                <select id="status">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+                        </div>  
 
                     <div id="formErrorMsg" class="error-message"></div>
 
@@ -166,26 +208,66 @@
                     
                     <form id="editUserForm">
                         <input type="hidden" id="editUserId" />
-                        <label for="editName">Name</label>
-                        <input id="editName" type="text"/>
+                        <div class="user-form-grid">
+                            <div class="form-field">
+                                <label for="editName">Name</label>
+                                <input id="editName" type="text"/>
+                            </div>
 
-                        <label for="editEmail">Email</label>
-                        <input id="editEmail" type="email"/>
+                            <div class="form-field">
+                                <label for="editEmail">Email</label>
+                                <input id="editEmail" type="email"/>
+                            </div>
 
-                        <label for="editRole">Role</label>
-                        <select id="editRole">
-                            <option value="">Select Role</option>
-                            <option value="admin">Admin</option>
-                            <option value="sales">Sales</option>
-                            <option value="warehouse">Warehouse</option>
-                            <option value="supply">Supply</option>
-                        </select>
+                            <div class="form-field">
+                                <label for="editRole">Role</label>
+                                <select id="editRole">
+                                    <option value="">Select Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="sales">Sales</option>
+                                    <option value="warehouse">Warehouse</option>
+                                    <option value="supply">Supply</option>
+                                </select>
+                            </div>
 
-                        <label for="editStatus">Status</label>
-                        <select id="editStatus">
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
+                            <div class="form-field">
+                                <label for="editStatus">Status</label>
+                                <select id="editStatus">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editDepartment">Department</label>
+                                <input id="editDepartment" type="text"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editSalesTarget">Sales Target</label>
+                                <input id="editSalesTarget" type="number" step="0.01"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editCommissionRate">Commission Rate ($)</label>
+                                <input id="editCommissionRate" type="number" step="0.01"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editWarehouseId">Warehouse ID</label>
+                                <input id="editWarehouseId" type="number"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editShift">Shift</label>
+                                <input id="editShift" type="text"/>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editPurchaseBudget">Purchase Budget ($)</label>
+                                <input id="editPurchaseBudget" type="number" step="0.01"/>
+                            </div>
+                        </div>
 
                         <div id="editFormErrorMsg" class="error-message"></div>
 
