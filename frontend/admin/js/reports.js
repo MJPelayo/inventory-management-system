@@ -10,9 +10,9 @@ async function fetchList(path) {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatPercent(value) {
-    return `${value.toFixed(1)}%`;
-}
+//function formatPercent(value) {
+ //   return `${value.toFixed(1)}%`;
+//}
 
 // ─── Loading / Error states ───────────────────────────────────────────────────
 function setLoadingState() {
@@ -28,7 +28,7 @@ function setErrorState(message) {
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
-function renderKpis({ products, users, warehouses }) {
+function renderKpis({ products, users, warehouses, suppliers }) {
     const grid = document.getElementById("kpiGrid");
     if (!grid) return;
 
@@ -36,13 +36,16 @@ function renderKpis({ products, users, warehouses }) {
     const activeProducts = products.filter((p) => p.is_active).length;
     const totalUsers = users.length;
 
-    // palceholder for total supplier count 
-    const totalSuppliers = 0; // TODO: fetch and calculate this from API
-    const activeSuppliers = 0; // TODO: fetch and calculate this from API
+    // total warehouse count
+    const totalWarehouses = warehouses.length; // fetch and calculate this from API
+    const activeWarehouses = warehouses.filter((w) => w.is_active).length; // fetch and calculate this from API
 
-    // Count active users and warehouses
+    // total supplier count 
+    const totalSuppliers = suppliers.length; // fetch and calculate this from API
+    const activeSuppliers = suppliers.filter((s) => s.is_active).length; // fetch and calculate this from API
+
+    // Count active users
     const activeUsers = users.filter((u) => u.is_active).length;
-    const activeWarehouses = warehouses.filter((w) => w.is_active).length;
 
     // Render KPIs in grid
     grid.innerHTML = `
@@ -52,9 +55,9 @@ function renderKpis({ products, users, warehouses }) {
             <div class="stat-sub">${activeProducts} active</div>
         </div>
         <div class="stat">
-            <div class="stat-label">Active products</div>
-            <div class="stat-value">${activeProducts}</div>
-            <div class="stat-sub">${totalProducts - activeProducts} inactive</div>
+            <div class="stat-label">Total warehouses</div>
+            <div class="stat-value">${totalWarehouses}</div>
+            <div class="stat-sub">${activeWarehouses} active</div>
         </div>
         <div class="stat">
             <div class="stat-label">Total users</div>
@@ -73,13 +76,14 @@ function renderKpis({ products, users, warehouses }) {
 async function loadOverviewKpis() {
     setLoadingState(); // Show loading state while fetching data
     try { // Fetch all necessary data in parallel
-        const [products, users, warehouses] = await Promise.all([
+        const [products, users, warehouses, suppliers] = await Promise.all([
             fetchList("/products"), // Fetch products for KPIs
             fetchList("/users"), // Fetch users for KPIs
-            fetchList("/warehouses") // Fetch warehouses for KPIs
+            fetchList("/warehouses"), // Fetch warehouses for KPIs
+            fetchList("/suppliers") // Fetch suppliers for KPIs
         ]);
 
-        renderKpis({ products, users, warehouses }); // Render KPIs with the fetched data
+        renderKpis({ products, users, warehouses, suppliers }); // Render KPIs with the fetched data
     } catch (error) {
         setErrorState(error.message); // Show error state if any fetch fails
     }
