@@ -20,6 +20,7 @@ async function loadUsers() {
                 <td>${u.name ?? ""}</td>
                 <td>${u.email ?? ""}</td>
                 <td>${u.role ?? ""}</td>
+                <td>${u.is_active ? "Active" : "Inactive"}</td>
                 <!-- row actions (edit/delete) -->
                 <td>
                     <div class="row-actions">
@@ -27,7 +28,8 @@ async function loadUsers() {
                                     data-id="${u.id}"
                                     data-name="${u.name ?? ""}"
                                     data-email="${u.email ?? ""}"
-                                    data-role="${u.role ?? ""}">
+                                    data-role="${u.role ?? ""}"
+                                    data-status="${u.is_active ?? "true"}">
                                 Edit
                             </button>
                             <button class="btn-delete" data-id="${u.id}">Delete</button>
@@ -78,6 +80,7 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
     const role = document.getElementById("role").value.trim().toLowerCase();
+    const status = document.getElementById("status").value.trim().toLowerCase();
     const errorMsg = document.getElementById("formErrorMsg");
 
     // available roles
@@ -89,7 +92,7 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
     errorMsg.style.display = "none";
 
     // Basic validation -- will be enhanced later
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password || !status) {
         // Show error message 
         errorMsg.textContent = "Please fill in all fields.";
         errorMsg.style.display = "block";
@@ -108,17 +111,8 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
         const res = await fetch(`${API_BASE}/api/users`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, role })
+            body: JSON.stringify({ name, email, password, role, status })
         });
-
-        /*
-        if (!res.ok) {
-            const err = await res.json();
-            errorMsg.textContent = err.message || "Failed to add user.";
-            errorMsg.style.display = "block";
-            return;
-        }
-        */
 
         if (!res.ok) {
             let msg = `Failed to add user. HTTP ${res.status}`;
@@ -164,6 +158,7 @@ if (userTableBody) {
             document.getElementById("editName").value = editBtn.dataset.name || "";
             document.getElementById("editEmail").value = editBtn.dataset.email || "";
             document.getElementById("editRole").value = (editBtn.dataset.role || "").toLowerCase();
+            document.getElementById("editStatus").value = editBtn.dataset.status || "true";
             editFormErrorMsg.style.display = "none";
             editFormErrorMsg.textContent = "";
             editUserModal.style.display = "block";
@@ -202,15 +197,34 @@ if (editUserForm) {
         const name = document.getElementById("editName").value.trim();
         const email = document.getElementById("editEmail").value.trim();
         const role = document.getElementById("editRole").value.trim().toLowerCase();
+        const status = document.getElementById("editStatus").value.trim().toLowerCase();
+
+        // available roles
+        const allowedRoles = ["admin", "sales", "warehouse", "supply"];
 
         editFormErrorMsg.style.display = "none";
         editFormErrorMsg.textContent = "";
+
+        // Basic validation -- will be enhanced later
+        if (!name || !email || !role || !status) {
+            // Show error message 
+            editFormErrorMsg.textContent = "Please fill in all fields.";
+            editFormErrorMsg.style.display = "block";
+            return;
+        }
+
+        // Validate role selection
+        if (!allowedRoles.includes(role)) {
+            editFormErrorMsg.textContent = "Please select a valid role.";
+            editFormErrorMsg.style.display = "block";
+            return;
+        }
 
         try {
             const res = await fetch(`${API_BASE}/api/users/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, role })
+                body: JSON.stringify({ name, email, role, status })
             });
 
              if (!res.ok) {

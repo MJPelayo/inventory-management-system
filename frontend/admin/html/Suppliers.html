@@ -197,7 +197,100 @@
                 </form>
             </div>
         </div>
-        <!-- Edit Supplier Modal goes here -->
+
+        <!-- Edit Supplier -->
+         <div  id="editSupplierModal" class="modal">
+            <div class="modal-content">
+                <span id="closeEditModal" class="close">&times;</span>
+                <h2>Edit Supplier</h2>
+
+                <form id="editSupplierForm">
+                    <input id="editSupplierId" type="hidden" />
+                    <div class="supplier-form-grid">
+                        <div class="form-field">
+                            <label for="editName">Name</label>
+                            <input id="editName" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="editContact">Contact Person</label>
+                            <input id="editContact" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="editPhone">Phone</label>
+                            <input id="editPhone" type="text"/>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="editEmail">Email</label>
+                            <input id="editEmail" type="email" />
+                        </div>
+
+                        <div class="form-field field-full">
+                            <label for="editAddress">Address</label>
+                            <input id="editAddress" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="editTaxId">Tax ID</label>
+                            <input id="editTaxId" type="text" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="editPaymentTerms">Payment Terms</label>
+                            <select id="editPaymentTerms">
+                                <option value="">Select Payment Terms</option>
+                                <option value="DOR">Due on Receipt</option>
+                                <option value="50% Advance">50% Advance</option>
+                                <option value="COD">Cash on Delivery</option>
+                                <option value="EOM">End of Month</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="editMinOrder">Minimum Order Quantity</label>
+                            <input id="editMinOrder" type="number" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="editTotalOrder">Total Order Quantity</label>
+                            <input id="editTotalOrder" type="number" />
+                        </div>                        
+
+                        <div class="form-field field-full metrics-row">
+                            <div class="form-field">
+                                <label for="editStatus">Status</label>
+                                <select id="editStatus">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editLeadTime">Lead Time Days</label>
+                                <input id="editLeadTime" type="number" />
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editOnTimeDelivery">On-Time Deliveries</label>
+                                <input id="editOnTimeDelivery" type="number" />
+                            </div>
+
+                            <div class="form-field">
+                                <label for="editQualityRating">Quality Rating (0-5)</label>
+                                <input id="editQualityRating" type="number" step="0.1" min="0" max="5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="editFormErrorMsg" class="error-message"></div>
+
+                    <button type="submit" class="AddBtn">Save Supplier</button>
+                </form>
+            </div>
+        </div>
+         
 
     </main>
     <script src="../js/suppliers.js"></script>
