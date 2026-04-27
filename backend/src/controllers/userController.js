@@ -60,7 +60,19 @@ const userController = {
     // Create new user
     async createUser(req, res) {
         try {
-            const { name, email, password, role, department, sales_target, warehouse_id } = req.body;
+            const {
+                name,
+                email,
+                password,
+                role,
+                department,
+                sales_target,
+                commission_rate,
+                warehouse_id,
+                shift,
+                purchase_budget,
+                is_active
+            } = req.body;
             
             // Validate required fields
             if (!name || !email || !password || !role) {
@@ -86,7 +98,11 @@ const userController = {
                 role,
                 department,
                 sales_target: sales_target || null,
-                warehouse_id: warehouse_id || null
+                commission_rate: commission_rate || 5.0,
+                warehouse_id: warehouse_id || null,
+                shift: shift || null,
+                purchase_budget: purchase_budget || null,
+                is_active: is_active !== undefined ? is_active : true 
             });
             
             const saved = await user.save();
@@ -123,16 +139,34 @@ const userController = {
                 });
             }
             
-            const { name, email, role, is_active, department, sales_target } = req.body;
+            const {
+                name,
+                email,
+                role,
+                is_active,
+                department,
+                sales_target,
+                commission_rate,
+                warehouse_id,
+                shift,
+                purchase_budget,
+                status
+            } = req.body;
             
             if (name) user.setName(name);
             if (email) user.setEmail(email);
             if (role) user.setRole(role);
             if (is_active !== undefined) {
-                is_active ? user.activate() : user.deactivate();
+                is_active === true ? user.activate() : user.deactivate();
+            } else if (status !== undefined) {
+                status === true || status === "true" ? user.activate() : user.deactivate();
             }
             if (department !== undefined) user.department = department;
             if (sales_target !== undefined) user.sales_target = sales_target;
+            if (commission_rate !== undefined) user.commission_rate = commission_rate;
+            if (warehouse_id !== undefined) user.warehouse_id = warehouse_id;
+            if (shift !== undefined) user.shift = shift;
+            if (purchase_budget !== undefined) user.purchase_budget = purchase_budget;
             
             const updated = await user.save();
             res.status(200).json({ 

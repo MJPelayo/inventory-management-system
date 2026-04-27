@@ -11,6 +11,7 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;');
 }
 
+// Get filtered and sorted users based on search and filter inputs
 function getFilteredUsers() {
     const search = document.getElementById("userSearch").value.toLowerCase().trim();
     const statusFilter = document.getElementById("userStatusFilter").value;
@@ -48,6 +49,7 @@ function renderUsers() {
         return;
     }
 
+    // Render user rows with proper escaping to prevent XSS
     tbody.innerHTML = users.map((u) => `
         <tr>
             <td>${escapeHtml(u.id ?? "")}</td>
@@ -63,6 +65,12 @@ function renderUsers() {
                             data-name="${escapeHtml(u.name ?? "") }"
                             data-email="${escapeHtml(u.email ?? "") }"
                             data-role="${escapeHtml(u.role ?? "") }"
+                            data-department="${escapeHtml(u.department ?? "") }"
+                            data-sales-target="${u.sales_target ?? ""}"
+                            data-commission-rate="${u.commission_rate ?? ""}"
+                            data-warehouse-id="${u.warehouse_id ?? ""}"
+                            data-shift="${escapeHtml(u.shift ?? "") }"
+                            data-purchase-budget="${u.purchase_budget ?? ""}"
                             data-status="${u.is_active ? "true" : "false"}">
                         Edit
                     </button>
@@ -132,7 +140,13 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
     const role = document.getElementById("role").value.trim().toLowerCase();
-    const status = document.getElementById("status").value.trim().toLowerCase();
+    const isActive = document.getElementById("status").value;
+    const department = document.getElementById("department").value.trim();
+    const salesTargetRaw = document.getElementById("salesTarget").value;
+    const commissionRateRaw = document.getElementById("commissionRate").value;
+    const warehouseIdRaw = document.getElementById("warehouseId").value;
+    const shift = document.getElementById("shift").value.trim();
+    const purchaseBudgetRaw = document.getElementById("purchaseBudget").value;
     const errorMsg = document.getElementById("formErrorMsg");
 
     // available roles
@@ -144,7 +158,7 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
     errorMsg.style.display = "none";
 
     // Basic validation -- will be enhanced later
-    if (!name || !email || !password || !status) {
+    if (!name || !email || !password || !role) {
         // Show error message 
         errorMsg.textContent = "Please fill in all fields.";
         errorMsg.style.display = "block";
@@ -163,7 +177,19 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
         const res = await fetch(`${API_BASE}/api/users`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, role, status })
+            body: JSON.stringify({ 
+                name,
+                email,
+                password,
+                role,
+                department,
+                sales_target: salesTargetRaw === "" ? null : parseFloat(salesTargetRaw),
+                commission_rate: commissionRateRaw === "" ? null : parseFloat(commissionRateRaw),
+                warehouse_id: warehouseIdRaw === "" ? null : parseInt(warehouseIdRaw, 10),
+                shift,
+                purchase_budget: purchaseBudgetRaw === "" ? null : parseFloat(purchaseBudgetRaw),
+                is_active: isActive
+            })
         });
 
         if (!res.ok) {
@@ -210,7 +236,14 @@ if (userTableBody) {
             document.getElementById("editName").value = editBtn.dataset.name || "";
             document.getElementById("editEmail").value = editBtn.dataset.email || "";
             document.getElementById("editRole").value = (editBtn.dataset.role || "").toLowerCase();
-            document.getElementById("editStatus").value = editBtn.dataset.status || "true";
+            document.getElementById("editStatus").value = editBtn.dataset.status || "";
+            document.getElementById("editDepartment").value = editBtn.dataset.department || "";
+            document.getElementById("editSalesTarget").value = editBtn.dataset.salesTarget || "";
+            document.getElementById("editCommissionRate").value = editBtn.dataset.commissionRate || "";
+            document.getElementById("editWarehouseId").value = editBtn.dataset.warehouseId || "";
+            document.getElementById("editShift").value = editBtn.dataset.shift || "";
+            document.getElementById("editPurchaseBudget").value = editBtn.dataset.purchaseBudget || "";
+
             editFormErrorMsg.style.display = "none";
             editFormErrorMsg.textContent = "";
             editUserModal.style.display = "block";
@@ -226,6 +259,8 @@ if (userTableBody) {
                 const res = await fetch(`${API_BASE}/api/users/${id}`, { method: "DELETE" });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 await loadUsers();
+                //log the deleted user ID for debugging
+                console.log("User deleted with ID:", id);
             } catch (err) {
                 console.error("Delete failed:", err);
                 alert("Failed to delete user.");
@@ -249,7 +284,13 @@ if (editUserForm) {
         const name = document.getElementById("editName").value.trim();
         const email = document.getElementById("editEmail").value.trim();
         const role = document.getElementById("editRole").value.trim().toLowerCase();
-        const status = document.getElementById("editStatus").value.trim().toLowerCase();
+        const isActive = document.getElementById("editStatus").value === "true";
+        const department = document.getElementById("editDepartment").value.trim();
+        const salesTargetRaw = document.getElementById("editSalesTarget").value;
+        const commissionRateRaw = document.getElementById("editCommissionRate").value;
+        const warehouseIdRaw = document.getElementById("editWarehouseId").value;
+        const shift = document.getElementById("editShift").value.trim();
+        const purchaseBudgetRaw = document.getElementById("editPurchaseBudget").value;
 
         // available roles
         const allowedRoles = ["admin", "sales", "warehouse", "supply"];
@@ -258,7 +299,7 @@ if (editUserForm) {
         editFormErrorMsg.textContent = "";
 
         // Basic validation -- will be enhanced later
-        if (!name || !email || !role || !status) {
+        if (!name || !email || !role) {
             // Show error message 
             editFormErrorMsg.textContent = "Please fill in all fields.";
             editFormErrorMsg.style.display = "block";
@@ -276,7 +317,18 @@ if (editUserForm) {
             const res = await fetch(`${API_BASE}/api/users/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, role, status })
+                body: JSON.stringify({ 
+                    name,
+                    email,
+                    role,
+                    department,
+                    sales_target: salesTargetRaw === "" ? null : parseFloat(salesTargetRaw),
+                    commission_rate: commissionRateRaw === "" ? null : parseFloat(commissionRateRaw),
+                    warehouse_id: warehouseIdRaw === "" ? null : parseInt(warehouseIdRaw, 10),
+                    shift,
+                    purchase_budget: purchaseBudgetRaw === "" ? null : parseFloat(purchaseBudgetRaw),
+                    is_active: isActive
+                })
             });
 
              if (!res.ok) {
