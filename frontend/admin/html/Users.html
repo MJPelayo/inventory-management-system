@@ -102,6 +102,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -114,7 +115,7 @@
                 <div class="modal-content">
                     <span id="closeModal" class="close">&times;</span>
                     <h2>Add New User</h2>
-                    <div id="formErrorMsg" class="error-message"></div>
+
                     <form id="addUserForm">
                         <label for="name">Name</label>
                         <input id="name" type="text"/>
@@ -134,6 +135,14 @@
                             <option value="supply">Supply</option>
                         </select>
 
+                        <label for="status">Status</label>
+                        <select id="status">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+
+                    <div id="formErrorMsg" class="error-message"></div>
+
                         <button type="submit" class="AddBtn">Save User</button>
                     </form>
                 </div>
@@ -144,23 +153,32 @@
                 <div class="modal-content">
                     <span id="closeEditModal" class="close">&times;</span>
                     <h2>Edit User</h2>
-                    <div id="editFormErrorMsg" class="error-message"></div>
+                    
                     <form id="editUserForm">
                         <input type="hidden" id="editUserId" />
                         <label for="editName">Name</label>
-                        <input id="editName" type="text" required />
+                        <input id="editName" type="text"/>
 
                         <label for="editEmail">Email</label>
-                        <input id="editEmail" type="email" required />
+                        <input id="editEmail" type="email"/>
 
                         <label for="editRole">Role</label>
-                        <select id="editRole" required>
+                        <select id="editRole">
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
                             <option value="sales">Sales</option>
                             <option value="warehouse">Warehouse</option>
                             <option value="supply">Supply</option>
                         </select>
+
+                        <label for="editStatus">Status</label>
+                        <select id="editStatus">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+
+                        <div id="editFormErrorMsg" class="error-message"></div>
+
                         <button type="submit" class="AddBtn">Save Changes</button>
                     </form>
                 </div>
