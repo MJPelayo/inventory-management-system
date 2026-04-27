@@ -212,3 +212,106 @@ main {
     background: #ffe7ea;
 }
 
+/* Modal style - hidden by default */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.modal.show-modal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    width: 760px;
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow-y: auto;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e3e1d8;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.modal-content h2 {
+    margin: 0 0 12px;
+}
+
+.close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #7a766d;
+}
+
+.supplier-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+}
+
+.field-full {
+    grid-column: 1 / -1;
+}
+
+.metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+
+@media (max-width: 1024px) {
+    .metrics-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .supplier-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+#addSupplierForm label,
+#editSupplierForm label {
+    display: block;
+    margin: 10px 0 6px;
+    font-size: 12px;
+    color: #7a766d;
+}
+
+#addSupplierForm input,
+#addSupplierForm select,
+#editSupplierForm input,
+#editSupplierForm select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #e3e1d8;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 8px;
+}
+
+.error-message {
+    display: none;
+    margin: 12px 0;
+    padding: 9px 11px;
+    border-radius: 6px;
+    background: #ffe7ea;
+    color: #8d1f2d;
+    font-size: 13px;
+}
+
+
