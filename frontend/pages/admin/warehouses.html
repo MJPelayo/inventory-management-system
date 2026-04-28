@@ -1,0 +1,399 @@
+<!-- frontend/pages/admin/warehouses.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Management - Admin | Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <style>
+        /* Warehouse Page Specific Styles */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+        }
+        
+        .filter-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            text-transform: none;
+            font-weight: normal;
+        }
+        
+        /* Warehouse Stats */
+        .warehouse-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-chip {
+            padding: 4px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .stat-chip.warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        
+        /* Form Layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Warehouse Details Modal */
+        .details-section {
+            margin-bottom: 24px;
+        }
+        
+        .details-section h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--accent-primary);
+        }
+        
+        .details-section h5 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 16px 0 8px;
+            color: var(--text-secondary);
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .details-grid div {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+        }
+        
+        .utilization-message {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+        }
+        
+        /* Inventory Table in Modal */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        
+        .inventory-table th,
+        .inventory-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .inventory-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+        
+        /* Badges */
+        .badge-success {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .badge-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .badge-warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .badge-info {
+            background: var(--accent-primary-light);
+            color: var(--accent-primary);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .toast-success {
+            background: var(--success);
+        }
+        
+        .toast-error {
+            background: var(--danger);
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: var(--accent-primary-light);
+            border-left: 4px solid var(--accent-primary);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+        
+        .info-box p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .info-box strong {
+            color: var(--accent-primary);
+        }
+        
+        /* Capacity Note */
+        .capacity-note {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* Table Utilization Bar */
+        .utilization-bar-container {
+            width: 100px;
+            height: 6px;
+            background: var(--border-light);
+            border-radius: 3px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        
+        .utilization-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header will be injected here -->
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <!-- Sidebar will be injected here -->
+            <aside id="sidebar"></aside>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Warehouse Management</h1>
+                        <p class="page-subtitle">Manage storage facilities and track capacity utilization</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openWarehouseModal()">
+                        <span>+</span> Add Warehouse
+                    </button>
+                </div>
+                
+                <!-- Info Box -->
+                <div class="info-box">
+                    <p>
+                        <strong>🏢 Warehouse Management</strong><br>
+                        Track capacity utilization across all warehouses. 
+                        <strong>Green = Good</strong> (&lt;50%), 
+                        <strong>Blue = Moderate</strong> (50-74%), 
+                        <strong>Orange = High</strong> (75-89%), 
+                        <strong>Red = Critical</strong> (90%+). 
+                        Click on any warehouse to view detailed inventory.
+                    </p>
+                </div>
+                
+                <!-- Warehouses Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Warehouses</h3>
+                        <div class="warehouse-stats" id="warehouseStats">
+                            <div class="stat-chip">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Bar -->
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="filter-group">
+                                <label>Search</label>
+                                <input type="text" id="filterSearch" placeholder="Warehouse name or location...">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="filterActive">
+                                    <label for="filterActive">Active Warehouses Only</label>
+                                </div>
+                            </div>
+                            
+                            <div class="filter-actions">
+                                <button class="btn btn-primary btn-sm" id="applyFilter">Apply</button>
+                                <button class="btn btn-secondary btn-sm" id="resetFilter">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Warehouses Table Container -->
+                    <div id="warehousesTable" class="table-container"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- ADD/EDIT WAREHOUSE MODAL -->
+    <!-- ============================================ -->
+    <div id="warehouseModal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Warehouse</h2>
+                <button class="close-btn" onclick="closeWarehouseModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="warehouseForm">
+                    <input type="hidden" id="warehouseId">
+                    
+                    <div class="form-group">
+                        <label>Warehouse Name *</label>
+                        <input type="text" id="warehouseName" required placeholder="e.g., Main Distribution Center">
+                        <small class="help-text">Unique name for this storage facility</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="warehouseLocation" placeholder="e.g., 123 Main St, City, State">
+                        <small class="help-text">Physical address or area description</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Storage Capacity (units)</label>
+                        <input type="number" id="warehouseCapacity" value="0" min="0" step="1000" placeholder="e.g., 10000">
+                        <small class="help-text">Maximum number of units this warehouse can hold</small>
+                        <div id="capacityNote" class="capacity-note" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="warehouseActive" checked>
+                            <span>Active Warehouse</span>
+                        </label>
+                        <small class="help-text">Inactive warehouses won't appear in inventory transfers</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeWarehouseModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveWarehouse()">Save Warehouse</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Dependencies -->
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/admin-warehouses.js"></script>
+</body>
+</html>
