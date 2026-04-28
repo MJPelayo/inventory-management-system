@@ -1,0 +1,384 @@
+<!-- frontend/pages/admin/suppliers.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Management - Admin | Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <style>
+        /* Supplier Page Specific Styles */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            text-transform: none;
+            font-weight: normal;
+        }
+        
+        /* Supplier Stats */
+        .supplier-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-chip {
+            padding: 4px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        /* Form Layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .form-row-full {
+            grid-column: span 2;
+        }
+        
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-row-full {
+                grid-column: span 1;
+            }
+        }
+        
+        /* Supplier Details Modal */
+        .supplier-details {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .details-section {
+            margin-bottom: 24px;
+        }
+        
+        .details-section h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--accent-primary);
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .details-grid div {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+        }
+        
+        .product-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .product-chip {
+            padding: 4px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Rating Stars */
+        .rating-stars {
+            color: #fbbf24;
+            letter-spacing: 2px;
+        }
+        
+        .badge-success {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .badge-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .toast-success {
+            background: var(--success);
+        }
+        
+        .toast-error {
+            background: var(--danger);
+        }
+        
+        .info-box {
+            background: var(--accent-primary-light);
+            border-left: 4px solid var(--accent-primary);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+        
+        .info-box p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .info-box strong {
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header will be injected here -->
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <!-- Sidebar will be injected here -->
+            <aside id="sidebar"></aside>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Supplier Management</h1>
+                        <p class="page-subtitle">Manage your vendors, track performance, and maintain supplier relationships</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openSupplierModal()">
+                        <span>+</span> Add Supplier
+                    </button>
+                </div>
+                
+                <!-- Info Box -->
+                <div class="info-box">
+                    <p>
+                        <strong>🏭 Supplier Management</strong><br>
+                        Track supplier performance including on-time delivery rates, quality ratings, and lead times. 
+                        Suppliers with 90%+ on-time delivery are considered "High Performers". Click on any supplier 
+                        to view detailed performance metrics and linked products.
+                    </p>
+                </div>
+                
+                <!-- Suppliers Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Suppliers</h3>
+                        <div class="supplier-stats" id="supplierStats">
+                            <div class="stat-chip">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Bar -->
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="filter-group">
+                                <label>Search</label>
+                                <input type="text" id="filterSearch" placeholder="Supplier name or contact...">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="filterActive">
+                                    <label for="filterActive">Active Suppliers Only</label>
+                                </div>
+                            </div>
+                            
+                            <div class="filter-actions">
+                                <button class="btn btn-primary btn-sm" id="applyFilter">Apply</button>
+                                <button class="btn btn-secondary btn-sm" id="resetFilter">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Suppliers Table Container -->
+                    <div id="suppliersTable" class="table-container"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- ADD/EDIT SUPPLIER MODAL -->
+    <!-- ============================================ -->
+    <div id="supplierModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Supplier</h2>
+                <button class="close-btn" onclick="closeSupplierModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="supplierForm">
+                    <input type="hidden" id="supplierId">
+                    
+                    <!-- Basic Information -->
+                    <h4 style="margin-bottom: 16px;">Basic Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Supplier Name *</label>
+                            <input type="text" id="supplierName" required placeholder="e.g., Tech Distributors Inc.">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Contact Person</label>
+                            <input type="text" id="supplierContact" placeholder="e.g., John Smith">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" id="supplierPhone" placeholder="+1 (555) 000-0000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="supplierEmail" placeholder="contact@supplier.com">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea id="supplierAddress" rows="2" placeholder="Street address, city, state, zip code"></textarea>
+                    </div>
+                    
+                    <!-- Business Information -->
+                    <h4 style="margin: 20px 0 16px;">Business Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tax ID / VAT</label>
+                            <input type="text" id="supplierTaxId" placeholder="e.g., 12-3456789">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Payment Terms</label>
+                            <input type="text" id="supplierPaymentTerms" placeholder="e.g., Net 30">
+                            <small class="help-text">Example: Net 30, COD, Net 60</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Lead Time (days)</label>
+                            <input type="number" id="supplierLeadTime" value="7" min="0" max="365">
+                            <small class="help-text">Average days from order to delivery</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Minimum Order Quantity</label>
+                            <input type="number" id="supplierMinOrder" value="0" min="0">
+                            <small class="help-text">Minimum units per purchase order</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="supplierActive" checked>
+                            <span>Active Supplier</span>
+                        </label>
+                        <small class="help-text">Inactive suppliers won't appear in purchase order creation</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeSupplierModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSupplier()">Save Supplier</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Dependencies -->
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/admin-suppliers.js"></script>
+</body>
+</html>
