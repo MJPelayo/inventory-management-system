@@ -1,0 +1,297 @@
+<!-- frontend/pages/admin/categories.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Management - Admin | Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <style>
+        /* Category Tree Specific Styles */
+        .category-tree-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        
+        .category-tree-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: var(--bg-tertiary);
+        }
+        
+        .category-tree-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .category-stats {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .stat-chip {
+            padding: 4px 12px;
+            background: var(--bg-secondary);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .category-tree {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .category-node {
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            transition: var(--transition);
+        }
+        
+        .category-item:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .category-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .category-expand {
+            cursor: pointer;
+            width: 24px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+        
+        .category-expand.has-children:hover {
+            color: var(--accent-primary);
+        }
+        
+        .category-name {
+            font-weight: 500;
+            font-size: 0.9375rem;
+        }
+        
+        .category-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .category-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+        
+        .category-item:hover .category-actions {
+            opacity: 1;
+        }
+        
+        .category-children {
+            margin-left: 20px;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+        
+        .btn-icon:hover {
+            background: var(--bg-secondary);
+        }
+        
+        /* Form Row */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .info-box {
+            background: var(--accent-primary-light);
+            border-left: 4px solid var(--accent-primary);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+        
+        .info-box p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .info-box strong {
+            color: var(--accent-primary);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .toast-success {
+            background: var(--success);
+        }
+        
+        .toast-error {
+            background: var(--danger);
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .details-grid div {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header will be injected here -->
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <!-- Sidebar will be injected here -->
+            <aside id="sidebar"></aside>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Category Management</h1>
+                        <p class="page-subtitle">Organize your products with hierarchical categories</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openAddCategoryModal()">
+                        <span>+</span> Add Category
+                    </button>
+                </div>
+                
+                <!-- Info Box -->
+                <div class="info-box">
+                    <p>
+                        <strong>📁 Hierarchical Categories</strong><br>
+                        Categories help organize your products. You can create parent-child relationships 
+                        (e.g., Electronics → Phones → Smartphones). Click <strong>▼</strong> to expand/collapse 
+                        subcategories. Hover over a category to see edit/delete options.
+                    </p>
+                </div>
+                
+                <!-- Category Tree Card -->
+                <div class="category-tree-container">
+                    <div class="category-tree-header">
+                        <h3>Category Structure</h3>
+                        <div class="category-stats" id="categoryStats">
+                            <div class="stat-chip">Loading...</div>
+                        </div>
+                    </div>
+                    <div id="categoryTree" class="category-tree-container">
+                        <div class="loading">Loading categories...</div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- ADD/EDIT CATEGORY MODAL -->
+    <!-- ============================================ -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Category</h2>
+                <button class="close-btn" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="form-group">
+                        <label>Category Name *</label>
+                        <input type="text" id="categoryName" required placeholder="e.g., Electronics, Clothing, Books">
+                        <small class="help-text">Must be at least 2 characters</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parent Category</label>
+                        <select id="categoryParent">
+                            <option value="">None (Root Category)</option>
+                        </select>
+                        <small class="help-text">Select a parent category to create a subcategory</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description (Optional)</label>
+                        <textarea id="categoryDescription" rows="3" placeholder="Describe what this category is for..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="cancelCategoryBtn">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Dependencies -->
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/admin-categories.js"></script>
+</body>
+</html>
