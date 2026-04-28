@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load dashboard data
     await loadDashboardData();
     await loadRecentActivity();
+    
 });
 
 /**
