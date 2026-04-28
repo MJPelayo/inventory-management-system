@@ -1,0 +1,470 @@
+<!-- frontend/pages/admin/reports.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Admin | Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <style>
+        /* Reports Page Specific Styles */
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .date-range-picker {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .date-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .date-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+        
+        .date-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+        
+        /* Report Tabs */
+        .report-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+        }
+        
+        .report-tab {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+        
+        .report-tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .report-tab.active {
+            background: var(--bg-secondary);
+            color: var(--accent-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Report Summary Grid */
+        .report-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .summary-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: var(--transition);
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .summary-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .summary-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .summary-sub {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        
+        /* Report Sections */
+        .report-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        
+        .report-section h4 {
+            padding: 16px 20px;
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+        }
+        
+        /* Report Tables */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .report-table th,
+        .report-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.875rem;
+        }
+        
+        .report-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .report-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        /* Category Breakdown */
+        .category-breakdown {
+            padding: 16px 20px;
+        }
+        
+        .category-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-light);
+            flex-wrap: wrap;
+        }
+        
+        .category-item:last-child {
+            border-bottom: none;
+        }
+        
+        .category-name {
+            flex: 0 0 180px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .category-revenue {
+            flex: 0 0 100px;
+            font-weight: 600;
+            color: var(--accent-primary);
+            font-size: 0.875rem;
+        }
+        
+        .category-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--border-light);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .category-bar-fill {
+            height: 100%;
+            background: var(--accent-primary);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        /* Utilization Bar */
+        .utilization-bar-container {
+            width: 100px;
+            height: 6px;
+            background: var(--border-light);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .utilization-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        
+        /* Badges */
+        .badge-success {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .badge-warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .badge-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        /* Rating Stars */
+        .rating-stars {
+            color: #fbbf24;
+            letter-spacing: 1px;
+            font-size: 0.875rem;
+        }
+        
+        /* Warning Text */
+        .warning-text {
+            color: var(--warning);
+            font-weight: 600;
+        }
+        
+        /* Action Buttons */
+        .report-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+        
+        .btn-icon:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        /* Loading & Empty States */
+        .loading-state {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-secondary);
+        }
+        
+        .error-state {
+            text-align: center;
+            padding: 48px;
+            color: var(--danger);
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .toast-success {
+            background: var(--success);
+        }
+        
+        .toast-error {
+            background: var(--danger);
+        }
+        
+        .toast-info {
+            background: var(--accent-primary);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .report-summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .category-name {
+                flex: 0 0 120px;
+            }
+            
+            .report-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .report-summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .date-range-picker {
+                width: 100%;
+            }
+            
+            .date-group {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header will be injected here -->
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <!-- Sidebar will be injected here -->
+            <aside id="sidebar"></aside>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Reports & Analytics</h1>
+                        <p class="page-subtitle">View sales performance, inventory status, and supplier metrics</p>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-secondary" id="refreshReport">
+                            <span>🔄</span> Refresh
+                        </button>
+                        <button class="btn btn-primary" id="exportReport">
+                            <span>📄</span> Export PDF
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Date Range Picker (only visible for sales reports) -->
+                <div class="reports-header" id="dateRangeContainer">
+                    <div class="date-range-picker">
+                        <div class="date-group">
+                            <label>Start Date</label>
+                            <input type="date" id="startDate">
+                        </div>
+                        <div class="date-group">
+                            <label>End Date</label>
+                            <input type="date" id="endDate">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Report Tabs -->
+                <div class="report-tabs">
+                    <button class="report-tab active" data-tab="sales">📈 Sales Report</button>
+                    <button class="report-tab" data-tab="inventory">📦 Inventory Report</button>
+                    <button class="report-tab" data-tab="supplier">🏭 Supplier Report</button>
+                </div>
+                
+                <!-- Sales Report Panel -->
+                <div id="salesReportPanel">
+                    <div id="salesLoading" class="loading-state" style="display: none;">
+                        <div>Loading sales data...</div>
+                    </div>
+                    <div id="salesReportContent">
+                        <!-- Sales report will be injected here -->
+                        <div class="loading-state">Loading sales report...</div>
+                    </div>
+                </div>
+                
+                <!-- Inventory Report Panel -->
+                <div id="inventoryReportPanel" style="display: none;">
+                    <div id="inventoryLoading" class="loading-state" style="display: none;">
+                        <div>Loading inventory data...</div>
+                    </div>
+                    <div id="inventoryReportContent">
+                        <!-- Inventory report will be injected here -->
+                        <div class="loading-state">Loading inventory report...</div>
+                    </div>
+                </div>
+                
+                <!-- Supplier Report Panel -->
+                <div id="supplierReportPanel" style="display: none;">
+                    <div id="supplierLoading" class="loading-state" style="display: none;">
+                        <div>Loading supplier data...</div>
+                    </div>
+                    <div id="supplierReportContent">
+                        <!-- Supplier report will be injected here -->
+                        <div class="loading-state">Loading supplier report...</div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- JavaScript Dependencies -->
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/admin-reports.js"></script>
+</body>
+</html>
