@@ -115,20 +115,21 @@ const closeModal = document.getElementById("closeModal");
 // Open modal
 if (addUserBtn && modal) {
     addUserBtn.addEventListener("click", () => {
-        modal.style.display = "block";
+        //add class to show the modal
+        modal.classList.add("show-modal");
     });
 }
 
 // Close modal
 if (closeModal && modal) {
     closeModal.addEventListener("click", () => {
-        modal.style.display = "none";
+        modal.classList.remove("show-modal");
     });
 }
 
 window.addEventListener("click", (e) => {
     if (e.target === modal) {
-        modal.style.display = "none";
+        modal.classList.remove("show-modal");
     }
 });
 
@@ -208,7 +209,7 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
         }
         // Success — reload users, close modal, reset form
         await loadUsers();
-        modal.style.display = "none";
+        modal.classList.remove("show-modal");
         document.getElementById("addUserForm").reset();
     } catch (err) {
         console.error("Error adding user:", err);
