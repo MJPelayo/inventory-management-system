@@ -142,6 +142,15 @@ async function saveUser() {
             });
         }
         
+        // ============================================
+        // EXPORT FUNCTIONS TO GLOBAL SCOPE
+        // ============================================
+        window.openUserModal = openUserModal;
+        window.closeUserModal = closeUserModal;
+        window.saveUser = saveUser;
+        window.deleteUser = deleteUser;
+        
+        console.log('✅ Admin Users module loaded');
         closeUserModal();
         await loadUsers();
         alert(isEdit ? 'User updated successfully' : 'User created successfully');

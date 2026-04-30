@@ -29,10 +29,9 @@ class Sidebar {
             ],
             sales: [
                 { icon: '📊', text: 'Dashboard', href: 'dashboard.html', page: 'dashboard' },
-                { icon: '📦', text: 'Products', href: 'products.html', page: 'products' },
                 { icon: '🛒', text: 'Cart', href: 'cart.html', page: 'cart' },
                 { icon: '📋', text: 'Orders', href: 'orders.html', page: 'orders' },
-                { icon: '👤', text: 'Customers', href: 'customers.html', page: 'customers' }
+                { icon: '👥', text: 'Customers', href: 'customers.html', page: 'customers' }
             ],
             warehouse: [
                 { icon: '📊', text: 'Dashboard', href: 'dashboard.html', page: 'dashboard' },
