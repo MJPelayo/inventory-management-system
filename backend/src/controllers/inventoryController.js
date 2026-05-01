@@ -33,17 +33,35 @@ const inventoryController = {
     
     async getMovements(req, res) {
         try {
-            const { product_id } = req.query;
-            if (!product_id) {
-                return res.status(400).json({ success: false, error: 'product_id is required' });
+            const { product_id, limit = 100 } = req.query;
+            
+            let query = `
+                SELECT sm.*, u.name as performed_by_name, w.name as warehouse_name, p.name as product_name
+                FROM stock_movements sm
+                JOIN users u ON sm.performed_by = u.id
+                JOIN warehouses w ON sm.warehouse_id = w.id
+                JOIN products p ON sm.product_id = p.id
+            `;
+            
+            const params = [];
+            
+            if (product_id) {
+                query += ` WHERE sm.product_id = $1`;
+                params.push(parseInt(product_id));
             }
-            const movements = await StockMovement.getProductHistory(parseInt(product_id));
+            
+            query += ` ORDER BY sm.created_at DESC LIMIT $${params.length + 1}`;
+            params.push(parseInt(limit));
+            
+            const result = await pool.query(query, params);
+            
             res.status(200).json({
                 success: true,
-                data: movements,
-                count: movements.length
+                data: result.rows,
+                count: result.rows.length
             });
         } catch (error) {
+            console.error('Failed to get movements:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     },
