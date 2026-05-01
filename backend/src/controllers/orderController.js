@@ -253,6 +253,20 @@ const orderController = {
         } catch (error) {
             res.status(400).json({ success: false, error: error.message });
         }
+    },
+
+    async cancelSupplyOrder(req, res) {
+        try {
+            const order = await SupplyOrder.findById(parseInt(req.params.id));
+            if (!order) {
+                return res.status(404).json({ success: false, error: 'Purchase order not found' });
+            }
+            order.status = 'cancelled';
+            await order.save();
+            res.status(200).json({ success: true, message: 'Purchase order cancelled' });
+        } catch (error) {
+            res.status(400).json({ success: false, error: error.message });
+        }
     }
 };
 

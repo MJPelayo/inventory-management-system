@@ -19,5 +19,6 @@ router.post('/supply', orderController.createSupplyOrder);
 router.get('/supply', orderController.getSupplyOrders);
 router.get('/supply/:id', orderController.getSupplyOrderById);
 router.post('/supply/:id/receive', orderController.receiveSupplyOrder);
+router.post('/supply/:id/cancel', authenticateToken, authorize('supply', 'admin'), orderController.cancelSupplyOrder);
 
 module.exports = router;
