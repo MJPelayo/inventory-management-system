@@ -1,0 +1,669 @@
+/* frontend/css/warehouse.css */
+/**
+ * Warehouse Panel Styles
+ * Complete styling for warehouse dashboard, inventory, transfers, receiving, and picklists
+ * 
+ * @module warehouse.css
+ */
+
+/* ============================================ */
+/* DASHBOARD SPECIFIC */
+/* ============================================ */
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.greeting {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.dashboard-two-column {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-two-column {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Low Stock List */
+.low-stock-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.low-stock-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.low-stock-item:last-child {
+    border-bottom: none;
+}
+
+.low-stock-info {
+    flex: 2;
+}
+
+.product-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.product-sku {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.low-stock-details {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.current-qty {
+    font-size: 0.75rem;
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.reorder-point {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Recent Movements */
+.recent-movements {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.movement-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.movement-icon {
+    font-size: 1.25rem;
+    width: 32px;
+    text-align: center;
+}
+
+.movement-info {
+    flex: 1;
+}
+
+.movement-product {
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.movement-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.movement-type {
+    text-transform: capitalize;
+}
+
+.movement-quantity {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.movement-quantity.positive {
+    color: var(--success);
+}
+
+.movement-quantity.negative {
+    color: var(--danger);
+}
+
+/* Pending Orders Table */
+.pending-orders-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pending-orders-table th,
+.pending-orders-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.875rem;
+}
+
+.pending-orders-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+/* ============================================ */
+/* INVENTORY PAGE */
+/* ============================================ */
+
+.filter-bar {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-group label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    color: var(--text-muted);
+}
+
+.filter-group input,
+.filter-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.quantity-cell.warning {
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.sku {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.status-badge.status-out {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.status-badge.status-low {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.status-badge.status-ok {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+/* ============================================ */
+/* RECEIVING PAGE */
+/* ============================================ */
+
+.deliveries-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.deliveries-table th,
+.deliveries-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.875rem;
+}
+
+.deliveries-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+.receiving-info {
+    background: var(--bg-tertiary);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.info-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.info-label {
+    font-weight: 600;
+    width: 120px;
+    color: var(--text-secondary);
+}
+
+.info-value {
+    color: var(--text-primary);
+}
+
+.receive-items-list {
+    margin: 16px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.receive-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.receive-item-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.item-name {
+    font-weight: 500;
+}
+
+.item-ordered {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.receive-item-qty {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.receive-qty-input {
+    width: 80px;
+    padding: 6px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+}
+
+.defect-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.defect-reason {
+    margin-top: 8px;
+    margin-left: 20px;
+}
+
+.defect-reason-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+}
+
+.location-inputs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.location-inputs input,
+.location-inputs select {
+    padding: 8px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+}
+
+.location-inputs input {
+    width: 80px;
+}
+
+/* ============================================ */
+/* TRANSFERS PAGE */
+/* ============================================ */
+
+.transfer-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-tertiary);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    background: var(--bg-secondary);
+    color: var(--accent-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.location-details {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.location-badge {
+    padding: 4px 10px;
+    background: var(--bg-tertiary);
+    border-radius: 9999px;
+    font-size: 0.7rem;
+}
+
+.quantity-badge {
+    padding: 4px 10px;
+    background: var(--accent-primary-light);
+    color: var(--accent-primary);
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.transfer-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transfer-history-table th,
+.transfer-history-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.875rem;
+}
+
+.transfer-history-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+/* ============================================ */
+/* PICKLISTS PAGE */
+/* ============================================ */
+
+.status-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-tertiary);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+}
+
+.picklists-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.picklists-table th,
+.picklists-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.875rem;
+}
+
+.picklists-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+.picklist-header {
+    margin-bottom: 20px;
+}
+
+.picklist-header h3 {
+    font-size: 1.125rem;
+    margin-bottom: 4px;
+}
+
+.picklist-header p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.picklist-info {
+    background: var(--bg-tertiary);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.info-group {
+    margin-bottom: 8px;
+}
+
+.picklist-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+}
+
+.picklist-items-table th,
+.picklist-items-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.875rem;
+}
+
+.picklist-items-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+.location-cell {
+    min-width: 180px;
+}
+
+.location-found {
+    background: var(--success-bg);
+    color: var(--success);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    display: inline-block;
+}
+
+.location-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    display: inline-block;
+}
+
+.location-not-found {
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    display: inline-block;
+}
+
+.btn-locate {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    margin-left: 8px;
+}
+
+.pick-progress {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+}
+
+.progress-label {
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--border-light);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* ============================================ */
+/* STAT WARNING VARIANT */
+/* ============================================ */
+
+.stat-warning .stat-value {
+    color: var(--warning);
+}
+
+/* ============================================ */
+/* BUTTON VARIANTS */
+/* ============================================ */
+
+.btn-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
+.btn-warning:hover {
+    background: var(--warning);
+    color: white;
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #0d9668;
+}
+
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    .filter-row {
+        flex-direction: column;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .filter-actions {
+        width: 100%;
+    }
+    
+    .picklists-table,
+    .deliveries-table,
+    .transfer-history-table {
+        font-size: 0.75rem;
+    }
+    
+    .picklists-table th,
+    .picklists-table td,
+    .deliveries-table th,
+    .deliveries-table td,
+    .transfer-history-table th,
+    .transfer-history-table td {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    .location-inputs {
+        flex-direction: column;
+    }
+    
+    .location-inputs input,
+    .location-inputs select {
+        width: 100%;
+    }
+}
