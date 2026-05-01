@@ -1,0 +1,108 @@
+<!-- frontend/pages/supply/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Dashboard - Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/supply.css">
+</head>
+<body>
+    <div class="app">
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <aside id="sidebar"></aside>
+            
+            <main class="main-content">
+                <div class="dashboard-header">
+                    <div>
+                        <div class="greeting" id="userGreeting">Good day!</div>
+                        <p class="page-subtitle">Manage purchase orders, suppliers, and inventory reordering</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="refreshDashboard()">
+                            <span>🔄</span> Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat stat-loading">
+                        <div class="stat-label">Budget Remaining</div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-sub">Loading...</div>
+                    </div>
+                    <div class="stat stat-loading">
+                        <div class="stat-label">Pending POs</div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-sub">Loading...</div>
+                    </div>
+                    <div class="stat stat-loading">
+                        <div class="stat-label">Active Suppliers</div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-sub">Loading...</div>
+                    </div>
+                    <div class="stat stat-loading">
+                        <div class="stat-label">Auto-Reorder Alerts</div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-sub">Loading...</div>
+                    </div>
+                </div>
+                
+                <!-- Two Column Layout -->
+                <div class="dashboard-two-column">
+                    <!-- Left Column: Auto-Reorder Suggestions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔄 Auto-Reorder Suggestions</h3>
+                            <a href="reorder.html" class="link">View all →</a>
+                        </div>
+                        <div class="card-body">
+                            <div id="reorderSuggestions" class="reorder-list">
+                                <div class="loading">Loading suggestions...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Recent Purchase Orders -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📄 Recent Purchase Orders</h3>
+                            <a href="purchase-orders.html" class="link">View all →</a>
+                        </div>
+                        <div class="card-body">
+                            <div id="recentPOs" class="recent-pos">
+                                <div class="loading">Loading POs...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Budget Utilization Card -->
+                <div class="card budget-card">
+                    <div class="card-header">
+                        <h3>💰 Budget Utilization</h3>
+                        <span class="badge" id="budgetPeriod">This Month</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="budgetUtilization" class="budget-container">
+                            <div class="loading">Loading budget data...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/supply.js"></script>
+</body>
+</html>
