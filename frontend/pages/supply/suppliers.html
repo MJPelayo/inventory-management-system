@@ -1,0 +1,114 @@
+<!-- frontend/pages/supply/suppliers.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Management - Supply</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/supply.css">
+</head>
+<body>
+    <div class="app">
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <aside id="sidebar"></aside>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Supplier Management</h1>
+                        <p class="page-subtitle">Manage vendor relationships, track performance, and view supplier analytics</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openSupplierModal()">
+                        <span>+</span> Add Supplier
+                    </button>
+                </div>
+                
+                <!-- Supplier Stats Cards -->
+                <div class="supplier-stats-grid" id="supplierStatsGrid">
+                    <div class="stat-card-mini">
+                        <div class="stat-label">Total Suppliers</div>
+                        <div class="stat-value" id="totalSuppliers">—</div>
+                    </div>
+                    <div class="stat-card-mini">
+                        <div class="stat-label">Active</div>
+                        <div class="stat-value" id="activeSuppliers">—</div>
+                    </div>
+                    <div class="stat-card-mini">
+                        <div class="stat-label">Avg Rating</div>
+                        <div class="stat-value" id="avgRating">—</div>
+                    </div>
+                    <div class="stat-card-mini">
+                        <div class="stat-label">On-Time Rate</div>
+                        <div class="stat-value" id="avgOnTime">—</div>
+                    </div>
+                </div>
+                
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Search</label>
+                            <input type="text" id="searchInput" placeholder="Supplier name, contact...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Performance</label>
+                            <select id="performanceFilter">
+                                <option value="">All</option>
+                                <option value="excellent">Excellent (95%+)</option>
+                                <option value="good">Good (85-94%)</option>
+                                <option value="average">Average (70-84%)</option>
+                                <option value="poor">Poor (&lt;70%)</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-primary btn-sm" id="applyFilter">Apply</button>
+                            <button class="btn btn-secondary btn-sm" id="resetFilter">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Suppliers Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Suppliers</h3>
+                        <span class="badge" id="supplierCount">0 suppliers</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="suppliersTable" class="table-container">
+                            <div class="loading">Loading suppliers...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Supplier Detail Modal -->
+    <div id="supplierDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h2 id="supplierDetailName">Supplier Details</h2>
+                <button class="close-btn" onclick="closeSupplierDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="supplierDetailContent">
+                <div class="loading">Loading...</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeSupplierDetailModal()">Close</button>
+                <button class="btn btn-primary" id="editSupplierBtn" onclick="editFromDetail()">Edit Supplier</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/supply-suppliers.js"></script>
+</body>
+</html>
