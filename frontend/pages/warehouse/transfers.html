@@ -1,0 +1,135 @@
+<!-- frontend/pages/warehouse/transfers.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Transfers - Warehouse</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/warehouse.css">
+</head>
+<body>
+    <div class="app">
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <aside id="sidebar"></aside>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Stock Transfers</h1>
+                        <p class="page-subtitle">Move stock between warehouses or change product locations</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openTransferModal()">
+                        <span>🔄</span> New Transfer
+                    </button>
+                </div>
+                
+                <!-- Transfer Type Tabs -->
+                <div class="transfer-tabs">
+                    <button class="tab-btn active" data-type="inter-warehouse">🏭 Inter-Warehouse</button>
+                    <button class="tab-btn" data-type="within-warehouse">📍 Within Warehouse</button>
+                </div>
+                
+                <!-- Transfer History -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Transfer History</h3>
+                        <span class="badge" id="transferCount">0 transfers</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="transferHistory">
+                            <div class="loading">Loading transfer history...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Transfer Modal -->
+    <div id="transferModal" class="modal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h2 id="transferModalTitle">New Stock Transfer</h2>
+                <button class="close-btn" onclick="closeTransferModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="transferForm">
+                    <input type="hidden" id="transferType" value="inter-warehouse">
+                    
+                    <div class="form-group">
+                        <label>Product *</label>
+                        <select id="transferProduct" required>
+                            <option value="">Select Product</option>
+                        </select>
+                    </div>
+                    
+                    <!-- For Within Warehouse (location change) -->
+                    <div id="withinWarehouseFields" style="display:none;">
+                        <h4>Current Location</h4>
+                        <div class="location-info" id="currentLocationInfo"></div>
+                        
+                        <h4>New Location</h4>
+                        <div class="location-inputs">
+                            <input type="number" id="newAisle" placeholder="Aisle" min="1">
+                            <select id="newSide">
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
+                            <input type="number" id="newShelf" placeholder="Shelf" min="1">
+                            <select id="newLayer">
+                                <option value="top">Top</option>
+                                <option value="middle">Middle</option>
+                                <option value="middle2">Middle 2</option>
+                                <option value="middle3">Middle 3</option>
+                                <option value="bottom">Bottom</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- For Inter-Warehouse Transfer -->
+                    <div id="interWarehouseFields">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>From Warehouse *</label>
+                                <select id="fromWarehouse" required>
+                                    <option value="">Select Source</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>To Warehouse *</label>
+                                <select id="toWarehouse" required>
+                                    <option value="">Select Destination</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity *</label>
+                            <input type="number" id="transferQuantity" required min="1" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Reason for Transfer</label>
+                        <textarea id="transferReason" rows="2" placeholder="e.g., Rebalancing inventory, Consolidation"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeTransferModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitTransfer()">Process Transfer</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/warehouse-transfers.js"></script>
+</body>
+</html>

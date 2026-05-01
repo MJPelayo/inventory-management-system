@@ -1,0 +1,78 @@
+<!-- frontend/pages/warehouse/picklists.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pick Lists - Warehouse</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/warehouse.css">
+</head>
+<body>
+    <div class="app">
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <aside id="sidebar"></aside>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Pick Lists</h1>
+                        <p class="page-subtitle">Generate and manage order picking lists for warehouse staff</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="generatePickList()">
+                        <span>📄</span> Generate New Pick List
+                    </button>
+                </div>
+                
+                <!-- Status Tabs -->
+                <div class="status-tabs">
+                    <button class="tab-btn active" data-status="pending">Pending</button>
+                    <button class="tab-btn" data-status="picking">In Progress</button>
+                    <button class="tab-btn" data-status="completed">Completed</button>
+                </div>
+                
+                <!-- Pick Lists Container -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Pick Lists</h3>
+                        <span class="badge" id="picklistCount">0 lists</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="picklistsContainer">
+                            <div class="loading">Loading pick lists...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Pick List Detail Modal -->
+    <div id="picklistModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Pick List Details</h2>
+                <button class="close-btn" onclick="closePicklistModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="picklistDetailContent">
+                <div class="loading">Loading...</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closePicklistModal()">Close</button>
+                <button class="btn btn-primary" onclick="printPicklist()">🖨️ Print</button>
+                <button class="btn btn-success" id="markCompleteBtn" onclick="markPicklistComplete()">✓ Mark as Completed</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/warehouse-picklists.js"></script>
+</body>
+</html>
