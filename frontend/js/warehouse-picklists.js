@@ -76,18 +76,41 @@ async function loadPickLists() {
     if (!container) return;
     
     try {
-        // Fetch orders based on status filter
-        let statusFilter = '';
+        // FIX: Don't use comma-separated status - make multiple requests or use single status
+        let orders = [];
+        
         if (currentStatus === 'pending') {
-            statusFilter = 'status=pending,processing';
+            // Fetch pending orders
+            try {
+                const pendingRes = await apiCall('/orders/sales?status=pending');
+                orders = orders.concat(pendingRes.data || []);
+            } catch (e) {}
+            
+            try {
+                const processingRes = await apiCall('/orders/sales?status=processing');
+                orders = orders.concat(processingRes.data || []);
+            } catch (e) {}
+            
         } else if (currentStatus === 'picking') {
-            statusFilter = 'status=processing';
+            const response = await apiCall('/orders/sales?status=processing');
+            orders = response.data || [];
         } else if (currentStatus === 'completed') {
-            statusFilter = 'status=ready,delivered';
+            // Fetch ready and delivered
+            try {
+                const readyRes = await apiCall('/orders/sales?status=ready');
+                orders = orders.concat(readyRes.data || []);
+            } catch (e) {}
+            
+            try {
+                const deliveredRes = await apiCall('/orders/sales?status=delivered');
+                orders = orders.concat(deliveredRes.data || []);
+            } catch (e) {}
+        } else {
+            const response = await apiCall('/orders/sales');
+            orders = response.data || [];
         }
         
-        const response = await apiCall(`/orders/sales?${statusFilter}`);
-        allOrders = response.data || [];
+        allOrders = orders;
         
         document.getElementById('picklistCount').textContent = `${allOrders.length} lists`;
         
@@ -118,7 +141,7 @@ async function loadPickLists() {
                             <td>${formatDate(order.created_at)}</td>
                             <td>
                                 <button class="btn-sm btn-primary" onclick="viewPicklist(${order.id})">View</button>
-                                ${order.status !== 'ready' && order.status !== 'delivered' ? 
+                                ${order.status !== 'ready' && order.status !== 'delivered' ?
                                     `<button class="btn-sm btn-success" onclick="markAsPicked(${order.id})">Mark Picked</button>` : ''}
                             </td>
                         </tr>
