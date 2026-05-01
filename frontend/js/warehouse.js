@@ -226,9 +226,20 @@ async function loadPendingOrders() {
     if (!container) return;
     
     try {
-        const response = await apiCall('/orders/sales?status=pending,processing');
-        const orders = response.data || [];
-        const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
+        // FIX: Make separate requests instead of comma-separated
+        let allOrders = [];
+        
+        try {
+            const pendingRes = await apiCall('/orders/sales?status=pending');
+            allOrders = allOrders.concat(pendingRes.data || []);
+        } catch (e) {}
+        
+        try {
+            const processingRes = await apiCall('/orders/sales?status=processing');
+            allOrders = allOrders.concat(processingRes.data || []);
+        } catch (e) {}
+        
+        const pendingOrders = allOrders;
         
         if (pendingOrders.length === 0) {
             container.innerHTML = '<div class="empty-state">✅ No pending orders. All caught up!</div>';
