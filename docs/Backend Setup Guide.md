@@ -172,6 +172,7 @@ inventory-management-system/
 │   │   │   ├── SupplyOrder.js       # Purchase orders
 │   │   │   └── AuditLog.js          # Security logging
 │   │   ├── controllers/
+│   │   │   ├── auditLogController.js
 │   │   │   ├── authController.js
 │   │   │   ├── userController.js
 │   │   │   ├── productController.js
@@ -180,6 +181,7 @@ inventory-management-system/
 │   │   │   ├── reportController.js
 │   │   │   └── exportController.js
 │   │   ├── routes/
+│   │   │   ├── auditLogRoutes.js
 │   │   │   ├── authRoutes.js
 │   │   │   ├── userRoutes.js
 │   │   │   ├── productRoutes.js
@@ -231,7 +233,7 @@ inventory-management-system/
 
 ---
 
-## 🔌 Complete API Endpoints (55 Total)
+## 🔌 Complete API Endpoints (57 Total)
 
 ### Public Endpoints (No Auth)
 
@@ -311,6 +313,7 @@ inventory-management-system/
 | GET | /api/orders/supply/:id | Get PO details |
 | POST | /api/orders/supply | Create PO |
 | POST | /api/orders/supply/:id/receive | Receive PO |
+| POST | /api/orders/supply/:id/cancel | Cancel PO (Supply/Admin) |
 
 #### Discount Approvals
 
@@ -334,6 +337,13 @@ inventory-management-system/
 | GET | /api/export/users | Export users to CSV |
 | GET | /api/export/products | Export products to CSV |
 | GET | /api/export/inventory | Export inventory to CSV |
+
+#### Audit Logs (Admin only)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/audit-logs | Get all audit logs |
+| GET | /api/audit-logs/entity/:type/:id | Get logs for specific entity |
 
 ---
 
@@ -471,7 +481,7 @@ Your backend includes enterprise-grade security:
 You can now:
 1. Start the server with `npm run dev`
 2. Login with `admin@ims.com` / `admin123`
-3. Test all 55 API endpoints
+3. Test all 57 API endpoints
 4. Proceed to frontend development
 
 Credentials are printed on startup - save them for your demo!

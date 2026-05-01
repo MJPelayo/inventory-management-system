@@ -21,7 +21,8 @@ Complete reference for all working API endpoints with curl test commands.
 11. [Discount Approvals](#discount-approvals)
 12. [Reports](#reports)
 13. [Export](#export)
-14. [Credentials Management](#credentials-management)
+14. [Audit Logs](#audit-logs)
+15. [Credentials Management](#credentials-management)
 
 ---
 
@@ -692,6 +693,17 @@ curl.exe -X POST http://localhost:3000/api/orders/supply/1/receive ^
 
 ---
 
+### POST `/api/orders/supply/:id/cancel` (Supply/Admin Only)
+Cancel a supply order.
+
+**curl Command:**
+```bash
+curl.exe -X POST http://localhost:3000/api/orders/supply/1/cancel ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
 ## Reports
 
 ### GET `/api/reports/sales` (Admin/Sales)
@@ -763,6 +775,47 @@ curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/ex
 
 ---
 
+## Audit Logs (Admin Only)
+
+### GET `/api/audit-logs`
+Get all audit logs with optional filtering.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" "http://localhost:3000/api/audit-logs?limit=50&offset=0"
+```
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| limit | number | Number of records to return (default: 50) |
+| offset | number | Offset for pagination |
+| entity_type | string | Filter by entity type (user, product, inventory, etc.) |
+| entity_id | number | Filter by specific entity ID |
+| user_id | number | Filter by user who performed the action |
+| action | string | Filter by action type (CREATE, UPDATE, DELETE) |
+
+---
+
+### GET `/api/audit-logs/entity/:entityType/:entityId`
+Get audit logs for a specific entity.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/audit-logs/entity/product/1
+```
+
+**Example Entity Types:**
+| Entity Type | Description |
+|-------------|-------------|
+| user | User account changes |
+| product | Product catalog changes |
+| inventory | Stock level changes |
+| sales_order | Sales order modifications |
+| supply_order | Purchase order modifications |
+
+---
+
 ## Credentials Management
 
 ### View All Credentials
@@ -812,10 +865,11 @@ Usage: `npm run reset-password <email> <newPassword>`
 | Inventory | 7 | GET(3), POST(3), GET(suggestions) |
 | Sales Orders | 4 | POST, GET, GET, PUT |
 | Discount Approvals | 2 | POST, PUT |
-| Supply Orders | 4 | POST, GET, GET, POST |
+| Supply Orders | 5 | POST, GET, GET, POST, POST (cancel) |
 | Reports | 3 | GET (3 reports) |
 | Export | 3 | GET (3 exports) |
-| **TOTAL** | **55** | |
+| Audit Logs | 2 | GET, GET (by entity) |
+| **TOTAL** | **57** | |
 
 ---
 
