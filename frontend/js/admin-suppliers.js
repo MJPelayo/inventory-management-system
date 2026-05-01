@@ -1,6 +1,5 @@
 // frontend/js/admin-suppliers.js
 
-
 // ============================================
 // GLOBAL VARIABLES
 // ============================================
@@ -38,6 +37,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============================================
+// HELPER: SAFELY FORMAT NUMBER
+// ============================================
+function safeNumber(value, decimals = 1) {
+    if (value === null || value === undefined) return 0;
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+}
+
+// ============================================
 // LOAD SUPPLIERS TABLE
 // ============================================
 async function loadSuppliers() {
@@ -56,19 +64,25 @@ async function loadSuppliers() {
         const response = await apiCall(query);
         allSuppliers = response.data || [];
         
-        // Format data for table
-        const formattedSuppliers = allSuppliers.map(s => ({
-            id: s.id,
-            name: s.name,
-            contact_person: s.contact_person || '—',
-            phone: s.phone || '—',
-            email: s.email || '—',
-            rating: s.rating ? `${s.rating.toFixed(1)} ★` : '—',
-            on_time_rate: s.on_time_delivery_rate ? `${s.on_time_delivery_rate.toFixed(0)}%` : '—',
-            status: s.is_active ? 
-                '<span class="badge badge-success">Active</span>' : 
-                '<span class="badge badge-danger">Inactive</span>'
-        }));
+        // Format data for table - FIXED: handle rating safely
+        const formattedSuppliers = allSuppliers.map(s => {
+            // Safely parse numeric values
+            const rating = safeNumber(s.rating, 1);
+            const onTimeRate = safeNumber(s.on_time_delivery_rate, 0);
+            
+            return {
+                id: s.id,
+                name: s.name || '—',
+                contact_person: s.contact_person || '—',
+                phone: s.phone || '—',
+                email: s.email || '—',
+                rating: rating > 0 ? `${rating.toFixed(1)} ★` : '—',
+                on_time_rate: onTimeRate > 0 ? `${Math.round(onTimeRate)}%` : '—',
+                status: s.is_active ? 
+                    '<span class="badge badge-success">Active</span>' : 
+                    '<span class="badge badge-danger">Inactive</span>'
+            };
+        });
         
         // Define table columns
         const columns = [
@@ -120,9 +134,9 @@ function updateSupplierStats() {
     
     const activeSuppliers = allSuppliers.filter(s => s.is_active).length;
     const avgRating = allSuppliers.length > 0 
-        ? (allSuppliers.reduce((sum, s) => sum + (s.rating || 0), 0) / allSuppliers.length).toFixed(1)
+        ? (allSuppliers.reduce((sum, s) => sum + safeNumber(s.rating, 0), 0) / allSuppliers.length).toFixed(1)
         : 0;
-    const highPerforming = allSuppliers.filter(s => (s.on_time_delivery_rate || 0) >= 90).length;
+    const highPerforming = allSuppliers.filter(s => safeNumber(s.on_time_delivery_rate, 0) >= 90).length;
     
     statsContainer.innerHTML = `
         <div class="stat-chip">Total: ${allSuppliers.length}</div>
@@ -144,10 +158,11 @@ async function viewSupplierDetails(supplierId) {
         const productsRes = await apiCall(`/products?supplier_id=${supplierId}`);
         const products = productsRes.data || [];
         
-        // Calculate performance grade
+        // Calculate performance grade - FIXED: use safeNumber
         let performanceGrade = 'N/A';
         let performanceColor = '';
-        const onTimeRate = supplier.on_time_delivery_rate || 0;
+        const onTimeRate = safeNumber(supplier.on_time_delivery_rate, 0);
+        const rating = safeNumber(supplier.rating, 1);
         
         if (onTimeRate >= 95) {
             performanceGrade = 'Excellent';
@@ -186,7 +201,7 @@ async function viewSupplierDetails(supplierId) {
                         <div class="details-section">
                             <h4>Performance Metrics</h4>
                             <div class="details-grid">
-                                <div><strong>Rating:</strong> ${supplier.rating ? supplier.rating.toFixed(1) + ' ★' : '—'}</div>
+                                <div><strong>Rating:</strong> ${rating > 0 ? rating.toFixed(1) + ' ★' : '—'}</div>
                                 <div><strong>On-Time Delivery:</strong> ${onTimeRate.toFixed(0)}%</div>
                                 <div><strong>Total Orders:</strong> ${supplier.total_orders || 0}</div>
                                 <div><strong>Lead Time:</strong> ${supplier.lead_time_days || 7} days</div>
