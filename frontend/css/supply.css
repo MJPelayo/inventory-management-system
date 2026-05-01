@@ -1,0 +1,652 @@
+/* frontend/css/supply.css */
+
+/* ============================================ */
+/* DASHBOARD SPECIFIC */
+/* ============================================ */
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.greeting {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.dashboard-two-column {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-two-column {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Reorder List */
+.reorder-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.reorder-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.reorder-item.priority-critical {
+    background: var(--danger-bg);
+    border-left: 4px solid var(--danger);
+}
+
+.reorder-item.priority-warning {
+    background: var(--warning-bg);
+    border-left: 4px solid var(--warning);
+}
+
+.reorder-info {
+    flex: 2;
+}
+
+.reorder-info .product-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.reorder-info .product-sku {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.reorder-details {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+}
+
+.current-stock {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.suggested-qty {
+    color: var(--success);
+    font-weight: 600;
+}
+
+/* Recent POs */
+.recent-pos {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.po-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.po-number {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.po-supplier {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.po-status {
+    text-align: right;
+}
+
+.po-amount {
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: block;
+    margin-top: 4px;
+}
+
+/* Budget Card */
+.budget-card {
+    margin-top: 0;
+}
+
+.budget-container {
+    padding: 8px 0;
+}
+
+.budget-bar-container {
+    height: 24px;
+    background: var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.budget-bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.3s;
+}
+
+.budget-bar-fill.success { background: var(--success); }
+.budget-bar-fill.info { background: var(--accent-primary); }
+.budget-bar-fill.warning { background: var(--warning); }
+.budget-bar-fill.danger { background: var(--danger); }
+
+.budget-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+}
+
+.budget-item {
+    flex: 1;
+}
+
+.budget-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.budget-value {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.budget-value.spent { color: var(--warning); }
+.budget-value.remaining { color: var(--success); }
+
+.budget-status {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.budget-status.success { background: var(--success-bg); color: var(--success); }
+.budget-status.info { background: var(--accent-primary-light); color: var(--accent-primary); }
+.budget-status.warning { background: var(--warning-bg); color: var(--warning); }
+.budget-status.danger { background: var(--danger-bg); color: var(--danger); }
+
+/* ============================================ */
+/* PURCHASE ORDERS PAGE */
+/* ============================================ */
+
+.filter-bar {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-group label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    color: var(--text-muted);
+}
+
+.filter-group input,
+.filter-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* PO Items Container */
+.po-items-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 16px 0;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 12px;
+}
+
+.po-item-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.po-item-row:last-child {
+    margin-bottom: 0;
+}
+
+.po-product-select,
+.po-quantity,
+.po-unit-price {
+    padding: 8px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+}
+
+.add-item-btn,
+.remove-item-btn {
+    background: none;
+    border: none;
+    font-size: 1.125rem;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.add-item-btn { color: var(--success); }
+.remove-item-btn { color: var(--danger); }
+
+.po-summary {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+    text-align: right;
+}
+
+.po-summary .summary-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 4px 0;
+}
+
+.po-summary .summary-row.total {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-light);
+}
+
+/* PO Details */
+.po-details-header {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.po-details-info {
+    background: var(--bg-tertiary);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.po-details-info .info-group {
+    margin-bottom: 8px;
+}
+
+.po-items-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+}
+
+.po-items-detail-table th,
+.po-items-detail-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.po-items-detail-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+/* ============================================ */
+/* SUPPLIER MANAGEMENT */
+/* ============================================ */
+
+.supplier-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card-mini {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    text-align: center;
+}
+
+.stat-card-mini .stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.stat-card-mini .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .supplier-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.rating-cell {
+    font-size: 0.875rem;
+}
+
+.rating-stars {
+    color: #fbbf24;
+    letter-spacing: 1px;
+}
+
+/* Supplier Detail Modal */
+.supplier-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.detail-card {
+    background: var(--bg-tertiary);
+    padding: 16px;
+    border-radius: var(--radius-md);
+}
+
+.detail-card h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.detail-card p {
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+}
+
+.product-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.product-tag {
+    background: var(--bg-secondary);
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+}
+
+@media (max-width: 640px) {
+    .supplier-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================ */
+/* REORDER PAGE */
+/* ============================================ */
+
+.info-box {
+    background: var(--accent-primary-light);
+    border-left: 4px solid var(--accent-primary);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.info-box p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.info-box strong {
+    color: var(--accent-primary);
+}
+
+.bulk-actions-bar {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.select-all-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.reorder-table .priority-critical {
+    background: var(--danger-bg);
+}
+
+.reorder-table .priority-warning {
+    background: var(--warning-bg);
+}
+
+.priority-badge {
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.priority-critical {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.priority-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.warning-text {
+    color: var(--warning);
+    font-weight: 600;
+}
+
+/* ============================================ */
+/* STATUS BADGES */
+/* ============================================ */
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-pending {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.status-processing {
+    background: var(--accent-primary-light);
+    color: var(--accent-primary);
+}
+
+.status-shipped {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.status-delivered {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.status-cancelled {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* ============================================ */
+/* BADGE VARIANTS */
+/* ============================================ */
+
+.badge-success {
+    background: var(--success-bg);
+    color: var(--success);
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+}
+
+.badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+}
+
+.badge-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+}
+
+/* ============================================ */
+/* STAT WARNING VARIANT */
+/* ============================================ */
+
+.stat-warning .stat-value {
+    color: var(--warning);
+}
+
+/* ============================================ */
+/* TOAST NOTIFICATIONS */
+/* ============================================ */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text-primary);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    z-index: 1100;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.toast.show {
+    opacity: 1;
+}
+
+.toast-success {
+    background: var(--success);
+}
+
+.toast-error {
+    background: var(--danger);
+}
+
+.toast-info {
+    background: var(--accent-primary);
+}
+
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    .filter-row {
+        flex-direction: column;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .filter-actions {
+        width: 100%;
+    }
+    
+    .po-item-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .po-product-select,
+    .po-quantity,
+    .po-unit-price {
+        width: 100%;
+    }
+}
