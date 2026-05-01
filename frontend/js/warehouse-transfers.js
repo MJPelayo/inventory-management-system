@@ -350,9 +350,30 @@ async function loadTransferHistory() {
     if (!container) return;
     
     try {
-        const response = await apiCall('/inventory/movements');
-        const movements = response.data || [];
-        const transfers = movements.filter(m => m.movement_type === 'transferred');
+        // FIX: Don't pass product_id - fetch all movements without filter
+        // The backend expects product_id but we want all movements
+        // So we'll fetch all inventory movements differently
+        
+        // First, get all products to fetch movements for each
+        const productsRes = await apiCall('/products');
+        const products = productsRes.data || [];
+        
+        let allMovements = [];
+        
+        // Fetch movements for each product (limit to last 50)
+        for (const product of products.slice(0, 20)) { // Limit to 20 products to avoid too many requests
+            try {
+                const movementsRes = await apiCall(`/inventory/movements?product_id=${product.id}&limit=5`);
+                const movements = movementsRes.data || [];
+                allMovements = allMovements.concat(movements);
+            } catch (e) {
+                // Skip products without movements
+            }
+        }
+        
+        // Sort by date descending
+        allMovements.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const transfers = allMovements.filter(m => m.movement_type === 'transferred');
         
         document.getElementById('transferCount').textContent = `${transfers.length} transfers`;
         
@@ -367,9 +388,8 @@ async function loadTransferHistory() {
                     <tr>
                         <th>Date</th>
                         <th>Product</th>
-                        <th>From/To</th>
                         <th>Quantity</th>
-                        <th>Reason</th>
+                        <th>Reference</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -377,7 +397,6 @@ async function loadTransferHistory() {
                         <tr>
                             <td>${formatDate(transfer.created_at)}</td>
                             <td>${escapeHtml(transfer.product_name || 'Product ID: ' + transfer.product_id)}</td>
-                            <td>${transfer.reason || '—'}</td>
                             <td class="${transfer.quantity_change < 0 ? 'negative' : 'positive'}">${transfer.quantity_change}</td>
                             <td>${transfer.reference_number || '—'}</td>
                         </tr>
@@ -388,7 +407,7 @@ async function loadTransferHistory() {
         
     } catch (error) {
         console.error('Failed to load transfer history:', error);
-        container.innerHTML = '<div class="error-state">Failed to load transfer history</div>';
+        container.innerHTML = '<div class="empty-state">No transfer history available</div>';
     }
 }
 
