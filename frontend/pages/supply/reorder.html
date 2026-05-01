@@ -1,0 +1,101 @@
+<!-- frontend/pages/supply/reorder.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Reorder - Supply</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/supply.css">
+</head>
+<body>
+    <div class="app">
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <aside id="sidebar"></aside>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Auto-Reorder Suggestions</h1>
+                        <p class="page-subtitle">AI-powered recommendations based on sales velocity and stock levels</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="createOrdersFromSuggestions()">
+                        <span>📦</span> Create POs from Selected
+                    </button>
+                </div>
+                
+                <!-- Info Box -->
+                <div class="info-box">
+                    <p>
+                        <strong>📊 How reorder suggestions work:</strong> The system analyzes current stock levels, 
+                        reorder points, sales velocity (30-day average), and supplier lead times to recommend 
+                        optimal reorder quantities. <strong>Priority:</strong> Critical (red) = Stock below reorder point, 
+                        Warning (yellow) = Below 2x reorder point.
+                    </p>
+                </div>
+                
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Priority</label>
+                            <select id="priorityFilter">
+                                <option value="all">All</option>
+                                <option value="critical">Critical Only</option>
+                                <option value="warning">Warning Only</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Supplier</label>
+                            <select id="supplierFilter">
+                                <option value="">All Suppliers</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Search</label>
+                            <input type="text" id="searchInput" placeholder="Product name...">
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-primary btn-sm" id="applyFilter">Apply</button>
+                            <button class="btn btn-secondary btn-sm" id="resetFilter">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bulk Actions Bar -->
+                <div class="bulk-actions-bar" id="bulkActionsBar" style="display:none;">
+                    <span id="selectedCount">0 items selected</span>
+                    <button class="btn btn-success btn-sm" onclick="createOrdersFromSuggestions()">Create POs</button>
+                    <button class="btn btn-secondary btn-sm" onclick="clearSelection()">Clear Selection</button>
+                </div>
+                
+                <!-- Reorder Suggestions Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Reorder Recommendations</h3>
+                        <label class="select-all-label">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            Select All
+                        </label>
+                    </div>
+                    <div class="card-body">
+                        <div id="reorderTable" class="table-container">
+                            <div class="loading">Loading suggestions...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/supply-reorder.js"></script>
+</body>
+</html>
