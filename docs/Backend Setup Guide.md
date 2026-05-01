@@ -23,7 +23,7 @@
 cd backend
 
 # Run the reset script
-node scripts/quick-reset.js
+node scripts/full-reset.js
 ```
 This script automatically drops and recreates all tables using [`database/schema.sql`](database/schema.sql).
 
@@ -196,8 +196,7 @@ inventory-management-system/
 │   │   ├── app.js
 │   │   └── server.js
 │   ├── scripts/
-│   │   ├── quick-reset.js           # Database reset
-│   │   ├── reset-password.js        # Password recovery
+│   │   ├── full-reset.js            # Database reset
 │   │   └── show-credentials.js      # Display all credentials
 │   ├── package.json
 │   └── .env
@@ -393,7 +392,7 @@ Error: Cannot find module 'xxx'
 ```
 error: relation "users" does not exist
 ```
-**Solution:** Run `node scripts/quick-reset.js` to initialize database
+**Solution:** Run `node scripts/full-reset.js` to initialize database
 
 ---
 
@@ -406,7 +405,7 @@ error: relation "users" does not exist
 cd backend
 
 # Run the reset script (drops and recreates all tables)
-node scripts/quick-reset.js
+node scripts/full-reset.js
 ```
 
 **What it does:**
