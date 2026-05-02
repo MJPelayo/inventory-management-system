@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS suppliers CASCADE;
 DROP TABLE IF EXISTS warehouses CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS system_settings CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ENUM TYPES
@@ -347,6 +349,32 @@ CREATE TABLE IF NOT EXISTS permission_audit_log (
 );
 
 -- =====================================================
+-- 20. notifications - User notification system
+-- =====================================================
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'system',
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
+-- 21. system_settings - System-wide configuration settings
+-- =====================================================
+CREATE TABLE IF NOT EXISTS system_settings (
+    id SERIAL PRIMARY KEY,
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value TEXT,
+    setting_type VARCHAR(20) DEFAULT 'string',
+    description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
 -- INDEXES for performance
 -- =====================================================
 CREATE INDEX idx_users_email ON users(email);
@@ -367,6 +395,9 @@ CREATE INDEX IF NOT EXISTS idx_product_requests_requested_by ON product_requests
 CREATE INDEX IF NOT EXISTS idx_user_permissions_user ON user_permissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_permissions_module ON user_permissions(module);
 CREATE INDEX IF NOT EXISTS idx_permission_audit_log_changed_for ON permission_audit_log(changed_for);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_system_settings_key ON system_settings(setting_key);
 
 -- =====================================================
 -- TRIGGER FUNCTION for updated_at
@@ -389,6 +420,7 @@ CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON inventory FOR EACH R
 CREATE TRIGGER update_sales_orders_updated_at BEFORE UPDATE ON sales_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_supply_orders_updated_at BEFORE UPDATE ON supply_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON user_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- SAMPLE DATA (for testing)
@@ -475,3 +507,18 @@ INSERT INTO product_locations (product_id, warehouse_id, aisle_number, side, she
 (3, 1, 3, 'left', 1, 'middle', 15),
 (4, 2, 1, 'left', 1, 'bottom', 25),
 (5, 1, 1, 'right', 3, 'top', 100);
+
+-- =====================================================
+-- DEFAULT SYSTEM SETTINGS
+-- =====================================================
+INSERT INTO system_settings (setting_key, setting_value, setting_type, description) VALUES
+('session_timeout', '1440', 'integer', 'Session timeout in minutes'),
+('password_expiry_days', '90', 'integer', 'Days until password expires'),
+('max_login_attempts', '5', 'integer', 'Maximum failed login attempts'),
+('default_tax_rate', '10', 'decimal', 'Default tax rate percentage'),
+('discount_approval_threshold', '10', 'decimal', 'Discount % requiring admin approval'),
+('low_stock_threshold', '10', 'integer', 'Units to trigger low stock alert'),
+('email_notifications', 'false', 'boolean', 'Enable email notifications'),
+('slack_notifications', 'false', 'boolean', 'Enable Slack notifications'),
+('slack_webhook', '', 'string', 'Slack webhook URL')
+ON CONFLICT (setting_key) DO NOTHING;
