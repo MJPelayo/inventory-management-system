@@ -62,20 +62,59 @@ const orderController = {
 
     async updateOrderStatus(req, res) {
         try {
-            const order = await SalesOrder.findById(parseInt(req.params.id));
+            const orderId = parseInt(req.params.id);
+            const { status } = req.body;
+            
+            // Find the order
+            const order = await SalesOrder.findById(orderId);
             if (!order) {
                 return res.status(404).json({ success: false, error: 'Order not found' });
             }
             
-            const { status } = req.body;
-            order.updateStatus(status);
+            // Validate status
+            const validStatuses = ['pending', 'processing', 'ready', 'in_transit', 'delivered', 'cancelled'];
+            if (!validStatuses.includes(status)) {
+                return res.status(400).json({ success: false, error: 'Invalid status' });
+            }
+            
+            // Update order status
+            const client = await pool.connect();
+            try {
+                await client.query(
+                    `UPDATE sales_orders SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+                    [status, orderId]
+                );
+                
+                // If status is 'ready', notify warehouse via notifications
+                if (status === 'ready') {
+                    // Get warehouse users to notify
+                    const warehouseUsers = await client.query(
+                        `SELECT id FROM users WHERE role = 'warehouse' AND is_active = true`
+                    );
+                    for (const user of warehouseUsers.rows) {
+                        await client.query(
+                            `INSERT INTO notifications (user_id, title, message, type)
+                             VALUES ($1, $2, $3, $4)`,
+                            [user.id, 'Order Ready', `Order ${order.order_number} is ready for pickup/delivery`, 'order']
+                        );
+                    }
+                }
+                
+                await client.query('COMMIT');
+            } catch (err) {
+                await client.query('ROLLBACK');
+                throw err;
+            } finally {
+                client.release();
+            }
             
             res.status(200).json({
                 success: true,
                 message: `Order status updated to ${status}`
             });
         } catch (error) {
-            res.status(400).json({ success: false, error: error.message });
+            console.error('Failed to update order status:', error);
+            res.status(500).json({ success: false, error: error.message });
         }
     },
 
