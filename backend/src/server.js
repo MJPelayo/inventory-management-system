@@ -13,6 +13,28 @@ async function startServer() {
         
         // Ensure default admin account exists
         await ensureDefaultAdmin();
+
+        // Check for new tables
+        try {
+            const tables = ['user_permissions', 'internal_messages', 'internal_requests', 'notifications', 'system_settings', 'role_default_permissions'];
+            
+            for (const table of tables) {
+                const check = await pool.query(`
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables
+                        WHERE table_name = $1
+                    )
+                `, [table]);
+                
+                if (!check.rows[0].exists) {
+                    console.log(`⚠️ Table ${table} does not exist. Please run schema.sql`);
+                }
+            }
+            
+            console.log('✅ New tables verified');
+        } catch (error) {
+            console.error('Error checking new tables:', error.message);
+        }
         
         // Start server
         app.listen(PORT, () => {
