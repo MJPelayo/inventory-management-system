@@ -17,9 +17,11 @@ class User extends BaseModel {
         this.purchase_budget = data.purchase_budget || null;
         this.is_active = data.is_active !== undefined ? data.is_active : true;
         this.last_login = data.last_login || null;
+        this.is_protected = data.is_protected !== undefined ? data.is_protected : false;
     }
 
-    // Getters
+    // ✅ FIX: Add proper getter methods that match the error
+    getId() { return this.id; }
     getName() { return this.name; }
     getEmail() { return this.email; }
     getRole() { return this.role; }
@@ -86,7 +88,7 @@ class User extends BaseModel {
     _getInsertFields() {
         return ['name', 'email', 'password_hash', 'role', 'department', 
                 'sales_target', 'commission_rate', 'warehouse_id', 'shift', 
-                'purchase_budget', 'is_active'];
+                'purchase_budget', 'is_active', 'is_protected'];
     }
 
     _getUpdateFields() {
@@ -111,6 +113,52 @@ class User extends BaseModel {
         }
     }
 
+    static async findById(id) {
+        const client = await pool.connect();
+        try {
+            const result = await client.query('SELECT * FROM users WHERE id = $1', [id]);
+            if (result.rows.length === 0) return null;
+            return new User(result.rows[0]);
+        } finally {
+            client.release();
+        }
+    }
+
+    static async findAll(filters = {}) {
+        const client = await pool.connect();
+        try {
+            let query = 'SELECT * FROM users WHERE 1=1';
+            const values = [];
+            let paramCount = 1;
+
+            if (filters.role) {
+                query += ` AND role = $${paramCount++}`;
+                values.push(filters.role);
+            }
+            if (filters.is_active !== undefined) {
+                query += ` AND is_active = $${paramCount++}`;
+                values.push(filters.is_active);
+            }
+
+            query += ' ORDER BY name';
+            
+            const result = await client.query(query, values);
+            return result.rows.map(row => new User(row));
+        } finally {
+            client.release();
+        }
+    }
+
+    static async deleteById(id) {
+        const client = await pool.connect();
+        try {
+            const result = await client.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+            return result.rows.length > 0;
+        } finally {
+            client.release();
+        }
+    }
+
     async updatePassword(newPasswordHash) {
         this.setPasswordHash(newPasswordHash);
         const client = await pool.connect();
@@ -125,10 +173,54 @@ class User extends BaseModel {
         }
     }
 
+    async save() {
+        const client = await pool.connect();
+        try {
+            if (this.id) {
+                // UPDATE existing record
+                const query = `
+                    UPDATE users 
+                    SET name = $1, email = $2, role = $3, department = $4,
+                        sales_target = $5, commission_rate = $6, warehouse_id = $7,
+                        shift = $8, purchase_budget = $9, is_active = $10,
+                        last_login = $11, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = $12
+                    RETURNING *
+                `;
+                const values = [
+                    this.name, this.email, this.role, this.department,
+                    this.sales_target, this.commission_rate, this.warehouse_id,
+                    this.shift, this.purchase_budget, this.is_active,
+                    this.last_login, this.id
+                ];
+                const result = await client.query(query, values);
+                return new User(result.rows[0]);
+            } else {
+                // INSERT new record
+                const query = `
+                    INSERT INTO users (name, email, password_hash, role, department,
+                        sales_target, commission_rate, warehouse_id, shift,
+                        purchase_budget, is_active)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    RETURNING *
+                `;
+                const values = [
+                    this.name, this.email, this.password_hash, this.role, this.department,
+                    this.sales_target, this.commission_rate, this.warehouse_id,
+                    this.shift, this.purchase_budget, this.is_active
+                ];
+                const result = await client.query(query, values);
+                return new User(result.rows[0]);
+            }
+        } finally {
+            client.release();
+        }
+    }
+
     // toJSON - excludes sensitive data
     toJSON() {
         return {
-            ...super.toJSON(),
+            id: this.id,
             name: this.name,
             email: this.email,
             role: this.role,
@@ -137,8 +229,12 @@ class User extends BaseModel {
             commission_rate: this.commission_rate,
             warehouse_id: this.warehouse_id,
             shift: this.shift,
+            purchase_budget: this.purchase_budget,
             is_active: this.is_active,
-            last_login: this.last_login
+            is_protected: this.is_protected,
+            last_login: this.last_login,
+            created_at: this.created_at,
+            updated_at: this.updated_at
         };
     }
 }
