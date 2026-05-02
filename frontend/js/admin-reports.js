@@ -463,10 +463,27 @@ async function exportToPDF() {
             url = `/reports/suppliers?format=pdf`;
         }
         
-        // Open PDF in new tab
-        window.open(`${CONFIG.API_BASE_URL}${url}`, '_blank');
-        showToast('PDF report generated', 'success');
+        // Use fetch with auth token for PDF
+        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+        const response = await fetch(`${CONFIG.API_BASE_URL}${url}`, {
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : ''
+            }
+        });
         
+        if (!response.ok) throw new Error('PDF generation failed');
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `report-${activeTab}-${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        showToast('PDF downloaded successfully', 'success');
     } catch (error) {
         console.error('Failed to export report:', error);
         showToast('Failed to generate PDF', 'error');
