@@ -1,9 +1,4 @@
-/**
- * Authentication Controller
- * Handles user registration, login, and profile management
- * 
- * @module controllers/authController
- */
+
 
 const bcrypt = require('bcrypt');
 const { User } = require('../models/User');
@@ -18,16 +13,13 @@ const authController = {
         try {
             const { name, email, password, role, department } = req.body;
             
-            // Input validation
             if (!name || !email || !password || !role) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Missing required fields',
-                    details: 'Name, email, password, and role are required'
+                    error: 'Missing required fields'
                 });
             }
             
-            // Validate email format
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 return res.status(400).json({
@@ -36,7 +28,6 @@ const authController = {
                 });
             }
             
-            // Check if user already exists
             const existingUser = await User.findByEmail(email);
             if (existingUser) {
                 return res.status(400).json({
@@ -45,11 +36,9 @@ const authController = {
                 });
             }
             
-            // Hash password with bcrypt (10 rounds of salt)
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(password, saltRounds);
             
-            // Create new user
             const user = new User({
                 name,
                 email,
@@ -60,7 +49,6 @@ const authController = {
             
             const savedUser = await user.save();
             
-            // Generate JWT token for auto-login after registration
             const token = generateToken(
                 savedUser.getId(),
                 savedUser.getEmail(),
@@ -92,7 +80,6 @@ const authController = {
         try {
             const { email, password } = req.body;
             
-            // Input validation
             if (!email || !password) {
                 return res.status(400).json({
                     success: false,
@@ -100,7 +87,7 @@ const authController = {
                 });
             }
             
-            // Find user by email
+            // ✅ FIX: Use findByEmail which returns a User instance
             const user = await User.findByEmail(email);
             if (!user) {
                 return res.status(401).json({
@@ -109,7 +96,7 @@ const authController = {
                 });
             }
             
-            // Check if account is active
+            // ✅ FIX: Use isActive() method
             if (!user.isActive()) {
                 return res.status(401).json({
                     success: false,
@@ -117,7 +104,7 @@ const authController = {
                 });
             }
             
-            // Verify password using bcrypt compare
+            // ✅ FIX: Use getPasswordHash() method
             const isPasswordValid = await bcrypt.compare(password, user.getPasswordHash());
             if (!isPasswordValid) {
                 return res.status(401).json({
@@ -126,11 +113,11 @@ const authController = {
                 });
             }
             
-            // Update last login timestamp
+            // ✅ FIX: Use updateLastLogin() method
             user.updateLastLogin();
             await user.save();
             
-            // Generate JWT token
+            // ✅ FIX: Use getter methods
             const token = generateToken(
                 user.getId(),
                 user.getEmail(),
@@ -160,7 +147,6 @@ const authController = {
      */
     async getMe(req, res) {
         try {
-            // Get user ID from authenticated request
             const userId = req.user?.id;
             
             if (!userId) {
