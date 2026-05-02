@@ -27,6 +27,39 @@
                     </button>
                 </div>
                 
+                <!-- Add after the page-header div -->
+                <div class="user-stats" id="userStats">
+                    <div class="stat-chip">Loading...</div>
+                </div>
+
+                <!-- Add filter bar (if not already there) -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Search</label>
+                        <input type="text" id="userSearch" placeholder="Name, email, or role...">
+                    </div>
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select id="userStatusFilter">
+                            <option value="all">All</option>
+                            <option value="active">Active Only</option>
+                            <option value="inactive">Inactive Only</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Sort By</label>
+                        <select id="userSort">
+                            <option value="name">Name</option>
+                            <option value="email">Email</option>
+                            <option value="role">Role</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-primary btn-sm" id="applyFilter">Apply</button>
+                        <button class="btn btn-secondary btn-sm" id="resetFilter">Reset</button>
+                    </div>
+                </div>
+                
                 <div class="card">
                     <div class="card-body">
                         <div id="usersTable"></div>
@@ -79,19 +112,36 @@
                         <input type="text" id="userDepartment" placeholder="e.g., Sales, Operations">
                     </div>
                     
-                    <div class="form-group" id="salesTargetGroup" style="display:none;">
+                    <div id="salesTargetGroup" style="display:none;">
                         <label>Sales Target ($)</label>
                         <input type="number" id="userSalesTarget" step="1000">
                     </div>
-                    
-                    <div class="form-group" id="warehouseGroup" style="display:none;">
+
+                    <div id="userCommissionRateGroup" style="display:none;">
+                        <label>Commission Rate (%)</label>
+                        <input type="number" id="userCommissionRate" step="0.5" value="5">
+                    </div>
+
+                    <div id="warehouseGroup" style="display:none;">
                         <label>Assigned Warehouse ID</label>
                         <input type="number" id="userWarehouseId">
                     </div>
-                    
-                    <div class="form-group" id="budgetGroup" style="display:none;">
+
+                    <div id="userShiftGroup" style="display:none;">
+                        <label>Shift</label>
+                        <input type="text" id="userShift" placeholder="e.g., Day, Night">
+                    </div>
+
+                    <div id="budgetGroup" style="display:none;">
                         <label>Purchase Budget ($)</label>
                         <input type="number" id="userPurchaseBudget" step="1000">
+                    </div>
+
+                    <div id="userActiveGroup">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="userActive" checked>
+                            <span>Active Account</span>
+                        </label>
                     </div>
                 </form>
             </div>
