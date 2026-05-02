@@ -51,6 +51,25 @@ app.use('/api/export', authenticateToken, require('./routes/exportRoutes'));
 // Audit Log Routes (admin only)
 app.use('/api/audit-logs', require('./routes/auditLogRoutes'));
 
+// ============================================
+// NEW ROUTES (Permissions, Settings, Messages, Requests, Notifications)
+// ============================================
+
+// Permission routes
+app.use('/api/permissions', require('./routes/permissionRoutes'));
+
+// Settings routes
+app.use('/api/settings', require('./routes/settingsRoutes'));
+
+// Message routes
+app.use('/api/messages', authenticateToken, require('./routes/messageRoutes'));
+
+// Request routes
+app.use('/api/requests', authenticateToken, require('./routes/requestRoutes'));
+
+// Notification routes
+app.use('/api/notifications', authenticateToken, require('./routes/notificationRoutes'));
+
 // Health check (public endpoint)
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
