@@ -1,9 +1,12 @@
 // backend/src/models/Product.js
+// UPDATED: Inherits from BaseModel - Demonstrates INHERITANCE in OOP
+
+const { BaseModel } = require('./BaseModel');
 const pool = require('../db/pool');
 
-class Product {
+class Product extends BaseModel {
     constructor(data) {
-        this.id = data.id || null;
+        super('products', data);  // Call parent constructor with table name
         this.name = data.name;
         this.description = data.description || null;
         this.sku = data.sku;
@@ -14,12 +17,12 @@ class Product {
         this.brand = data.brand || null;
         this.image_url = data.image_url || null;
         this.is_active = data.is_active !== undefined ? data.is_active : true;
-        this.created_at = data.created_at || null;
-        this.updated_at = data.updated_at || null;
     }
 
-    // Getters
-    getId() { return this.id; }
+    // ============================================
+    // BUSINESS LOGIC METHODS (KEEP ALL EXISTING)
+    // ============================================
+    
     getName() { return this.name; }
     getSku() { return this.sku; }
     getPrice() { return this.price; }
@@ -73,66 +76,30 @@ class Product {
         return this.price * (1 - percentage / 100);
     }
 
-    // CRUD Operations
-    async save() {
-        const client = await pool.connect();
-        try {
-            if (this.id) {
-                // UPDATE
-                const query = `
-                    UPDATE products 
-                    SET name = $1, description = $2, sku = $3, price = $4, 
-                        cost = $5, category_id = $6, supplier_id = $7, 
-                        brand = $8, image_url = $9, is_active = $10,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = $11
-                    RETURNING *
-                `;
-                const values = [
-                    this.name, this.description, this.sku, this.price,
-                    this.cost, this.category_id, this.supplier_id,
-                    this.brand, this.image_url, this.is_active, this.id
-                ];
-                const result = await client.query(query, values);
-                return new Product(result.rows[0]);
-            } else {
-                // INSERT
-                const query = `
-                    INSERT INTO products (name, description, sku, price, cost, 
-                        category_id, supplier_id, brand, image_url)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                    RETURNING *
-                `;
-                const values = [
-                    this.name, this.description, this.sku, this.price,
-                    this.cost, this.category_id, this.supplier_id,
-                    this.brand, this.image_url
-                ];
-                const result = await client.query(query, values);
-                return new Product(result.rows[0]);
-            }
-        } finally {
-            client.release();
-        }
+    // ============================================
+    // POLYMORPHISM METHODS (Required by BaseModel)
+    // ============================================
+    
+    /**
+     * Get fields for INSERT operation
+     * Each child class provides its own fields - This is POLYMORPHISM
+     */
+    _getInsertFields() {
+        return ['name', 'description', 'sku', 'price', 'cost',
+                'category_id', 'supplier_id', 'brand', 'image_url', 'is_active'];
+    }
+    
+    /**
+     * Get fields for UPDATE operation
+     */
+    _getUpdateFields() {
+        return ['name', 'description', 'sku', 'price', 'cost',
+                'category_id', 'supplier_id', 'brand', 'image_url', 'is_active'];
     }
 
-    static async findById(id) {
-        const client = await pool.connect();
-        try {
-            const result = await client.query(
-                `SELECT p.*, c.name as category_name, s.name as supplier_name 
-                 FROM products p
-                 LEFT JOIN categories c ON p.category_id = c.id
-                 LEFT JOIN suppliers s ON p.supplier_id = s.id
-                 WHERE p.id = $1`,
-                [id]
-            );
-            if (result.rows.length === 0) return null;
-            return new Product(result.rows[0]);
-        } finally {
-            client.release();
-        }
-    }
+    // ============================================
+    // STATIC METHODS (Keep existing, add BaseModel compatibility)
+    // ============================================
 
     static async findBySku(sku) {
         const client = await pool.connect();
@@ -145,52 +112,57 @@ class Product {
         }
     }
 
+    /**
+     * Override findAll to support product-specific filters
+     */
     static async findAll(filters = {}) {
         const client = await pool.connect();
         try {
-            let query = 'SELECT * FROM products WHERE 1=1';
+            let query = `
+                SELECT p.*, c.name as category_name, s.name as supplier_name
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN suppliers s ON p.supplier_id = s.id
+                WHERE 1=1
+            `;
             const values = [];
             let paramCount = 1;
 
             if (filters.category_id) {
-                query += ` AND category_id = $${paramCount++}`;
+                query += ` AND p.category_id = $${paramCount++}`;
                 values.push(filters.category_id);
             }
             if (filters.supplier_id) {
-                query += ` AND supplier_id = $${paramCount++}`;
+                query += ` AND p.supplier_id = $${paramCount++}`;
                 values.push(filters.supplier_id);
             }
             if (filters.is_active !== undefined) {
-                query += ` AND is_active = $${paramCount++}`;
+                query += ` AND p.is_active = $${paramCount++}`;
                 values.push(filters.is_active);
             }
             if (filters.search) {
-                query += ` AND (name ILIKE $${paramCount++} OR sku ILIKE $${paramCount++})`;
+                query += ` AND (p.name ILIKE $${paramCount++} OR p.sku ILIKE $${paramCount++})`;
                 values.push(`%${filters.search}%`, `%${filters.search}%`);
             }
-            query += ' ORDER BY name';
+            
+            query += ' ORDER BY p.name';
+            
+            if (filters.limit) {
+                query += ` LIMIT $${paramCount++}`;
+                values.push(filters.limit);
+            }
+            if (filters.offset) {
+                query += ` OFFSET $${paramCount++}`;
+                values.push(filters.offset);
+            }
 
             const result = await client.query(query, values);
-            return result.rows.map(row => new Product(row));
-        } finally {
-            client.release();
-        }
-    }
-
-    static async deleteById(id) {
-        const client = await pool.connect();
-        try {
-            // Check if product has inventory first
-            const inventoryCheck = await client.query(
-                'SELECT id FROM inventory WHERE product_id = $1 LIMIT 1',
-                [id]
-            );
-            if (inventoryCheck.rows.length > 0) {
-                throw new Error('Cannot delete product with existing inventory records');
-            }
-            
-            const result = await client.query('DELETE FROM products WHERE id = $1 RETURNING id', [id]);
-            return result.rows.length > 0;
+            return result.rows.map(row => {
+                const product = new Product(row);
+                product.category_name = row.category_name;
+                product.supplier_name = row.supplier_name;
+                return product;
+            });
         } finally {
             client.release();
         }
@@ -212,9 +184,13 @@ class Product {
         }
     }
 
+    // ============================================
+    // OVERRIDE toJSON (Include base fields + product-specific)
+    // ============================================
+    
     toJSON() {
         return {
-            id: this.id,
+            ...super.toJSON(),  // Includes id, created_at, updated_at
             name: this.name,
             description: this.description,
             sku: this.sku,
@@ -225,9 +201,7 @@ class Product {
             supplier_id: this.supplier_id,
             brand: this.brand,
             image_url: this.image_url,
-            is_active: this.is_active,
-            created_at: this.created_at,
-            updated_at: this.updated_at
+            is_active: this.is_active
         };
     }
 }
