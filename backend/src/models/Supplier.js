@@ -1,9 +1,12 @@
 // backend/src/models/Supplier.js
+// UPDATED: Inherits from BaseModel - Demonstrates INHERITANCE in OOP
+
+const { BaseModel } = require('./BaseModel');
 const pool = require('../db/pool');
 
-class Supplier {
+class Supplier extends BaseModel {
     constructor(data) {
-        this.id = data.id || null;
+        super('suppliers', data);  // Call parent constructor with table name
         this.name = data.name;
         this.contact_person = data.contact_person || null;
         this.phone = data.phone || null;
@@ -17,11 +20,12 @@ class Supplier {
         this.total_orders = data.total_orders || 0;
         this.on_time_deliveries = data.on_time_deliveries || 0;
         this.is_active = data.is_active !== undefined ? data.is_active : true;
-        this.created_at = data.created_at || null;
-        this.updated_at = data.updated_at || null;
     }
 
-    getId() { return this.id; }
+    // ============================================
+    // BUSINESS LOGIC METHODS (KEEP ALL EXISTING)
+    // ============================================
+    
     getName() { return this.name; }
     getRating() { return this.rating; }
     
@@ -35,89 +39,131 @@ class Supplier {
         if (onTime) {
             this.on_time_deliveries++;
         }
-        this.rating = this.getOnTimeDeliveryRate() / 20;
+        this.rating = this.getOnTimeDeliveryRate() / 20;  // Scale to 0-5
+    }
+    
+    /**
+     * Get performance grade (for UI display)
+     */
+    getPerformanceGrade() {
+        const rate = this.getOnTimeDeliveryRate();
+        if (rate >= 95) return { grade: 'Excellent', color: 'success' };
+        if (rate >= 85) return { grade: 'Good', color: 'info' };
+        if (rate >= 70) return { grade: 'Average', color: 'warning' };
+        return { grade: 'Poor', color: 'danger' };
     }
 
-    async save() {
-        const client = await pool.connect();
-        try {
-            if (this.id) {
-                const query = `
-                    UPDATE suppliers 
-                    SET name = $1, contact_person = $2, phone = $3, email = $4,
-                        address = $5, tax_id = $6, payment_terms = $7,
-                        lead_time_days = $8, minimum_order = $9, rating = $10,
-                        total_orders = $11, on_time_deliveries = $12, is_active = $13,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = $14
-                    RETURNING *
-                `;
-                const values = [
-                    this.name, this.contact_person, this.phone, this.email,
-                    this.address, this.tax_id, this.payment_terms,
-                    this.lead_time_days, this.minimum_order, this.rating,
-                    this.total_orders, this.on_time_deliveries, this.is_active, this.id
-                ];
-                const result = await client.query(query, values);
-                return new Supplier(result.rows[0]);
-            } else {
-                const query = `
-                    INSERT INTO suppliers (name, contact_person, phone, email, address,
-                        tax_id, payment_terms, lead_time_days, minimum_order)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                    RETURNING *
-                `;
-                const values = [
-                    this.name, this.contact_person, this.phone, this.email,
-                    this.address, this.tax_id, this.payment_terms,
-                    this.lead_time_days, this.minimum_order
-                ];
-                const result = await client.query(query, values);
-                return new Supplier(result.rows[0]);
-            }
-        } finally {
-            client.release();
-        }
+    // ============================================
+    // POLYMORPHISM METHODS (Required by BaseModel)
+    // ============================================
+    
+    /**
+     * Get fields for INSERT operation
+     */
+    _getInsertFields() {
+        return ['name', 'contact_person', 'phone', 'email', 'address',
+                'tax_id', 'payment_terms', 'lead_time_days', 'minimum_order',
+                'rating', 'total_orders', 'on_time_deliveries', 'is_active'];
+    }
+    
+    /**
+     * Get fields for UPDATE operation
+     */
+    _getUpdateFields() {
+        return ['name', 'contact_person', 'phone', 'email', 'address',
+                'tax_id', 'payment_terms', 'lead_time_days', 'minimum_order',
+                'rating', 'total_orders', 'on_time_deliveries', 'is_active'];
     }
 
-    static async findById(id) {
+    // ============================================
+    // STATIC METHODS (Keep existing)
+    // ============================================
+    
+    /**
+     * Find suppliers with product count (for dashboard)
+     */
+    static async findAllWithProductCount(filters = {}) {
         const client = await pool.connect();
         try {
-            const result = await client.query('SELECT * FROM suppliers WHERE id = $1', [id]);
-            if (result.rows.length === 0) return null;
-            return new Supplier(result.rows[0]);
-        } finally {
-            client.release();
-        }
-    }
-
-    static async findAll(filters = {}) {
-        const client = await pool.connect();
-        try {
-            let query = 'SELECT * FROM suppliers WHERE 1=1';
+            let query = `
+                SELECT s.*, COUNT(p.id) as product_count
+                FROM suppliers s
+                LEFT JOIN products p ON p.supplier_id = s.id
+                WHERE 1=1
+            `;
             const values = [];
             let paramCount = 1;
 
             if (filters.is_active !== undefined) {
-                query += ` AND is_active = $${paramCount++}`;
+                query += ` AND s.is_active = $${paramCount++}`;
                 values.push(filters.is_active);
             }
             if (filters.search) {
-                query += ` AND (name ILIKE $${paramCount++} OR contact_person ILIKE $${paramCount++})`;
+                query += ` AND (s.name ILIKE $${paramCount++} OR s.contact_person ILIKE $${paramCount++})`;
                 values.push(`%${filters.search}%`, `%${filters.search}%`);
             }
-            query += ' ORDER BY rating DESC, name';
+            
+            query += ` GROUP BY s.id ORDER BY s.rating DESC`;
+            
+            if (filters.limit) {
+                query += ` LIMIT $${paramCount++}`;
+                values.push(filters.limit);
+            }
 
             const result = await client.query(query, values);
-            return result.rows.map(row => new Supplier(row));
+            return result.rows;
+        } finally {
+            client.release();
+        }
+    }
+    
+    /**
+     * Get products supplied by this supplier
+     */
+    async getProducts(limit = 20) {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `SELECT id, name, sku, price, cost, is_active
+                 FROM products
+                 WHERE supplier_id = $1
+                 LIMIT $2`,
+                [this.id, limit]
+            );
+            return result.rows;
+        } finally {
+            client.release();
+        }
+    }
+    
+    /**
+     * Get purchase order history for this supplier
+     */
+    async getPurchaseOrderHistory(limit = 10) {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `SELECT id, po_number, status, total_amount, created_at, expected_delivery
+                 FROM supply_orders
+                 WHERE supplier_id = $1
+                 ORDER BY created_at DESC
+                 LIMIT $2`,
+                [this.id, limit]
+            );
+            return result.rows;
         } finally {
             client.release();
         }
     }
 
+    // ============================================
+    // OVERRIDE toJSON (Include base fields + supplier-specific)
+    // ============================================
+    
     toJSON() {
+        const performance = this.getPerformanceGrade();
         return {
-            id: this.id,
+            ...super.toJSON(),  // Includes id, created_at, updated_at
             name: this.name,
             contact_person: this.contact_person,
             phone: this.phone,
@@ -128,11 +174,12 @@ class Supplier {
             lead_time_days: this.lead_time_days,
             minimum_order: this.minimum_order,
             rating: this.rating,
-            on_time_delivery_rate: this.getOnTimeDeliveryRate(),
             total_orders: this.total_orders,
-            is_active: this.is_active,
-            created_at: this.created_at,
-            updated_at: this.updated_at
+            on_time_deliveries: this.on_time_deliveries,
+            on_time_delivery_rate: this.getOnTimeDeliveryRate(),
+            performance_grade: performance.grade,
+            performance_color: performance.color,
+            is_active: this.is_active
         };
     }
 }
