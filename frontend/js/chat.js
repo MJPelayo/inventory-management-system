@@ -98,7 +98,7 @@ class ChatSystem {
         if (!message) return;
         
         try {
-            await apiCall('/system/messages', {
+            await apiCall('/api/messages', {
                 method: 'POST',
                 body: JSON.stringify({
                     recipient_role: recipient === 'all' ? null : recipient,
@@ -115,7 +115,7 @@ class ChatSystem {
     async loadMessages() {
         const container = document.getElementById('chatMessagesPanel');
         try {
-            const response = await apiCall('/system/messages');
+            const response = await apiCall('/api/messages');
             const messages = response.data || [];
             
             if (messages.length === 0) {
@@ -140,7 +140,7 @@ class ChatSystem {
     async loadRequests() {
         const container = document.getElementById('chatRequestsPanel');
         try {
-            const response = await apiCall('/system/requests?status=pending');
+            const response = await apiCall('/api/requests?status=pending');
             const requests = response.data || [];
             
             if (requests.length === 0) {
@@ -170,7 +170,7 @@ class ChatSystem {
     async loadNotifications() {
         const container = document.getElementById('chatNotificationsPanel');
         try {
-            const response = await apiCall('/system/notifications');
+            const response = await apiCall('/api/notifications');
             const notifications = response.data || [];
             
             if (notifications.length === 0) {
@@ -193,7 +193,7 @@ class ChatSystem {
     
     async loadUnreadCount() {
         try {
-            const response = await apiCall('/system/messages/unread');
+            const response = await apiCall('/api/messages/unread');
             const count = response.count || 0;
             const badge = document.getElementById('chatBadge');
             if (badge) {
@@ -211,7 +211,7 @@ class ChatSystem {
     
     async approveRequest(requestId) {
         try {
-            await apiCall(`/system/requests/${requestId}/approve`, { method: 'POST' });
+            await apiCall(`/api/requests/${requestId}/approve`, { method: 'POST' });
             this.loadRequests();
             showToast('Request approved', 'success');
         } catch (error) {
@@ -221,7 +221,7 @@ class ChatSystem {
     
     async denyRequest(requestId) {
         try {
-            await apiCall(`/system/requests/${requestId}/deny`, { method: 'POST' });
+            await apiCall(`/api/requests/${requestId}/deny`, { method: 'POST' });
             this.loadRequests();
             showToast('Request denied', 'info');
         } catch (error) {

@@ -70,6 +70,33 @@ app.use('/api/requests', authenticateToken, require('./routes/requestRoutes'));
 // Notification routes
 app.use('/api/notifications', authenticateToken, require('./routes/notificationRoutes'));
 
+// ============================================
+// SYSTEM ROUTES (for frontend compatibility)
+// ============================================
+
+// Message routes (already have)
+app.use('/api/messages', authenticateToken, require('./routes/messageRoutes'));
+
+// System aliases for frontend
+app.use('/api/system/messages', authenticateToken, require('./routes/messageRoutes'));
+app.use('/api/system/requests', authenticateToken, require('./routes/requestRoutes'));
+app.use('/api/system/notifications', authenticateToken, require('./routes/notificationRoutes'));
+
+// Also add unread count endpoint for messages
+app.get('/api/system/messages/unread', authenticateToken, async (req, res) => {
+    try {
+        const pool = require('./db/pool');
+        const result = await pool.query(
+            `SELECT COUNT(*) as count FROM internal_messages
+             WHERE recipient_id = $1 AND is_read = false`,
+            [req.user.id]
+        );
+        res.json({ success: true, count: parseInt(result.rows[0].count) });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Health check (public endpoint)
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });

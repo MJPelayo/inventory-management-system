@@ -306,7 +306,7 @@ async function requestDeleteSupplier(supplierId, supplierName) {
             status: 'pending'
         };
         
-        await apiCall('/system/requests', {
+        await apiCall('/api/requests', {
             method: 'POST',
             body: JSON.stringify(requestData)
         });
