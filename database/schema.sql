@@ -21,6 +21,7 @@ CREATE TYPE user_role AS ENUM ('admin', 'sales', 'warehouse', 'supply');
 CREATE TYPE order_status AS ENUM ('pending', 'processing', 'ready', 'in_transit', 'delivered', 'cancelled');
 CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'failed', 'refunded');
 CREATE TYPE movement_type AS ENUM ('received', 'sold', 'transferred', 'adjusted', 'returned');
+CREATE TYPE permission_level AS ENUM ('none', 'read', 'create', 'edit', 'delete', 'full');
 
 -- =====================================================
 -- 1. users table
@@ -38,6 +39,7 @@ CREATE TABLE users (
     shift VARCHAR(20),
     purchase_budget DECIMAL(12,2),
     is_active BOOLEAN DEFAULT TRUE,
+    is_protected BOOLEAN DEFAULT FALSE,
     last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -319,6 +321,32 @@ CREATE TABLE IF NOT EXISTS internal_messages (
 );
 
 -- =====================================================
+-- 18. user_permissions - Granular permission controls per module
+-- =====================================================
+CREATE TABLE IF NOT EXISTS user_permissions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    module VARCHAR(50) NOT NULL, -- 'products', 'suppliers', 'warehouses', 'users', 'reports', 'orders', 'inventory'
+    permission permission_level DEFAULT 'none',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, module)
+);
+
+-- =====================================================
+-- 19. permission_audit_log - Track permission changes
+-- =====================================================
+CREATE TABLE IF NOT EXISTS permission_audit_log (
+    id SERIAL PRIMARY KEY,
+    changed_by INTEGER REFERENCES users(id),
+    changed_for INTEGER REFERENCES users(id),
+    module VARCHAR(50),
+    old_permission permission_level,
+    new_permission permission_level,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
 -- INDEXES for performance
 -- =====================================================
 CREATE INDEX idx_users_email ON users(email);
@@ -336,6 +364,9 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_product_requests_status ON product_requests(status);
 CREATE INDEX IF NOT EXISTS idx_product_requests_requested_by ON product_requests(requested_by);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_user ON user_permissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_module ON user_permissions(module);
+CREATE INDEX IF NOT EXISTS idx_permission_audit_log_changed_for ON permission_audit_log(changed_for);
 
 -- =====================================================
 -- TRIGGER FUNCTION for updated_at
@@ -357,15 +388,56 @@ CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW
 CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON inventory FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_sales_orders_updated_at BEFORE UPDATE ON sales_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_supply_orders_updated_at BEFORE UPDATE ON supply_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON user_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- SAMPLE DATA (for testing)
 -- =====================================================
-INSERT INTO users (name, email, password_hash, role) VALUES 
+INSERT INTO users (name, email, password_hash, role) VALUES
 ('Admin User', 'admin@ims.com', 'admin123', 'admin'),
 ('Sales Manager', 'sales@ims.com', 'sales123', 'sales'),
 ('Warehouse Manager', 'warehouse@ims.com', 'warehouse123', 'warehouse'),
 ('Supply Manager', 'supply@ims.com', 'supply123', 'supply');
+
+-- Mark admin as protected
+UPDATE users SET is_protected = TRUE WHERE email = 'admin@ims.com';
+
+-- =====================================================
+-- DEFAULT PERMISSIONS FOR ROLES
+-- =====================================================
+
+-- Admin gets full access to all modules
+INSERT INTO user_permissions (user_id, module, permission) SELECT id, module, 'full' FROM generate_series(1,1) AS u(id), (VALUES ('products'),('suppliers'),('warehouses'),('users'),('reports'),('orders'),('inventory')) AS m(module) WHERE u.id = (SELECT id FROM users WHERE email = 'admin@ims.com');
+
+-- Sales permissions
+INSERT INTO user_permissions (user_id, module, permission) VALUES
+((SELECT id FROM users WHERE email = 'sales@ims.com'), 'products', 'read'),
+((SELECT id FROM users WHERE email = 'sales@ims.com'), 'orders', 'full'),
+((SELECT id FROM users WHERE email = 'sales@ims.com'), 'inventory', 'read'),
+((SELECT id FROM users WHERE email = 'sales@ims.com'), 'reports', 'read'),
+((SELECT id FROM users WHERE email = 'sales@ims.com'), 'suppliers', 'none'),
+((SELECT id FROM users WHERE email = 'sales@ims.com'), 'warehouses', 'none'),
+((SELECT id FROM users WHERE email = 'sales@ims.com'), 'users', 'none');
+
+-- Warehouse permissions
+INSERT INTO user_permissions (user_id, module, permission) VALUES
+((SELECT id FROM users WHERE email = 'warehouse@ims.com'), 'products', 'read'),
+((SELECT id FROM users WHERE email = 'warehouse@ims.com'), 'inventory', 'full'),
+((SELECT id FROM users WHERE email = 'warehouse@ims.com'), 'warehouses', 'read'),
+((SELECT id FROM users WHERE email = 'warehouse@ims.com'), 'orders', 'read'),
+((SELECT id FROM users WHERE email = 'warehouse@ims.com'), 'reports', 'read'),
+((SELECT id FROM users WHERE email = 'warehouse@ims.com'), 'suppliers', 'none'),
+((SELECT id FROM users WHERE email = 'warehouse@ims.com'), 'users', 'none');
+
+-- Supply permissions
+INSERT INTO user_permissions (user_id, module, permission) VALUES
+((SELECT id FROM users WHERE email = 'supply@ims.com'), 'products', 'create'),
+((SELECT id FROM users WHERE email = 'supply@ims.com'), 'suppliers', 'full'),
+((SELECT id FROM users WHERE email = 'supply@ims.com'), 'inventory', 'read'),
+((SELECT id FROM users WHERE email = 'supply@ims.com'), 'orders', 'read'),
+((SELECT id FROM users WHERE email = 'supply@ims.com'), 'reports', 'read'),
+((SELECT id FROM users WHERE email = 'supply@ims.com'), 'warehouses', 'none'),
+((SELECT id FROM users WHERE email = 'supply@ims.com'), 'users', 'none');
 
 INSERT INTO warehouses (name, location, capacity) VALUES
 ('Main Warehouse', '123 Main St, City', 10000),
