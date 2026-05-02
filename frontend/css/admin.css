@@ -224,11 +224,18 @@
 /* STATS CHIPS */
 /* ============================================ */
 
+/* User Stats */
+.user-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .stat-chip {
     padding: 4px 12px;
     background: var(--bg-tertiary);
     border-radius: 9999px;
-    font-size: 0.75rem;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-secondary);
 }
@@ -236,6 +243,34 @@
 .stat-chip.warning {
     background: var(--warning-bg);
     color: var(--warning);
+}
+
+/* Role Badges */
+.badge-admin {
+    background: var(--accent-primary-light);
+    color: var(--accent-primary);
+}
+.badge-sales {
+    background: var(--success-bg);
+    color: var(--success);
+}
+.badge-warehouse {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+.badge-supply {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+.badge-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* Mono font for emails */
+.mono {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
 }
 
 /* ============================================ */
@@ -347,6 +382,17 @@
     display: flex;
     gap: 8px;
     align-items: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-actions {
+        justify-content: flex-end;
+    }
 }
 
 /* ============================================ */
