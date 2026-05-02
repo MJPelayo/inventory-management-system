@@ -7,6 +7,7 @@ let productsTable = null;
 let currentProductId = null;
 let categoriesList = [];
 let suppliersList = [];
+let viewMode = 'table'; // 'table' or 'card'
 
 // ============================================
 // PAGE INITIALIZATION
@@ -109,6 +110,12 @@ function getMarginBadgeClass(margin) {
     return 'badge-danger';
 }
 
+function getMarginClass(margin) {
+    if (margin >= 40) return 'good';
+    if (margin >= 20) return 'warn';
+    return 'bad';
+}
+
 // ============================================
 // UPDATE MARGIN PREVIEW (NEW from Version B)
 // ============================================
@@ -151,54 +158,217 @@ async function loadProducts() {
         const response = await apiCall(query);
         const products = response.data || [];
         
-        const formattedProducts = products.map(p => {
-            const margin = calcMargin(p.price, p.cost);
-            return {
-                id: p.id,
-                name: `<div class="product-name">${escapeHtml(p.name)}</div>${p.description ? `<div class="product-desc">${escapeHtml(p.description.substring(0, 50))}</div>` : ''}`,
-                sku: `<span class="mono">${escapeHtml(p.sku)}</span>`,
-                brand: escapeHtml(p.brand || '—'),
-                category: escapeHtml(p.category_name || '—'),
-                price: `$${parseFloat(p.price).toFixed(2)}`,
-                cost: `$${parseFloat(p.cost).toFixed(2)}`,
-                margin: `<span class="badge ${getMarginBadgeClass(margin)}">${margin.toFixed(1)}%</span>`,
-                status: p.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'
-            };
-        });
-        
-        const columns = [
-            { key: 'id', label: 'ID' },
-            { key: 'name', label: 'Product' },
-            { key: 'sku', label: 'SKU' },
-            { key: 'brand', label: 'Brand' },
-            { key: 'category', label: 'Category' },
-            { key: 'price', label: 'Price' },
-            { key: 'cost', label: 'Cost' },
-            { key: 'margin', label: 'Margin' },
-            { key: 'status', label: 'Status' }
-        ];
-        
-        if (productsTable) {
-            productsTable.setData(formattedProducts);
-        } else {
-            productsTable = new DataTable('productsTable', columns, {
-                itemsPerPage: 10,
-                searchable: false,
-                sortable: true,
-                onEdit: (id) => openProductModal(id),
-                onDelete: (id) => deleteProduct(id),
-                onView: (id) => viewProductDetails(id)
-            });
-            productsTable.setData(formattedProducts);
-        }
-        
         updateProductStats(products);
+        
+        // Route to appropriate view based on viewMode
+        if (viewMode === 'card') {
+            displayProductsCardView(products);
+        } else {
+            displayProductsTableView(products);
+        }
         
     } catch (error) {
         console.error('Failed to load products:', error);
         const container = document.getElementById('productsTable');
         if (container) container.innerHTML = '<div class="error-state">Failed to load products</div>';
     }
+}
+
+// ============================================
+// TABLE VIEW (DataTable)
+// ============================================
+function displayProductsTableView(products) {
+    const formattedProducts = products.map(p => {
+        const margin = calcMargin(p.price, p.cost);
+        return {
+            id: p.id,
+            name: `<div class="product-name">${escapeHtml(p.name)}</div>${p.description ? `<div class="product-desc">${escapeHtml(p.description.substring(0, 50))}</div>` : ''}`,
+            sku: `<span class="mono">${escapeHtml(p.sku)}</span>`,
+            brand: escapeHtml(p.brand || '—'),
+            category: escapeHtml(p.category_name || '—'),
+            price: `$${parseFloat(p.price).toFixed(2)}`,
+            cost: `$${parseFloat(p.cost).toFixed(2)}`,
+            margin: `<span class="badge ${getMarginBadgeClass(margin)}">${margin.toFixed(1)}%</span>`,
+            status: p.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'
+        };
+    });
+    
+    const columns = [
+        { key: 'id', label: 'ID' },
+        { key: 'name', label: 'Product' },
+        { key: 'sku', label: 'SKU' },
+        { key: 'brand', label: 'Brand' },
+        { key: 'category', label: 'Category' },
+        { key: 'price', label: 'Price' },
+        { key: 'cost', label: 'Cost' },
+        { key: 'margin', label: 'Margin' },
+        { key: 'status', label: 'Status' }
+    ];
+    
+    if (productsTable) {
+        productsTable.setData(formattedProducts);
+    } else {
+        productsTable = new DataTable('productsTable', columns, {
+            itemsPerPage: 10,
+            searchable: false,
+            sortable: true,
+            onEdit: (id) => openProductModal(id),
+            onDelete: (id) => deleteProduct(id),
+            onView: (id) => viewProductDetails(id)
+        });
+        productsTable.setData(formattedProducts);
+    }
+}
+
+// ============================================
+// CARD VIEW
+// ============================================
+function displayProductsCardView(products) {
+    const container = document.getElementById('productsTable');
+    if (!container) return;
+    
+    if (products.length === 0) {
+        container.innerHTML = '<div class="empty-state">No products found</div>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="products-card-grid">
+            ${products.map(product => `
+                <div class="product-card">
+                    <div class="card-header">
+                        <h3 class="product-name">${escapeHtml(product.name)}</h3>
+                        <span class="product-sku">${escapeHtml(product.sku)}</span>
+                    </div>
+                    <div class="card-body">
+                        ${product.brand ? `<div class="product-brand">${escapeHtml(product.brand)}</div>` : ''}
+                        <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                        <div class="product-margin ${getMarginClass(calcMargin(product.price, product.cost))}">
+                            Margin: ${calcMargin(product.price, product.cost).toFixed(1)}%
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn-sm" onclick="editProduct(${product.id})">Edit</button>
+                        <button class="btn-sm btn-danger" onclick="deleteProduct(${product.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Add CSS for card grid if not present
+    if (!document.querySelector('#cardGridStyles')) {
+        const style = document.createElement('style');
+        style.id = 'cardGridStyles';
+        style.textContent = `
+            .products-card-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+                padding: 16px;
+            }
+            .product-card {
+                background: var(--surface, #ffffff);
+                border: 1px solid var(--border, #e2e8f0);
+                border-radius: 12px;
+                padding: 16px;
+                transition: all 0.2s;
+                display: flex;
+                flex-direction: column;
+            }
+            .product-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+            }
+            .product-card .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 12px;
+                padding: 0;
+                background: none;
+                border: none;
+            }
+            .product-card .card-header h3 {
+                margin: 0;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+            .product-card .card-body {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+            .product-card .card-footer {
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                padding-top: 12px;
+                border-top: 1px solid var(--border-light, #e2e8f0);
+            }
+            .product-sku {
+                font-family: 'DM Mono', monospace;
+                font-size: 0.75rem;
+                color: var(--text-muted, #64748b);
+                background: var(--bg-tertiary, #f1f5f9);
+                padding: 2px 6px;
+                border-radius: 4px;
+            }
+            .product-brand {
+                font-size: 0.875rem;
+                color: var(--text-secondary, #475569);
+            }
+            .product-price {
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: var(--text-primary, #1e293b);
+            }
+            .product-margin {
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+            .product-margin.good { color: var(--success, #16a34a); }
+            .product-margin.warn { color: var(--warning, #ca8a04); }
+            .product-margin.bad { color: var(--danger, #dc2626); }
+            .btn-sm {
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                border: 1px solid var(--border, #e2e8f0);
+                background: var(--surface, #ffffff);
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .btn-sm:hover {
+                background: var(--bg-tertiary, #f1f5f9);
+            }
+            .btn-sm.btn-danger {
+                color: var(--danger, #dc2626);
+                border-color: var(--danger, #dc2626);
+            }
+            .btn-sm.btn-danger:hover {
+                background: var(--danger, #dc2626);
+                color: white;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// ============================================
+// TOGGLE VIEW MODE
+// ============================================
+function toggleViewMode() {
+    const toggleBtn = document.getElementById('viewToggle');
+    viewMode = viewMode === 'table' ? 'card' : 'table';
+    
+    if (toggleBtn) {
+        toggleBtn.textContent = viewMode === 'table' ? '📋 Table View' : '🃏 Card View';
+    }
+    
+    loadProducts(); // Reload with new view mode
 }
 
 function updateProductStats(products) {
@@ -526,5 +696,7 @@ window.openBulkPriceModal = openBulkPriceModal;
 window.closeBulkPriceModal = closeBulkPriceModal;
 window.applyBulkPriceUpdate = applyBulkPriceUpdate;
 window.updateMarginPreview = updateMarginPreview;
+window.toggleViewMode = toggleViewMode;
+window.editProduct = (id) => openProductModal(id);
 
 console.log('✅ Admin Products module loaded');

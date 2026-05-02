@@ -284,6 +284,41 @@ INSERT INTO adjustment_reasons (reason_code, description, requires_approval) VAL
 ('RETURN_TO_SUPPLIER', 'Returning defective items to supplier', FALSE);
 
 -- =====================================================
+-- 16. internal_requests - Cross-role request system
+-- =====================================================
+CREATE TABLE IF NOT EXISTS internal_requests (
+    id SERIAL PRIMARY KEY,
+    request_type VARCHAR(50) NOT NULL, -- 'DELETE_SUPPLIER', 'DISCOUNT_APPROVAL', 'STOCK_ADJUSTMENT', 'PRODUCT_REQUEST'
+    entity_type VARCHAR(50),
+    entity_id INTEGER,
+    entity_name VARCHAR(200),
+    reason TEXT,
+    requested_by INTEGER REFERENCES users(id),
+    requested_by_name VARCHAR(100),
+    target_role VARCHAR(50), -- 'admin', 'supply', 'warehouse', 'sales'
+    status VARCHAR(20) DEFAULT 'pending',
+    admin_notes TEXT,
+    resolved_by INTEGER REFERENCES users(id),
+    resolved_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 17. internal_messages - Internal messaging/chat system
+-- =====================================================
+CREATE TABLE IF NOT EXISTS internal_messages (
+    id SERIAL PRIMARY KEY,
+    sender_id INTEGER REFERENCES users(id),
+    sender_name VARCHAR(100),
+    sender_role VARCHAR(50),
+    recipient_role VARCHAR(50), -- All, specific role, or specific user
+    recipient_id INTEGER,
+    subject VARCHAR(200),
+    message TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
 -- INDEXES for performance
 -- =====================================================
 CREATE INDEX idx_users_email ON users(email);

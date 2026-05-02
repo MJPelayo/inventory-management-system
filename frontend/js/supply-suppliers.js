@@ -7,6 +7,22 @@
  */
 
 // ============================================
+// SUPPLIER PERMISSIONS CHECK
+// ============================================
+function checkSupplierPermissions(supplierId = null) {
+    const user = auth.getCurrentUser();
+    const isSupply = user.role === 'supply';
+    const isAdmin = user.role === 'admin';
+    
+    return {
+        canAdd: isSupply || isAdmin,
+        canEdit: isSupply || isAdmin,
+        canDelete: isAdmin, // Only admin can delete
+        canRequestDelete: isSupply // Supply can request deletion
+    };
+}
+
+// ============================================
 // GLOBAL VARIABLES
 // ============================================
 let allSuppliers = [];
@@ -147,6 +163,18 @@ function displaySuppliers() {
                     else if (onTimeRate >= 75) performanceClass = 'badge-warning';
                     else performanceClass = 'badge-danger';
                     
+                    const permissions = checkSupplierPermissions(supplier.id);
+                    
+                    const actionButtons = `
+                        <button class="btn-icon" onclick="viewSupplierDetail(${supplier.id})" title="View Details">👁️</button>
+                        ${permissions.canEdit ? `<button class="btn-icon" onclick="editSupplier(${supplier.id})" title="Edit">✏️</button>` : ''}
+                        ${permissions.canDelete ?
+                            `<button class="btn-icon btn-danger" onclick="deleteSupplier(${supplier.id})" title="Delete">🗑️</button>` :
+                            (permissions.canRequestDelete ?
+                                `<button class="btn-icon" onclick="requestDeleteSupplier(${supplier.id}, '${escapeHtml(supplier.name)}')" title="Request Deletion">📨</button>` : '')
+                        }
+                    `;
+                    
                     return `
                         <tr>
                             <td><strong>${escapeHtml(supplier.name)}</strong><br><small>${escapeHtml(supplier.email || '—')}</small></td>
@@ -155,11 +183,8 @@ function displaySuppliers() {
                             <td><span class="badge ${performanceClass}">${onTimeRate.toFixed(0)}%</span></td>
                             <td>${supplier.lead_time_days || 7} days</td>
                             <td>${supplier.is_active ? '<span class="badge-success">Active</span>' : '<span class="badge-danger">Inactive</span>'}</td>
-                            <td>
-                                <button class="btn-icon" onclick="viewSupplierDetail(${supplier.id})" title="View Details">👁️</button>
-                                <button class="btn-icon" onclick="editSupplier(${supplier.id})" title="Edit">✏️</button>
-                             </td>
-                         </tr>
+                            <td>${actionButtons}</td>
+                          </tr>
                     `;
                 }).join('')}
             </tbody>
@@ -262,6 +287,68 @@ async function viewSupplierDetail(supplierId) {
 }
 
 // ============================================
+// REQUEST DELETE SUPPLIER (for supply role)
+// ============================================
+async function requestDeleteSupplier(supplierId, supplierName) {
+    const reason = prompt(`Why do you want to delete supplier "${supplierName}"?\n\nProvide reason for admin review:`);
+    if (!reason) return;
+    
+    try {
+        // Send request to admin via notification system
+        const requestData = {
+            type: 'DELETE_SUPPLIER',
+            entity_type: 'supplier',
+            entity_id: supplierId,
+            entity_name: supplierName,
+            reason: reason,
+            requested_by: auth.getCurrentUser().id,
+            requested_by_name: auth.getCurrentUser().name,
+            status: 'pending'
+        };
+        
+        await apiCall('/system/requests', {
+            method: 'POST',
+            body: JSON.stringify(requestData)
+        });
+        
+        showToast(`Deletion request sent to admin for "${supplierName}"`, 'success');
+        
+        // Remove from local list
+        allSuppliers = allSuppliers.filter(s => s.id !== supplierId);
+        displaySuppliers();
+        
+    } catch (error) {
+        console.error('Failed to send deletion request:', error);
+        showToast('Failed to send request. Please try again.', 'error');
+    }
+}
+
+// ============================================
+// DELETE SUPPLIER (admin only - called from permission-checked buttons)
+// ============================================
+async function deleteSupplier(supplierId) {
+    const supplier = allSuppliers.find(s => s.id === supplierId);
+    const supplierName = supplier ? supplier.name : 'this supplier';
+    
+    if (!confirm(`Are you sure you want to delete supplier "${supplierName}"? This action cannot be undone.`)) return;
+    
+    try {
+        await apiCall(`/suppliers/${supplierId}`, { method: 'DELETE' });
+        showToast('Supplier deleted successfully', 'success');
+        
+        // Remove from local list and refresh
+        allSuppliers = allSuppliers.filter(s => s.id !== supplierId);
+        document.getElementById('supplierCount').textContent = `${allSuppliers.length} suppliers`;
+        displaySuppliers();
+        await loadSupplierStats();
+        
+    } catch (error) {
+        console.error('Failed to delete supplier:', error);
+        showToast('Failed to delete supplier', 'error');
+    }
+}
+
+// ============================================
 // EDIT SUPPLIER (redirect to admin panel or inline edit)
 // ============================================
 function editSupplier(supplierId) {
@@ -284,7 +371,109 @@ function closeSupplierDetailModal() {
 // OPEN ADD SUPPLIER MODAL
 // ============================================
 function openSupplierModal() {
-    window.location.href = '/pages/admin/suppliers.html';
+    const permissions = checkSupplierPermissions();
+    
+    if (permissions.canAdd) {
+        // Allow supply to add suppliers directly with limited fields
+        const modalHtml = `
+            <div class="modal-content" style="max-width: 650px;">
+                <div class="modal-header">
+                    <h2>Add New Supplier</h2>
+                    <button class="close-btn" onclick="closeAddSupplierModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSupplierFormSupply">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Supplier Name *</label>
+                                <input type="text" id="supplySupplierName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Person</label>
+                                <input type="text" id="supplyContactPerson">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="supplyPhone">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="supplyEmail">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea id="supplyAddress" rows="2"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Payment Terms</label>
+                                <input type="text" id="supplyPaymentTerms" placeholder="e.g., Net 30">
+                            </div>
+                            <div class="form-group">
+                                <label>Lead Time (days)</label>
+                                <input type="number" id="supplyLeadTime" value="7">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" onclick="closeAddSupplierModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveNewSupplier()">Save Supplier</button>
+                </div>
+            </div>
+        `;
+        
+        const modal = document.createElement('div');
+        modal.id = 'addSupplierModalSupply';
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = modalHtml;
+        document.body.appendChild(modal);
+    } else {
+        window.location.href = '/pages/admin/suppliers.html';
+    }
+}
+
+async function saveNewSupplier() {
+    const supplierData = {
+        name: document.getElementById('supplySupplierName').value.trim(),
+        contact_person: document.getElementById('supplyContactPerson').value.trim() || null,
+        phone: document.getElementById('supplyPhone').value.trim() || null,
+        email: document.getElementById('supplyEmail').value.trim() || null,
+        address: document.getElementById('supplyAddress').value.trim() || null,
+        payment_terms: document.getElementById('supplyPaymentTerms').value.trim() || null,
+        lead_time_days: parseInt(document.getElementById('supplyLeadTime').value) || 7,
+        is_active: true
+    };
+    
+    if (!supplierData.name) {
+        showToast('Supplier name is required', 'error');
+        return;
+    }
+    
+    try {
+        const response = await apiCall('/suppliers', {
+            method: 'POST',
+            body: JSON.stringify(supplierData)
+        });
+        
+        if (response.success) {
+            showToast('Supplier added successfully', 'success');
+            closeAddSupplierModal();
+            await loadSuppliers();
+            await loadSupplierStats();
+        }
+    } catch (error) {
+        showToast(error.message || 'Failed to add supplier', 'error');
+    }
+}
+
+function closeAddSupplierModal() {
+    const modal = document.getElementById('addSupplierModalSupply');
+    if (modal) modal.remove();
 }
 
 // ============================================
@@ -358,12 +547,18 @@ function showToast(message, type = 'info') {
 // ============================================
 // EXPORT FUNCTIONS TO GLOBAL SCOPE
 // ============================================
+window.checkSupplierPermissions = checkSupplierPermissions;
 window.viewSupplierDetail = viewSupplierDetail;
 window.closeSupplierDetailModal = closeSupplierDetailModal;
 window.editFromDetail = editFromDetail;
+window.editSupplier = editSupplier;
 window.openSupplierModal = openSupplierModal;
+window.saveNewSupplier = saveNewSupplier;
+window.closeAddSupplierModal = closeAddSupplierModal;
 window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.goToPage = goToPage;
+window.requestDeleteSupplier = requestDeleteSupplier;
+window.deleteSupplier = deleteSupplier;
 
 console.log('✅ Supply Suppliers module loaded');
