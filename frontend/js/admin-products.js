@@ -1,6 +1,5 @@
 // frontend/js/admin-products.js
 
-
 // ============================================
 // GLOBAL VARIABLES
 // ============================================
@@ -8,7 +7,6 @@ let productsTable = null;
 let currentProductId = null;
 let categoriesList = [];
 let suppliersList = [];
-let warehousesList = [];
 
 // ============================================
 // PAGE INITIALIZATION
@@ -16,7 +14,6 @@ let warehousesList = [];
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Admin Products page loading...');
     
-    // Check authentication and role
     if (!auth.isLoggedIn()) {
         window.location.href = '/index.html';
         return;
@@ -28,67 +25,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    // Initialize header and sidebar
     new Header('appHeader');
     new Sidebar('sidebar', 'products');
     
-    // Load all dropdown data
     await loadDropdownData();
-    
-    // Load products table
     await loadProducts();
-    
-    // Setup event listeners
     setupEventListeners();
 });
 
 // ============================================
-// LOAD DROPDOWN DATA (Categories, Suppliers, Warehouses)
+// LOAD DROPDOWN DATA
 // ============================================
 async function loadDropdownData() {
     try {
-        console.log('Loading dropdown data...');
-        
-        // Load categories
         const categoriesRes = await apiCall('/categories');
         categoriesList = categoriesRes.data || [];
         populateCategoryDropdowns(categoriesList);
         
-        // Load suppliers
         const suppliersRes = await apiCall('/suppliers?is_active=true');
         suppliersList = suppliersRes.data || [];
         populateSupplierDropdowns(suppliersList);
-        
-        // Load warehouses
-        const warehousesRes = await apiCall('/warehouses?is_active=true');
-        warehousesList = warehousesRes.data || [];
-        populateWarehouseSelect();
-        
-        console.log('Dropdown data loaded successfully');
     } catch (error) {
         console.error('Failed to load dropdown data:', error);
-        showToast('Failed to load form data', 'error');
     }
 }
 
-// ============================================
-// POPULATE CATEGORY DROPDOWNS (with hierarchy)
-// ============================================
 function populateCategoryDropdowns(categories) {
     const categorySelect = document.getElementById('productCategory');
     const filterCategory = document.getElementById('filterCategory');
     
-    if (!categorySelect) return;
-    
-    // Build hierarchical options
-    const buildOptions = (cats, prefix = '', level = 0) => {
+    const buildOptions = (cats, prefix = '') => {
         let html = '';
         for (const cat of cats) {
             if (!cat.parent_id) {
-                html += `<option value="${cat.id}">${prefix}${cat.name}</option>`;
-                // Add children recursively
+                html += `<option value="${cat.id}">${prefix}${escapeHtml(cat.name)}</option>`;
                 const children = cats.filter(c => c.parent_id === cat.id);
-                html += buildOptions(children, prefix + '  └ ', level + 1);
+                html += buildOptions(children, prefix + '  └ ');
             }
         }
         return html;
@@ -99,39 +71,67 @@ function populateCategoryDropdowns(categories) {
     if (categorySelect) {
         categorySelect.innerHTML = '<option value="">Select Category</option>' + options;
     }
-    
     if (filterCategory) {
         filterCategory.innerHTML = '<option value="">All Categories</option>' + options;
     }
 }
 
-// ============================================
-// POPULATE SUPPLIER DROPDOWNS
-// ============================================
 function populateSupplierDropdowns(suppliers) {
     const supplierSelect = document.getElementById('productSupplier');
     const filterSupplier = document.getElementById('filterSupplier');
     
-    if (supplierSelect) {
-        supplierSelect.innerHTML = '<option value="">Select Supplier</option>' + 
-            suppliers.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
-    }
+    const options = suppliers.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
     
+    if (supplierSelect) {
+        supplierSelect.innerHTML = '<option value="">Select Supplier</option>' + options;
+    }
     if (filterSupplier) {
-        filterSupplier.innerHTML = '<option value="">All Suppliers</option>' + 
-            suppliers.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+        filterSupplier.innerHTML = '<option value="">All Suppliers</option>' + options;
     }
 }
 
 // ============================================
-// POPULATE WAREHOUSE SELECT FOR INVENTORY
+// CALCULATE MARGIN (from Version B)
 // ============================================
-function populateWarehouseSelect() {
-    const warehouseSelect = document.getElementById('inventoryWarehouse');
-    if (!warehouseSelect) return;
+function calcMargin(price, cost) {
+    if (!price || price === 0) return 0;
+    return ((price - cost) / price) * 100;
+}
+
+function calcMarkup(price, cost) {
+    if (!cost || cost === 0) return 0;
+    return ((price - cost) / cost) * 100;
+}
+
+function getMarginBadgeClass(margin) {
+    if (margin >= 40) return 'badge-success';
+    if (margin >= 20) return 'badge-warning';
+    return 'badge-danger';
+}
+
+// ============================================
+// UPDATE MARGIN PREVIEW (NEW from Version B)
+// ============================================
+function updateMarginPreview() {
+    const price = parseFloat(document.getElementById('productPrice').value) || 0;
+    const cost = parseFloat(document.getElementById('productCost').value) || 0;
+    const preview = document.getElementById('marginPreview');
     
-    warehouseSelect.innerHTML = '<option value="">Select Warehouse</option>' + 
-        warehousesList.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
+    if (price > 0 && preview) {
+        preview.style.display = 'block';
+        const margin = calcMargin(price, cost);
+        const marginElement = document.getElementById('previewMargin');
+        if (marginElement) {
+            marginElement.textContent = margin.toFixed(1) + '%';
+            marginElement.className = `mp-val ${margin >= 40 ? 'good' : margin >= 20 ? 'warn' : 'bad'}`;
+        }
+        const profitElement = document.getElementById('previewProfit');
+        if (profitElement) profitElement.textContent = '$' + (price - cost).toFixed(2);
+        const markupElement = document.getElementById('previewMarkup');
+        if (markupElement) markupElement.textContent = calcMarkup(price, cost).toFixed(1) + '%';
+    } else if (preview) {
+        preview.style.display = 'none';
+    }
 }
 
 // ============================================
@@ -139,14 +139,10 @@ function populateWarehouseSelect() {
 // ============================================
 async function loadProducts() {
     try {
-        console.log('Loading products...');
-        
-        // Get filter values
         const categoryId = document.getElementById('filterCategory')?.value || '';
         const supplierId = document.getElementById('filterSupplier')?.value || '';
         const searchTerm = document.getElementById('filterSearch')?.value || '';
         
-        // Build query string
         let query = '/products?';
         if (categoryId) query += `category_id=${categoryId}&`;
         if (supplierId) query += `supplier_id=${supplierId}&`;
@@ -155,33 +151,33 @@ async function loadProducts() {
         const response = await apiCall(query);
         const products = response.data || [];
         
-        // Format data for table
-        const formattedProducts = products.map(p => ({
-            id: p.id,
-            sku: p.sku,
-            name: p.name,
-            brand: p.brand || '—',
-            price: `$${parseFloat(p.price).toFixed(2)}`,
-            cost: `$${parseFloat(p.cost).toFixed(2)}`,
-            profit_margin: p.profit_margin ? `${p.profit_margin.toFixed(1)}%` : '—',
-            status: p.is_active ? 
-                '<span class="badge badge-success">Active</span>' : 
-                '<span class="badge badge-danger">Inactive</span>'
-        }));
+        const formattedProducts = products.map(p => {
+            const margin = calcMargin(p.price, p.cost);
+            return {
+                id: p.id,
+                name: `<div class="product-name">${escapeHtml(p.name)}</div>${p.description ? `<div class="product-desc">${escapeHtml(p.description.substring(0, 50))}</div>` : ''}`,
+                sku: `<span class="mono">${escapeHtml(p.sku)}</span>`,
+                brand: escapeHtml(p.brand || '—'),
+                category: escapeHtml(p.category_name || '—'),
+                price: `$${parseFloat(p.price).toFixed(2)}`,
+                cost: `$${parseFloat(p.cost).toFixed(2)}`,
+                margin: `<span class="badge ${getMarginBadgeClass(margin)}">${margin.toFixed(1)}%</span>`,
+                status: p.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'
+            };
+        });
         
-        // Define table columns
         const columns = [
             { key: 'id', label: 'ID' },
+            { key: 'name', label: 'Product' },
             { key: 'sku', label: 'SKU' },
-            { key: 'name', label: 'Product Name' },
             { key: 'brand', label: 'Brand' },
+            { key: 'category', label: 'Category' },
             { key: 'price', label: 'Price' },
             { key: 'cost', label: 'Cost' },
-            { key: 'profit_margin', label: 'Margin' },
+            { key: 'margin', label: 'Margin' },
             { key: 'status', label: 'Status' }
         ];
         
-        // Create or update table
         if (productsTable) {
             productsTable.setData(formattedProducts);
         } else {
@@ -196,104 +192,48 @@ async function loadProducts() {
             productsTable.setData(formattedProducts);
         }
         
-        console.log(`Loaded ${products.length} products`);
+        updateProductStats(products);
         
     } catch (error) {
         console.error('Failed to load products:', error);
-        document.getElementById('productsTable').innerHTML = 
-            '<div class="error-state">Failed to load products. Please refresh.</div>';
+        const container = document.getElementById('productsTable');
+        if (container) container.innerHTML = '<div class="error-state">Failed to load products</div>';
     }
 }
 
-// ============================================
-// VIEW PRODUCT DETAILS (with inventory)
-// ============================================
-async function viewProductDetails(productId) {
-    try {
-        const response = await apiCall(`/products/${productId}`);
-        const product = response.data;
-        
-        // Build inventory HTML
-        let inventoryHtml = '<div class="inventory-list">';
-        if (product.inventory && product.inventory.length > 0) {
-            inventoryHtml += product.inventory.map(inv => `
-                <div class="inventory-item">
-                    <strong>${escapeHtml(inv.warehouse_name)}</strong>
-                    <span>Quantity: ${inv.quantity}</span>
-                </div>
-            `).join('');
-        } else {
-            inventoryHtml += '<p>No inventory records found</p>';
-        }
-        inventoryHtml += '</div>';
-        
-        // Show modal with details
-        const modalHtml = `
-            <div class="modal-content" style="max-width: 600px;">
-                <div class="modal-header">
-                    <h2>Product Details: ${escapeHtml(product.name)}</h2>
-                    <button class="close-btn" onclick="closeViewModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="details-grid">
-                        <div><strong>SKU:</strong> ${product.sku}</div>
-                        <div><strong>Brand:</strong> ${product.brand || '—'}</div>
-                        <div><strong>Price:</strong> $${parseFloat(product.price).toFixed(2)}</div>
-                        <div><strong>Cost:</strong> $${parseFloat(product.cost).toFixed(2)}</div>
-                        <div><strong>Profit Margin:</strong> ${product.profit_margin?.toFixed(1) || '0'}%</div>
-                        <div><strong>Status:</strong> ${product.is_active ? 'Active' : 'Inactive'}</div>
-                    </div>
-                    <hr>
-                    <h3>Inventory by Warehouse</h3>
-                    ${inventoryHtml}
-                </div>
-                <div class="modal-footer">
-                    <button class="btn" onclick="closeViewModal()">Close</button>
-                    <button class="btn btn-primary" onclick="closeViewModal(); openProductModal(${product.id})">Edit Product</button>
-                </div>
-            </div>
-        `;
-        
-        // Create and show modal
-        const modal = document.createElement('div');
-        modal.id = 'viewModal';
-        modal.className = 'modal';
-        modal.style.display = 'flex';
-        modal.innerHTML = modalHtml;
-        document.body.appendChild(modal);
-        
-    } catch (error) {
-        console.error('Failed to load product details:', error);
-        alert('Failed to load product details');
-    }
+function updateProductStats(products) {
+    const statsContainer = document.getElementById('productStats');
+    if (!statsContainer) return;
+    
+    const active = products.filter(p => p.is_active).length;
+    const avgMargin = products.length > 0 
+        ? products.reduce((sum, p) => sum + calcMargin(p.price, p.cost), 0) / products.length 
+        : 0;
+    
+    statsContainer.innerHTML = `
+        <span class="stat-chip">Total: ${products.length}</span>
+        <span class="stat-chip">Active: ${active}</span>
+        <span class="stat-chip">Avg Margin: ${avgMargin.toFixed(1)}%</span>
+    `;
 }
 
 // ============================================
-// CLOSE VIEW MODAL
-// ============================================
-function closeViewModal() {
-    const modal = document.getElementById('viewModal');
-    if (modal) modal.remove();
-}
-
-// ============================================
-// OPEN PRODUCT MODAL (Add/Edit)
+// PRODUCT MODAL (with margin preview)
 // ============================================
 async function openProductModal(productId = null) {
     currentProductId = productId;
     const modal = document.getElementById('productModal');
     const isEdit = productId !== null;
     
-    // Reset form
     document.getElementById('productForm').reset();
     document.getElementById('modalTitle').textContent = isEdit ? 'Edit Product' : 'Add Product';
     document.getElementById('productId').value = '';
     
-    // Show/hide password field for edit
     const inventorySection = document.getElementById('inventorySection');
-    if (inventorySection) {
-        inventorySection.style.display = isEdit ? 'block' : 'none';
-    }
+    if (inventorySection) inventorySection.style.display = isEdit ? 'block' : 'none';
+    
+    const marginPreview = document.getElementById('marginPreview');
+    if (marginPreview) marginPreview.style.display = 'none';
     
     if (isEdit) {
         try {
@@ -311,6 +251,7 @@ async function openProductModal(productId = null) {
             document.getElementById('productSupplier').value = product.supplier_id || '';
             document.getElementById('productActive').checked = product.is_active;
             
+            updateMarginPreview();
         } catch (error) {
             console.error('Failed to load product:', error);
             alert('Failed to load product data');
@@ -321,33 +262,29 @@ async function openProductModal(productId = null) {
     modal.style.display = 'flex';
 }
 
-// ============================================
-// CLOSE PRODUCT MODAL
-// ============================================
 function closeProductModal() {
     document.getElementById('productModal').style.display = 'none';
     currentProductId = null;
 }
 
 // ============================================
-// SAVE PRODUCT (Create or Update)
+// SAVE PRODUCT
 // ============================================
 async function saveProduct() {
     const productId = document.getElementById('productId').value;
     const isEdit = productId !== '';
     
-    // Validate required fields
     const name = document.getElementById('productName').value.trim();
     const sku = document.getElementById('productSku').value.trim();
     const price = parseFloat(document.getElementById('productPrice').value);
     const cost = parseFloat(document.getElementById('productCost').value);
     
-    if (!name) {
-        alert('Product name is required');
+    if (!name || name.length < 2) {
+        alert('Product name must be at least 2 characters');
         return;
     }
-    if (!sku) {
-        alert('SKU is required');
+    if (!sku || sku.length < 2) {
+        alert('SKU must be at least 2 characters');
         return;
     }
     if (isNaN(price) || price < 0) {
@@ -364,10 +301,7 @@ async function saveProduct() {
     }
     
     const productData = {
-        name: name,
-        sku: sku,
-        price: price,
-        cost: cost,
+        name, sku, price, cost,
         brand: document.getElementById('productBrand').value || null,
         description: document.getElementById('productDescription').value || null,
         category_id: parseInt(document.getElementById('productCategory').value) || null,
@@ -376,24 +310,16 @@ async function saveProduct() {
     };
     
     try {
-        let response;
         if (isEdit) {
-            response = await apiCall(`/products/${productId}`, {
-                method: 'PUT',
-                body: JSON.stringify(productData)
-            });
+            await apiCall(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
             showToast('Product updated successfully', 'success');
         } else {
-            response = await apiCall('/products', {
-                method: 'POST',
-                body: JSON.stringify(productData)
-            });
+            await apiCall('/products', { method: 'POST', body: JSON.stringify(productData) });
             showToast('Product created successfully', 'success');
         }
         
         closeProductModal();
         await loadProducts();
-        
     } catch (error) {
         console.error('Failed to save product:', error);
         alert(error.message || 'Failed to save product');
@@ -404,18 +330,78 @@ async function saveProduct() {
 // DELETE PRODUCT
 // ============================================
 async function deleteProduct(productId) {
-    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-        return;
-    }
+    if (!confirm('Are you sure you want to delete this product?')) return;
     
     try {
         await apiCall(`/products/${productId}`, { method: 'DELETE' });
         showToast('Product deleted successfully', 'success');
         await loadProducts();
     } catch (error) {
-        console.error('Failed to delete product:', error);
         alert(error.message || 'Failed to delete product');
     }
+}
+
+// ============================================
+// VIEW PRODUCT DETAILS
+// ============================================
+async function viewProductDetails(productId) {
+    try {
+        const response = await apiCall(`/products/${productId}`);
+        const product = response.data;
+        
+        let inventoryHtml = '<div class="inventory-list">';
+        if (product.inventory && product.inventory.length > 0) {
+            inventoryHtml += product.inventory.map(inv => `
+                <div class="inventory-item">
+                    <strong>${escapeHtml(inv.warehouse_name)}</strong>
+                    <span>Quantity: ${inv.quantity}</span>
+                </div>
+            `).join('');
+        } else {
+            inventoryHtml += '<p>No inventory records</p>';
+        }
+        inventoryHtml += '</div>';
+        
+        const modalHtml = `
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>${escapeHtml(product.name)}</h2>
+                    <button class="close-btn" onclick="closeViewModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="details-grid">
+                        <div><strong>SKU:</strong> ${product.sku}</div>
+                        <div><strong>Brand:</strong> ${product.brand || '—'}</div>
+                        <div><strong>Price:</strong> $${product.price}</div>
+                        <div><strong>Cost:</strong> $${product.cost}</div>
+                        <div><strong>Margin:</strong> ${calcMargin(product.price, product.cost).toFixed(1)}%</div>
+                        <div><strong>Status:</strong> ${product.is_active ? 'Active' : 'Inactive'}</div>
+                    </div>
+                    <hr>
+                    <h4>Inventory</h4>
+                    ${inventoryHtml}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" onclick="closeViewModal()">Close</button>
+                    <button class="btn btn-primary" onclick="closeViewModal(); openProductModal(${product.id})">Edit</button>
+                </div>
+            </div>
+        `;
+        
+        const modal = document.createElement('div');
+        modal.id = 'viewModal';
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = modalHtml;
+        document.body.appendChild(modal);
+    } catch (error) {
+        alert('Failed to load product details');
+    }
+}
+
+function closeViewModal() {
+    const modal = document.getElementById('viewModal');
+    if (modal) modal.remove();
 }
 
 // ============================================
@@ -444,17 +430,17 @@ async function loadProductsForBulkUpdate() {
                        placeholder="New price" step="0.01" value="${p.price}">
             </div>
         `).join('');
-        
     } catch (error) {
-        console.error('Failed to load products for bulk update:', error);
+        console.error('Failed to load products:', error);
     }
 }
 
 async function applyBulkPriceUpdate() {
-    const products = await apiCall('/products?is_active=true');
+    const response = await apiCall('/products?is_active=true');
+    const products = response.data || [];
     const updates = [];
     
-    for (const product of (products.data || [])) {
+    for (const product of products) {
         const newPriceInput = document.getElementById(`newPrice_${product.id}`);
         if (newPriceInput) {
             const newPrice = parseFloat(newPriceInput.value);
@@ -469,45 +455,19 @@ async function applyBulkPriceUpdate() {
         return;
     }
     
-    if (!confirm(`Update prices for ${updates.length} product(s)?`)) {
-        return;
-    }
+    if (!confirm(`Update prices for ${updates.length} product(s)?`)) return;
     
     try {
-        const response = await apiCall('/products/bulk-price', {
+        const result = await apiCall('/products/bulk-price', {
             method: 'PUT',
-            body: JSON.stringify({ updates: updates })
+            body: JSON.stringify({ updates })
         });
-        
-        showToast(`${response.data.total_updated} products updated successfully`, 'success');
+        showToast(`${result.data.total_updated} products updated`, 'success');
         closeBulkPriceModal();
         await loadProducts();
-        
     } catch (error) {
-        console.error('Bulk price update failed:', error);
-        alert(error.message || 'Failed to update prices');
+        alert(error.message || 'Bulk update failed');
     }
-}
-
-// ============================================
-// ADD INVENTORY TO PRODUCT
-// ============================================
-function addInventoryToProduct() {
-    const warehouseId = document.getElementById('inventoryWarehouse').value;
-    const quantity = parseInt(document.getElementById('inventoryQuantity').value);
-    
-    if (!warehouseId) {
-        alert('Please select a warehouse');
-        return;
-    }
-    if (isNaN(quantity) || quantity <= 0) {
-        alert('Please enter a valid quantity');
-        return;
-    }
-    
-    // This would call the inventory receive endpoint
-    // For now, just show a message
-    alert(`Add ${quantity} units to warehouse ID ${warehouseId} for product ID ${currentProductId}`);
 }
 
 // ============================================
@@ -515,16 +475,10 @@ function addInventoryToProduct() {
 // ============================================
 function escapeHtml(str) {
     if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function showToast(message, type = 'info') {
-    // Create toast element if it doesn't exist
     let toast = document.getElementById('toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -532,43 +486,35 @@ function showToast(message, type = 'info') {
         toast.className = 'toast';
         document.body.appendChild(toast);
     }
-    
     toast.textContent = message;
     toast.className = `toast toast-${type} show`;
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
+    setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 function setupEventListeners() {
-    // Filter buttons
-    const applyFilterBtn = document.getElementById('applyFilter');
-    const resetFilterBtn = document.getElementById('resetFilter');
+    const applyFilter = document.getElementById('applyFilter');
+    const resetFilter = document.getElementById('resetFilter');
+    const searchInput = document.getElementById('filterSearch');
     
-    if (applyFilterBtn) {
-        applyFilterBtn.addEventListener('click', loadProducts);
-    }
-    if (resetFilterBtn) {
-        resetFilterBtn.addEventListener('click', () => {
-            document.getElementById('filterCategory').value = '';
-            document.getElementById('filterSupplier').value = '';
-            document.getElementById('filterSearch').value = '';
+    if (applyFilter) applyFilter.addEventListener('click', loadProducts);
+    if (resetFilter) {
+        resetFilter.addEventListener('click', () => {
+            if (document.getElementById('filterCategory')) document.getElementById('filterCategory').value = '';
+            if (document.getElementById('filterSupplier')) document.getElementById('filterSupplier').value = '';
+            if (searchInput) searchInput.value = '';
             loadProducts();
         });
     }
+    if (searchInput) searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadProducts(); });
     
-    // Enter key on search
-    const searchInput = document.getElementById('filterSearch');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') loadProducts();
-        });
-    }
+    const priceInput = document.getElementById('productPrice');
+    const costInput = document.getElementById('productCost');
+    if (priceInput) priceInput.addEventListener('input', updateMarginPreview);
+    if (costInput) costInput.addEventListener('input', updateMarginPreview);
 }
 
 // ============================================
-// EXPORT FUNCTIONS TO GLOBAL SCOPE
+// EXPORT GLOBALS
 // ============================================
 window.openProductModal = openProductModal;
 window.closeProductModal = closeProductModal;
@@ -579,6 +525,6 @@ window.closeViewModal = closeViewModal;
 window.openBulkPriceModal = openBulkPriceModal;
 window.closeBulkPriceModal = closeBulkPriceModal;
 window.applyBulkPriceUpdate = applyBulkPriceUpdate;
-window.addInventoryToProduct = addInventoryToProduct;
+window.updateMarginPreview = updateMarginPreview;
 
 console.log('✅ Admin Products module loaded');
