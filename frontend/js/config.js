@@ -7,8 +7,11 @@
  */
 
 const CONFIG = {
-    // API Base URL - use relative path since frontend and backend are on same port
+    // Use relative path for same-origin requests
     API_BASE_URL: '/api',
+    
+    // OR if frontend and backend on different ports during development:
+    // API_BASE_URL: 'http://localhost:3000/api',
     
     // Token storage key
     TOKEN_KEY: 'ims_auth_token',
