@@ -1,0 +1,246 @@
+<!-- frontend/pages/admin/settings.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - Admin | Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <link rel="stylesheet" href="../../css/admin-settings.css">
+</head>
+<body>
+    <div class="app">
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <aside id="sidebar"></aside>
+            
+            <main class="main-content">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">System Settings</h1>
+                        <p class="page-subtitle">Configure user permissions and system preferences</p>
+                    </div>
+                </div>
+                
+                <!-- Settings Tabs -->
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="permissions">👥 User Permissions</button>
+                    <button class="tab-btn" data-tab="roles">⚙️ Role Defaults</button>
+                    <button class="tab-btn" data-tab="system">🔧 System Configuration</button>
+                    <button class="tab-btn" data-tab="audit">📋 Permission Audit Log</button>
+                </div>
+                
+                <!-- Permissions Tab -->
+                <div id="permissionsTab" class="settings-panel active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Granular User Permissions</h3>
+                            <p class="help-text">Configure exactly what each user can do. Overrides role-based defaults.</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-bar">
+                                <div class="filter-group">
+                                    <label>Select User</label>
+                                    <select id="userSelect" onchange="loadUserPermissions()">
+                                        <option value="">-- Select User --</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Role Filter</label>
+                                    <select id="roleFilter" onchange="filterUsers()">
+                                        <option value="">All Roles</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="sales">Sales</option>
+                                        <option value="warehouse">Warehouse</option>
+                                        <option value="supply">Supply</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="permissionsGrid" style="display:none;">
+                                <div class="permissions-header">
+                                    <h4 id="selectedUserName"></h4>
+                                    <span id="userRoleBadge" class="badge"></span>
+                                    <div class="protected-badge" id="protectedBadge" style="display:none;">
+                                        🔒 Protected Account (Cannot be modified/deleted)
+                                    </div>
+                                </div>
+                                
+                                <table class="permissions-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Module</th>
+                                            <th>Permission Level</th>
+                                            <th>Description</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td colspan="4" class="loading">Loading permissions...</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <div class="permission-actions">
+                                    <button class="btn btn-primary" onclick="savePermissions()">Save Changes</button>
+                                    <button class="btn btn-secondary" onclick="resetUserPermissions()">Reset to Role Default</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Role Defaults Tab -->
+                <div id="rolesTab" class="settings-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Role-Based Default Permissions</h3>
+                            <p class="help-text">Set default permissions for each role. Individual user overrides can be set above.</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="role-defaults-grid">
+                                <div class="role-card">
+                                    <h4>👑 Admin</h4>
+                                    <div class="role-permissions">
+                                        <label><input type="checkbox" checked disabled> Full Access (All modules)</label>
+                                        <label><input type="checkbox" checked disabled> Can manage other admins</label>
+                                        <label><input type="checkbox" checked disabled> Protected from deletion</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="role-card">
+                                    <h4>💰 Sales Manager</h4>
+                                    <div class="role-permissions-config" id="salesPermissions">
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="sales" data-module="products" checked> View Products</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="sales" data-module="orders" checked> Create Orders</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="sales" data-module="discount" checked> Apply Discounts (requires approval)</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="sales" data-module="customers" checked> View Customers</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="sales" data-module="reports" checked> View Sales Reports</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="role-card">
+                                    <h4>📦 Warehouse Manager</h4>
+                                    <div class="role-permissions-config" id="warehousePermissions">
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="warehouse" data-module="inventory" checked> View Inventory</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="warehouse" data-module="receive" checked> Receive Stock</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="warehouse" data-module="transfer" checked> Transfer Stock</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="warehouse" data-module="adjust" checked> Adjust Stock (requires approval)</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="warehouse" data-module="picklists" checked> Generate Pick Lists</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="role-card">
+                                    <h4>🏭 Supply Manager</h4>
+                                    <div class="role-permissions-config" id="supplyPermissions">
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="supply" data-module="suppliers" checked> View Suppliers</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="supply" data-module="suppliers_add" checked> Add Suppliers</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="supply" data-module="suppliers_edit" checked> Edit Suppliers</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="supply" data-module="suppliers_delete" disabled> Delete Suppliers (Admin only)</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="supply" data-module="purchase_orders" checked> Create Purchase Orders</label>
+                                        <label><input type="checkbox" class="role-perm-checkbox" data-role="supply" data-module="budget" checked> View Budget</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="permission-actions">
+                                <button class="btn btn-primary" onclick="saveRoleDefaults()">Save Role Defaults</button>
+                                <button class="btn btn-secondary" onclick="resetRoleDefaults()">Reset to Default</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Config Tab -->
+                <div id="systemTab" class="settings-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>System Configuration</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="config-group">
+                                <h4>Security Settings</h4>
+                                <div class="config-row">
+                                    <label>Session Timeout (minutes)</label>
+                                    <input type="number" id="sessionTimeout" value="1440">
+                                    <small>Default: 1440 (24 hours)</small>
+                                </div>
+                                <div class="config-row">
+                                    <label>Password Expiry (days)</label>
+                                    <input type="number" id="passwordExpiry" value="90">
+                                    <small>0 = never expire</small>
+                                </div>
+                                <div class="config-row">
+                                    <label>Max Login Attempts</label>
+                                    <input type="number" id="maxLoginAttempts" value="5">
+                                </div>
+                            </div>
+                            
+                            <div class="config-group">
+                                <h4>Business Rules</h4>
+                                <div class="config-row">
+                                    <label>Default Tax Rate (%)</label>
+                                    <input type="number" id="defaultTaxRate" value="10" step="0.5">
+                                </div>
+                                <div class="config-row">
+                                    <label>Discount Approval Threshold (%)</label>
+                                    <input type="number" id="discountApprovalThreshold" value="10">
+                                    <small>Discounts above this % require admin approval</small>
+                                </div>
+                                <div class="config-row">
+                                    <label>Low Stock Alert Threshold</label>
+                                    <input type="number" id="lowStockThreshold" value="10">
+                                    <small>Units remaining to trigger alert</small>
+                                </div>
+                            </div>
+                            
+                            <div class="config-group">
+                                <h4>Notification Settings</h4>
+                                <div class="config-row">
+                                    <label><input type="checkbox" id="emailNotifications"> Enable Email Notifications</label>
+                                </div>
+                                <div class="config-row">
+                                    <label><input type="checkbox" id="slackNotifications"> Enable Slack Notifications</label>
+                                </div>
+                                <div class="config-row">
+                                    <label>Slack Webhook URL</label>
+                                    <input type="url" id="slackWebhook" placeholder="https://hooks.slack.com/services/...">
+                                </div>
+                            </div>
+                            
+                            <div class="permission-actions">
+                                <button class="btn btn-primary" onclick="saveSystemSettings()">Save Settings</button>
+                                <button class="btn btn-secondary" onclick="resetSystemSettings()">Reset to Default</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Audit Log Tab -->
+                <div id="auditTab" class="settings-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Permission Change Audit Log</h3>
+                            <button class="btn btn-sm" onclick="refreshAuditLog()">🔄 Refresh</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="auditLogTable">
+                                <div class="loading">Loading audit log...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/admin-settings.js"></script>
+</body>
+</html>
