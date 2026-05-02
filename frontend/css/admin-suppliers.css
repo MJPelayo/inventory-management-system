@@ -84,9 +84,47 @@
     }
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .supplier-details {
     max-height: 500px;
     overflow-y: auto;
+}
+
+/* Metrics Grid for details modal */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.metric-card {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+}
+
+.metric-card .metric-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.metric-card .metric-value {
+    font-size: 18px;
+    font-weight: 600;
 }
 
 .details-section {
@@ -132,6 +170,14 @@
 .rating-stars {
     color: #fbbf24;
     letter-spacing: 2px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Performance badges */
+.badge-info {
+    background: var(--accent-primary-light);
+    color: var(--accent-primary);
 }
 
 .badge-success {
