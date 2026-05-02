@@ -326,6 +326,29 @@ const inventoryController = {
             console.error('Reorder suggestions error:', error);
             res.status(500).json({ success: false, error: error.message });
         }
+    },
+
+    async getProductLocation(req, res) {
+        try {
+            const productId = parseInt(req.params.productId);
+            const warehouseId = parseInt(req.params.warehouseId);
+            
+            const result = await pool.query(
+                `SELECT pl.*, p.name, p.sku
+                 FROM product_locations pl
+                 JOIN products p ON pl.product_id = p.id
+                 WHERE pl.product_id = $1 AND pl.warehouse_id = $2`,
+                [productId, warehouseId]
+            );
+            
+            res.status(200).json({
+                success: true,
+                data: result.rows,
+                count: result.rows.length
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
     }
 };
 

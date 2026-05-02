@@ -12,5 +12,6 @@ router.post('/transfer', inventoryController.transferStock);
 // ===== CHECKPOINT 3 - NEW ROUTES =====
 router.post('/adjust', inventoryController.adjustStock);
 router.get('/reorder-suggestions', inventoryController.getReorderSuggestions);
+router.get('/product/:productId/warehouse/:warehouseId/location', inventoryController.getProductLocation);
 
 module.exports = router;
