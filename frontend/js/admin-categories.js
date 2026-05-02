@@ -416,4 +416,53 @@ window.viewCategoryDetails = viewCategoryDetails;
 window.toggleCategoryChildren = toggleCategoryChildren;
 window.closeViewModal = closeViewModal;
 
+// ============================================
+// ENHANCEMENT: Expand/Collapse All
+// ============================================
+function expandAllCategories() {
+    const allChildren = document.querySelectorAll('.category-children');
+    const allIcons = document.querySelectorAll('.category-expand');
+    
+    allChildren.forEach(child => child.style.display = 'block');
+    allIcons.forEach(icon => {
+        if (icon.classList.contains('has-children')) icon.textContent = '▼';
+    });
+    showToast('All categories expanded', 'info');
+}
+
+function collapseAllCategories() {
+    const allChildren = document.querySelectorAll('.category-children');
+    const allIcons = document.querySelectorAll('.category-expand');
+    
+    allChildren.forEach(child => child.style.display = 'none');
+    allIcons.forEach(icon => {
+        if (icon.classList.contains('has-children')) icon.textContent = '▶';
+    });
+    showToast('All categories collapsed', 'info');
+}
+
+// Add buttons to category tree header
+function addExpandCollapseButtons() {
+    const header = document.querySelector('.category-tree-header');
+    if (header && !document.querySelector('.expand-collapse-buttons')) {
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'expand-collapse-buttons';
+        btnContainer.innerHTML = `
+            <button class="btn btn-sm" onclick="expandAllCategories()">Expand All</button>
+            <button class="btn btn-sm" onclick="collapseAllCategories()">Collapse All</button>
+        `;
+        header.appendChild(btnContainer);
+    }
+}
+
+// Call this after loading categories
+const originalLoadCategories = window.loadCategories;
+window.loadCategories = async function() {
+    if (originalLoadCategories) await originalLoadCategories();
+    addExpandCollapseButtons();
+};
+
+window.expandAllCategories = expandAllCategories;
+window.collapseAllCategories = collapseAllCategories;
+
 console.log('✅ Admin Categories module loaded');
