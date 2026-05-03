@@ -244,6 +244,111 @@
     color: var(--success);
 }
 
+/* Readonly field styles */
+.readonly-field {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+/* Product description in table */
+.product-desc {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Better status badges */
+.status-badge.status-out {
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.status-badge.status-low {
+    background: var(--warning-bg);
+    color: var(--warning);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.status-badge.status-ok {
+    background: var(--success-bg);
+    color: var(--success);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* SKU styling */
+.sku {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Quantity cell warning */
+.quantity-cell.warning {
+    color: var(--warning);
+    font-weight: 600;
+}
+
+/* Actions cell */
+.actions-cell {
+    white-space: nowrap;
+}
+
+.btn-icon {
+    background: none;
+    border: 1px solid var(--border-light);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: var(--transition);
+}
+
+.btn-icon:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+/* Form row */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Warning note */
+.warning-note {
+    background: var(--warning-bg);
+    border-left: 3px solid var(--warning);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    margin-top: 16px;
+}
+
+.warning-note p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--warning);
+}
+
 /* ============================================ */
 /* RECEIVING PAGE */
 /* ============================================ */

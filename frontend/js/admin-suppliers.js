@@ -222,7 +222,11 @@ async function openSupplierModal(supplierId = null) {
     document.getElementById('supplierForm').reset();
     document.getElementById('modalTitle').textContent = isEdit ? 'Edit Supplier' : 'Add Supplier';
     document.getElementById('supplierId').value = '';
-    
+
+    // Reset payment terms dropdown to default
+    const paymentTermsSelect = document.getElementById('supplierPaymentTerms');
+    if (paymentTermsSelect) paymentTermsSelect.value = '';
+
     if (isEdit) {
         try {
             const response = await apiCall(`/suppliers/${supplierId}`);
@@ -235,7 +239,12 @@ async function openSupplierModal(supplierId = null) {
             document.getElementById('supplierEmail').value = supplier.email || '';
             document.getElementById('supplierAddress').value = supplier.address || '';
             document.getElementById('supplierTaxId').value = supplier.tax_id || '';
-            document.getElementById('supplierPaymentTerms').value = supplier.payment_terms || '';
+            
+            // Set payment terms dropdown
+            if (paymentTermsSelect && supplier.payment_terms) {
+                paymentTermsSelect.value = supplier.payment_terms;
+            }
+            
             document.getElementById('supplierLeadTime').value = supplier.lead_time_days || 7;
             document.getElementById('supplierMinOrder').value = supplier.minimum_order || 0;
             document.getElementById('supplierActive').checked = supplier.is_active;
@@ -283,6 +292,9 @@ async function saveSupplier() {
         return;
     }
     
+    // Get payment terms from dropdown
+    const paymentTermsSelect = document.getElementById('supplierPaymentTerms');
+    
     const supplierData = {
         name: name,
         contact_person: document.getElementById('supplierContact').value.trim() || null,
@@ -290,7 +302,7 @@ async function saveSupplier() {
         email: email || null,
         address: document.getElementById('supplierAddress').value.trim() || null,
         tax_id: document.getElementById('supplierTaxId').value.trim() || null,
-        payment_terms: document.getElementById('supplierPaymentTerms').value.trim() || null,
+        payment_terms: paymentTermsSelect ? paymentTermsSelect.value || null : null,
         lead_time_days: leadTime,
         minimum_order: parseInt(document.getElementById('supplierMinOrder').value) || 0,
         is_active: document.getElementById('supplierActive').checked

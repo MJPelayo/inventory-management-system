@@ -7,13 +7,42 @@ const inventoryController = {
     async getWarehouseInventory(req, res) {
         try {
             const warehouseId = parseInt(req.params.warehouseId);
-            const inventory = await Inventory.findByWarehouse(warehouseId);
+            
+            // Get inventory with full product details
+            const query = `
+                SELECT
+                    i.id,
+                    i.product_id,
+                    i.warehouse_id,
+                    i.quantity,
+                    i.reorder_point,
+                    i.max_stock,
+                    p.name as product_name,
+                    p.sku,
+                    p.price,
+                    p.cost,
+                    p.brand,
+                    p.description,
+                    c.name as category_name,
+                    s.name as supplier_name,
+                    p.is_active as product_active
+                FROM inventory i
+                JOIN products p ON i.product_id = p.id
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN suppliers s ON p.supplier_id = s.id
+                WHERE i.warehouse_id = $1
+                ORDER BY p.name
+            `;
+            
+            const result = await pool.query(query, [warehouseId]);
+            
             res.status(200).json({
                 success: true,
-                data: inventory,
-                count: inventory.length
+                data: result.rows,
+                count: result.rows.length
             });
         } catch (error) {
+            console.error('Failed to get warehouse inventory:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     },
