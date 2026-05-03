@@ -70,17 +70,9 @@ async function loadSupplierStats() {
         
         const total = suppliers.length;
         const active = suppliers.filter(s => s.is_active).length;
-        const avgRating = suppliers.length > 0 
-            ? (suppliers.reduce((sum, s) => sum + (s.rating || 0), 0) / suppliers.length).toFixed(1)
-            : 0;
-        const avgOnTime = suppliers.length > 0
-            ? (suppliers.reduce((sum, s) => sum + (s.on_time_delivery_rate || 0), 0) / suppliers.length).toFixed(0)
-            : 0;
         
         document.getElementById('totalSuppliers').textContent = total;
         document.getElementById('activeSuppliers').textContent = active;
-        document.getElementById('avgRating').textContent = `${avgRating} ★`;
-        document.getElementById('avgOnTime').textContent = `${avgOnTime}%`;
         
     } catch (error) {
         console.error('Failed to load supplier stats:', error);
@@ -103,19 +95,7 @@ async function loadSuppliers() {
         const response = await apiCall(query);
         let suppliers = response.data || [];
         
-        // Apply performance filter client-side
-        if (currentFilters.performance) {
-            suppliers = suppliers.filter(s => {
-                const rate = s.on_time_delivery_rate || 0;
-                if (currentFilters.performance === 'excellent') return rate >= 95;
-                if (currentFilters.performance === 'good') return rate >= 85 && rate < 95;
-                if (currentFilters.performance === 'average') return rate >= 70 && rate < 85;
-                if (currentFilters.performance === 'poor') return rate < 70;
-                return true;
-            });
-        }
-        
-        allSuppliers = suppliers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        allSuppliers = suppliers;
         
         document.getElementById('supplierCount').textContent = `${allSuppliers.length} suppliers`;
         
@@ -147,8 +127,6 @@ function displaySuppliers() {
                 <tr>
                     <th>Supplier</th>
                     <th>Contact</th>
-                    <th>Rating</th>
-                    <th>On-Time %</th>
                     <th>Lead Time</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -156,13 +134,6 @@ function displaySuppliers() {
             </thead>
             <tbody>
                 ${pageSuppliers.map(supplier => {
-                    const ratingStars = getRatingStars(supplier.rating || 0);
-                    const onTimeRate = supplier.on_time_delivery_rate || 0;
-                    let performanceClass = '';
-                    if (onTimeRate >= 90) performanceClass = 'badge-success';
-                    else if (onTimeRate >= 75) performanceClass = 'badge-warning';
-                    else performanceClass = 'badge-danger';
-                    
                     const permissions = checkSupplierPermissions(supplier.id);
                     
                     const actionButtons = `
@@ -179,8 +150,6 @@ function displaySuppliers() {
                         <tr>
                             <td><strong>${escapeHtml(supplier.name)}</strong><br><small>${escapeHtml(supplier.email || '—')}</small></td>
                             <td>${escapeHtml(supplier.contact_person || '—')}<br><small>${escapeHtml(supplier.phone || '—')}</small></td>
-                            <td class="rating-cell">${ratingStars}</td>
-                            <td><span class="badge ${performanceClass}">${onTimeRate.toFixed(0)}%</span></td>
                             <td>${supplier.lead_time_days || 7} days</td>
                             <td>${supplier.is_active ? '<span class="badge-success">Active</span>' : '<span class="badge-danger">Inactive</span>'}</td>
                             <td>${actionButtons}</td>
@@ -193,16 +162,6 @@ function displaySuppliers() {
     `;
     
     container.innerHTML = tableHtml;
-}
-
-function getRatingStars(rating) {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    let stars = '';
-    for (let i = 0; i < fullStars; i++) stars += '★';
-    if (halfStar) stars += '½';
-    for (let i = stars.length; i < 5; i++) stars += '☆';
-    return `<span class="rating-stars">${stars}</span>`;
 }
 
 function renderPagination(current, total) {
@@ -233,13 +192,6 @@ async function viewSupplierDetail(supplierId) {
         const productsRes = await apiCall(`/products?supplier_id=${supplierId}`);
         const products = productsRes.data || [];
         
-        const onTimeRate = supplier.on_time_delivery_rate || 0;
-        let performanceText = '';
-        if (onTimeRate >= 95) performanceText = 'Excellent';
-        else if (onTimeRate >= 85) performanceText = 'Good';
-        else if (onTimeRate >= 70) performanceText = 'Average';
-        else performanceText = 'Needs Improvement';
-        
         document.getElementById('supplierDetailName').textContent = supplier.name;
         
         const modalContent = document.getElementById('supplierDetailContent');
@@ -260,16 +212,9 @@ async function viewSupplierDetail(supplierId) {
                     <p><strong>Min Order:</strong> ${supplier.minimum_order || 0} units</p>
                 </div>
                 <div class="detail-card">
-                    <h4>Performance Metrics</h4>
-                    <p><strong>Rating:</strong> ${getRatingStars(supplier.rating || 0)}</p>
-                    <p><strong>On-Time Delivery:</strong> ${onTimeRate.toFixed(0)}%</p>
-                    <p><strong>Total Orders:</strong> ${supplier.total_orders || 0}</p>
-                    <p><strong>Performance:</strong> <span class="badge ${onTimeRate >= 90 ? 'badge-success' : 'badge-warning'}">${performanceText}</span></p>
-                </div>
-                <div class="detail-card">
                     <h4>Products Supplied (${products.length})</h4>
                     <div class="product-list">
-                        ${products.slice(0, 10).map(p => 
+                        ${products.slice(0, 10).map(p =>
                             `<span class="product-tag">${escapeHtml(p.name)}</span>`
                         ).join('')}
                         ${products.length > 10 ? `<span class="product-tag">+${products.length - 10} more</span>` : ''}

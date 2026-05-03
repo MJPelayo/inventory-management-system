@@ -60,7 +60,7 @@ class BaseModel {
         const client = await pool.connect();
         try {
             const result = await client.query(
-                `SELECT * FROM ${this.prototype.tableName} WHERE id = $1`, 
+                `SELECT * FROM ${this.tableName} WHERE id = $1`,
                 [id]
             );
             if (result.rows.length === 0) return null;
@@ -73,7 +73,7 @@ class BaseModel {
     static async findAll(filters = {}) {
         const client = await pool.connect();
         try {
-            let query = `SELECT * FROM ${this.prototype.tableName} WHERE 1=1`;
+            let query = `SELECT * FROM ${this.tableName} WHERE 1=1`;
             const values = [];
             let paramCount = 1;
 
@@ -96,7 +96,7 @@ class BaseModel {
         const client = await pool.connect();
         try {
             const result = await client.query(
-                `DELETE FROM ${this.prototype.tableName} WHERE id = $1 RETURNING id`, 
+                `DELETE FROM ${this.tableName} WHERE id = $1 RETURNING id`,
                 [id]
             );
             return result.rows.length > 0;

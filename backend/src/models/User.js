@@ -3,6 +3,7 @@ const { BaseModel } = require('./BaseModel');
 const pool = require('../db/pool');
 
 class User extends BaseModel {
+    static tableName = 'users';
     constructor(data) {
         super('users', data);
         this.name = data.name;
@@ -11,23 +12,20 @@ class User extends BaseModel {
         this.role = data.role;
         this.department = data.department || null;
         this.sales_target = data.sales_target || null;
-        this.commission_rate = data.commission_rate || 5.0;
         this.warehouse_id = data.warehouse_id || null;
-        this.shift = data.shift || null;
         this.purchase_budget = data.purchase_budget || null;
         this.is_active = data.is_active !== undefined ? data.is_active : true;
         this.last_login = data.last_login || null;
         this.is_protected = data.is_protected !== undefined ? data.is_protected : false;
     }
 
-    // ✅ FIX: Add proper getter methods that match the error
+    // Getter methods
     getId() { return this.id; }
     getName() { return this.name; }
     getEmail() { return this.email; }
     getRole() { return this.role; }
     getPasswordHash() { return this.password_hash; }
     isActive() { return this.is_active; }
-    getCommissionRate() { return this.commission_rate; }
     getWarehouseId() { return this.warehouse_id; }
 
     // Setters with validation
@@ -86,15 +84,14 @@ class User extends BaseModel {
 
     // Required methods for polymorphism
     _getInsertFields() {
-        return ['name', 'email', 'password_hash', 'role', 'department', 
-                'sales_target', 'commission_rate', 'warehouse_id', 'shift', 
-                'purchase_budget', 'is_active', 'is_protected'];
+        return ['name', 'email', 'password_hash', 'role', 'department',
+                'sales_target', 'warehouse_id', 'purchase_budget',
+                'is_active', 'is_protected'];
     }
 
     _getUpdateFields() {
-        return ['name', 'email', 'role', 'department', 'sales_target', 
-                'commission_rate', 'warehouse_id', 'shift', 'purchase_budget', 
-                'is_active', 'last_login'];
+        return ['name', 'email', 'role', 'department', 'sales_target',
+                'warehouse_id', 'purchase_budget', 'is_active', 'last_login'];
     }
 
     // Override _hydrate to return User instances
@@ -179,18 +176,18 @@ class User extends BaseModel {
             if (this.id) {
                 // UPDATE existing record
                 const query = `
-                    UPDATE users 
+                    UPDATE users
                     SET name = $1, email = $2, role = $3, department = $4,
-                        sales_target = $5, commission_rate = $6, warehouse_id = $7,
-                        shift = $8, purchase_budget = $9, is_active = $10,
-                        last_login = $11, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = $12
+                        sales_target = $5, warehouse_id = $6,
+                        purchase_budget = $7, is_active = $8,
+                        last_login = $9, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = $10
                     RETURNING *
                 `;
                 const values = [
                     this.name, this.email, this.role, this.department,
-                    this.sales_target, this.commission_rate, this.warehouse_id,
-                    this.shift, this.purchase_budget, this.is_active,
+                    this.sales_target, this.warehouse_id,
+                    this.purchase_budget, this.is_active,
                     this.last_login, this.id
                 ];
                 const result = await client.query(query, values);
@@ -199,15 +196,14 @@ class User extends BaseModel {
                 // INSERT new record
                 const query = `
                     INSERT INTO users (name, email, password_hash, role, department,
-                        sales_target, commission_rate, warehouse_id, shift,
-                        purchase_budget, is_active)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                        sales_target, warehouse_id, purchase_budget, is_active)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                     RETURNING *
                 `;
                 const values = [
                     this.name, this.email, this.password_hash, this.role, this.department,
-                    this.sales_target, this.commission_rate, this.warehouse_id,
-                    this.shift, this.purchase_budget, this.is_active
+                    this.sales_target, this.warehouse_id,
+                    this.purchase_budget, this.is_active
                 ];
                 const result = await client.query(query, values);
                 return new User(result.rows[0]);
@@ -226,9 +222,7 @@ class User extends BaseModel {
             role: this.role,
             department: this.department,
             sales_target: this.sales_target,
-            commission_rate: this.commission_rate,
             warehouse_id: this.warehouse_id,
-            shift: this.shift,
             purchase_budget: this.purchase_budget,
             is_active: this.is_active,
             is_protected: this.is_protected,

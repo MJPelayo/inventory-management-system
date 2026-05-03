@@ -5,6 +5,7 @@ const { BaseModel } = require('./BaseModel');
 const pool = require('../db/pool');
 
 class Product extends BaseModel {
+    static tableName = 'products';
     constructor(data) {
         super('products', data);  // Call parent constructor with table name
         this.name = data.name;

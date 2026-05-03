@@ -1,6 +1,6 @@
 -- =====================================================
 -- INVENTORY MANAGEMENT SYSTEM - COMPLETE DATABASE SCHEMA
--- PostgreSQL for pgAdmin4
+-- PostgreSQL - Working Version
 -- =====================================================
 
 -- DROP TABLES IF EXISTS (for clean setup)
@@ -26,11 +26,20 @@ DROP TABLE IF EXISTS suppliers CASCADE;
 DROP TABLE IF EXISTS warehouses CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
--- ENUM TYPES
+-- ENUM TYPES (without IF NOT EXISTS)
+DROP TYPE IF EXISTS user_role CASCADE;
 CREATE TYPE user_role AS ENUM ('admin', 'sales', 'warehouse', 'supply');
+
+DROP TYPE IF EXISTS order_status CASCADE;
 CREATE TYPE order_status AS ENUM ('pending', 'processing', 'ready', 'in_transit', 'delivered', 'cancelled');
+
+DROP TYPE IF EXISTS payment_status CASCADE;
 CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'failed', 'refunded');
+
+DROP TYPE IF EXISTS movement_type CASCADE;
 CREATE TYPE movement_type AS ENUM ('received', 'sold', 'transferred', 'adjusted', 'returned');
+
+DROP TYPE IF EXISTS permission_level CASCADE;
 CREATE TYPE permission_level AS ENUM ('none', 'read', 'create', 'edit', 'delete', 'full');
 
 -- =====================================================
@@ -44,9 +53,7 @@ CREATE TABLE users (
     role user_role NOT NULL,
     department VARCHAR(100),
     sales_target DECIMAL(12,2),
-    commission_rate DECIMAL(5,2) DEFAULT 5.0,
     warehouse_id INTEGER,
-    shift VARCHAR(20),
     purchase_budget DECIMAL(12,2),
     is_active BOOLEAN DEFAULT TRUE,
     is_protected BOOLEAN DEFAULT FALSE,
@@ -56,7 +63,7 @@ CREATE TABLE users (
 );
 
 -- =====================================================
--- 2. categories (self-referential for hierarchy)
+-- 2. categories
 -- =====================================================
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
@@ -81,9 +88,6 @@ CREATE TABLE suppliers (
     payment_terms VARCHAR(50),
     lead_time_days INTEGER DEFAULT 7,
     minimum_order INTEGER DEFAULT 0,
-    rating DECIMAL(3,2) DEFAULT 0,
-    total_orders INTEGER DEFAULT 0,
-    on_time_deliveries INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -123,7 +127,7 @@ CREATE TABLE products (
 );
 
 -- =====================================================
--- 6. inventory (product + warehouse junction)
+-- 6. inventory
 -- =====================================================
 CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
@@ -138,7 +142,7 @@ CREATE TABLE inventory (
 );
 
 -- =====================================================
--- 7. product_locations (no bins - aisle/side/shelf/layer)
+-- 7. product_locations
 -- =====================================================
 CREATE TABLE product_locations (
     id SERIAL PRIMARY KEY,
@@ -198,7 +202,7 @@ CREATE TABLE supply_orders (
 );
 
 -- =====================================================
--- 10. order_items (polymorphic - both sales and supply)
+-- 10. order_items
 -- =====================================================
 CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
@@ -213,7 +217,7 @@ CREATE TABLE order_items (
 );
 
 -- =====================================================
--- 11. stock_movements (audit trail)
+-- 11. stock_movements
 -- =====================================================
 CREATE TABLE stock_movements (
     id SERIAL PRIMARY KEY,
@@ -243,7 +247,7 @@ CREATE TABLE discount_approvals (
 );
 
 -- =====================================================
--- 13. audit_logs - Track all user actions for security
+-- 13. audit_logs
 -- =====================================================
 CREATE TABLE audit_logs (
     id SERIAL PRIMARY KEY,
@@ -259,7 +263,7 @@ CREATE TABLE audit_logs (
 );
 
 -- =====================================================
--- 14. adjustment_reasons - Standard reasons for stock adjustments
+-- 14. adjustment_reasons
 -- =====================================================
 CREATE TABLE adjustment_reasons (
     id SERIAL PRIMARY KEY,
@@ -269,18 +273,8 @@ CREATE TABLE adjustment_reasons (
     is_active BOOLEAN DEFAULT TRUE
 );
 
--- Insert default adjustment reasons
-INSERT INTO adjustment_reasons (reason_code, description, requires_approval) VALUES
-('DAMAGE', 'Product damaged in warehouse - regular write-off', FALSE),
-('THEFT', 'Product stolen - requires manager approval', TRUE),
-('COUNT_ERROR', 'Physical count mismatch during inventory', FALSE),
-('EXPIRED', 'Product reached expiration date', FALSE),
-('QUALITY_ISSUE', 'Quality control failure - needs inspection', TRUE),
-('RETURN_TO_SUPPLIER', 'Returning defective items to supplier', FALSE)
-ON CONFLICT (reason_code) DO NOTHING;
-
 -- =====================================================
--- 15. notifications - User notifications
+-- 15. notifications
 -- =====================================================
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
@@ -294,7 +288,7 @@ CREATE TABLE notifications (
 );
 
 -- =====================================================
--- 16. system_settings - System configuration
+-- 16. system_settings
 -- =====================================================
 CREATE TABLE system_settings (
     id SERIAL PRIMARY KEY,
@@ -305,21 +299,8 @@ CREATE TABLE system_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default settings
-INSERT INTO system_settings (setting_key, setting_value, setting_type, description) VALUES
-('session_timeout', '1440', 'integer', 'Session timeout in minutes'),
-('password_expiry_days', '90', 'integer', 'Days until password expires'),
-('max_login_attempts', '5', 'integer', 'Maximum failed login attempts'),
-('default_tax_rate', '10', 'decimal', 'Default tax rate percentage'),
-('discount_approval_threshold', '10', 'decimal', 'Discount % requiring admin approval'),
-('low_stock_threshold', '10', 'integer', 'Units to trigger low stock alert'),
-('email_notifications', 'false', 'boolean', 'Enable email notifications'),
-('slack_notifications', 'false', 'boolean', 'Enable Slack notifications'),
-('slack_webhook', '', 'string', 'Slack webhook URL')
-ON CONFLICT (setting_key) DO NOTHING;
-
 -- =====================================================
--- 17. internal_requests - Cross-role request system
+-- 17. internal_requests
 -- =====================================================
 CREATE TABLE internal_requests (
     id SERIAL PRIMARY KEY,
@@ -339,7 +320,7 @@ CREATE TABLE internal_requests (
 );
 
 -- =====================================================
--- 18. internal_messages - Internal messaging/chat system
+-- 18. internal_messages
 -- =====================================================
 CREATE TABLE internal_messages (
     id SERIAL PRIMARY KEY,
@@ -356,7 +337,7 @@ CREATE TABLE internal_messages (
 );
 
 -- =====================================================
--- 19. user_permissions - Granular permission controls
+-- 19. user_permissions
 -- =====================================================
 CREATE TABLE user_permissions (
     id SERIAL PRIMARY KEY,
@@ -369,7 +350,7 @@ CREATE TABLE user_permissions (
 );
 
 -- =====================================================
--- 20. permission_audit_log - Track permission changes
+-- 20. permission_audit_log
 -- =====================================================
 CREATE TABLE permission_audit_log (
     id SERIAL PRIMARY KEY,
@@ -382,7 +363,7 @@ CREATE TABLE permission_audit_log (
 );
 
 -- =====================================================
--- INDEXES for performance
+-- INDEXES
 -- =====================================================
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
@@ -414,7 +395,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Apply trigger to tables with updated_at
+-- Apply triggers
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -443,10 +424,10 @@ INSERT INTO categories (name, parent_id) VALUES
 ('Accessories', 1);
 
 -- Suppliers
-INSERT INTO suppliers (name, contact_person, phone, email, rating) VALUES
-('Samsung Electronics', 'John Kim', '555-0100', 'orders@samsung.com', 4.8),
-('Apple Inc', 'Jane Smith', '555-0101', 'procurement@apple.com', 4.9),
-('Dell Technologies', 'Bob Johnson', '555-0102', 'supply@dell.com', 4.5);
+INSERT INTO suppliers (name, contact_person, phone, email) VALUES
+('Samsung Electronics', 'John Kim', '555-0100', 'orders@samsung.com'),
+('Apple Inc', 'Jane Smith', '555-0101', 'procurement@apple.com'),
+('Dell Technologies', 'Bob Johnson', '555-0102', 'supply@dell.com');
 
 -- Products
 INSERT INTO products (name, sku, price, cost, category_id, supplier_id, brand) VALUES
@@ -472,3 +453,24 @@ INSERT INTO product_locations (product_id, warehouse_id, aisle_number, side, she
 (3, 1, 3, 'left', 1, 'middle', 15),
 (4, 2, 1, 'left', 1, 'bottom', 25),
 (5, 1, 1, 'right', 3, 'top', 100);
+
+-- Adjustment Reasons
+INSERT INTO adjustment_reasons (reason_code, description, requires_approval) VALUES
+('DAMAGE', 'Product damaged in warehouse', FALSE),
+('THEFT', 'Product stolen - requires approval', TRUE),
+('COUNT_ERROR', 'Physical count mismatch', FALSE),
+('EXPIRED', 'Product expired', FALSE),
+('QUALITY_ISSUE', 'Quality control failure', TRUE),
+('RETURN_TO_SUPPLIER', 'Returning to supplier', FALSE);
+
+-- System Settings
+INSERT INTO system_settings (setting_key, setting_value, setting_type, description) VALUES
+('session_timeout', '1440', 'integer', 'Session timeout in minutes'),
+('password_expiry_days', '90', 'integer', 'Days until password expires'),
+('max_login_attempts', '5', 'integer', 'Maximum failed login attempts'),
+('default_tax_rate', '10', 'decimal', 'Default tax rate percentage'),
+('discount_approval_threshold', '10', 'decimal', 'Discount % requiring admin approval'),
+('low_stock_threshold', '10', 'integer', 'Units to trigger low stock alert'),
+('email_notifications', 'false', 'boolean', 'Enable email notifications'),
+('slack_notifications', 'false', 'boolean', 'Enable Slack notifications'),
+('slack_webhook', '', 'string', 'Slack webhook URL');

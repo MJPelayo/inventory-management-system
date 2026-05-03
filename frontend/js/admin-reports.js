@@ -368,7 +368,6 @@ function displaySupplierReport(data) {
     if (!container) return;
     
     const suppliers = data.suppliers || [];
-    const performanceSummary = data.performance_summary || {};
     
     container.innerHTML = `
         <!-- Summary Cards -->
@@ -378,65 +377,32 @@ function displaySupplierReport(data) {
                 <div class="summary-value">${data.total_suppliers || 0}</div>
                 <div class="summary-sub">active partners</div>
             </div>
-            <div class="summary-card">
-                <div class="summary-label">Excellent (95%+)</div>
-                <div class="summary-value">${performanceSummary.excellent || 0}</div>
-                <div class="summary-sub">on-time delivery</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Good (85-94%)</div>
-                <div class="summary-value">${performanceSummary.good || 0}</div>
-                <div class="summary-sub">on-time delivery</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Needs Improvement</div>
-                <div class="summary-value">${(performanceSummary.average || 0) + (performanceSummary.poor || 0)}</div>
-                <div class="summary-sub">below 85%</div>
-            </div>
         </div>
         
-        <!-- Supplier Performance Table -->
+        <!-- Supplier List -->
         <div class="report-section">
-            <h4>Supplier Performance</h4>
+            <h4>Suppliers</h4>
             <div class="table-responsive">
                 <table class="report-table">
                     <thead>
                         <tr>
                             <th>Supplier</th>
-                            <th>Rating</th>
-                            <th>On-Time Rate</th>
-                            <th>Total Orders</th>
-                            <th>Products Supplied</th>
+                            <th>Contact</th>
                             <th>Lead Time</th>
+                            <th>Products Supplied</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${suppliers.length > 0 ? suppliers.map(s => {
-                            let ratingStars = '';
-                            const rating = s.rating || 0;
-                            const fullStars = Math.floor(rating);
-                            const halfStar = rating % 1 >= 0.5;
-                            for (let i = 0; i < fullStars; i++) ratingStars += '★';
-                            if (halfStar) ratingStars += '½';
-                            for (let i = ratingStars.length; i < 5; i++) ratingStars += '☆';
-                            
-                            let performanceClass = '';
-                            const onTimeRate = s.on_time_rate || 0;
-                            if (onTimeRate >= 90) performanceClass = 'badge-success';
-                            else if (onTimeRate >= 75) performanceClass = 'badge-warning';
-                            else performanceClass = 'badge-danger';
-                            
                             return `
                                 <tr>
                                     <td>${escapeHtml(s.name)}</td>
-                                    <td class="rating-stars">${ratingStars}</td>
-                                    <td><span class="badge ${performanceClass}">${onTimeRate.toFixed(0)}%</span></td>
-                                    <td>${s.total_orders || 0}</td>
-                                    <td>${s.products_supplied || 0}</td>
+                                    <td>${escapeHtml(s.contact_person || '—')}</td>
                                     <td>${s.lead_time_days || 7} days</td>
+                                    <td>${s.products_supplied || 0}</td>
                                 </tr>
                             `;
-                        }).join('') : '<tr><td colspan="6" class="empty-state">No supplier data available</td></tr>'}
+                        }).join('') : '<tr><td colspan="4" class="empty-state">No supplier data available</td></tr>'}
                     </tbody>
                 </table>
             </div>

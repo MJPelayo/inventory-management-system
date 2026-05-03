@@ -5,6 +5,8 @@ const { BaseModel } = require('./BaseModel');
 const pool = require('../db/pool');
 
 class Supplier extends BaseModel {
+    static tableName = 'suppliers';
+
     constructor(data) {
         super('suppliers', data);  // Call parent constructor with table name
         this.name = data.name;
@@ -16,42 +18,14 @@ class Supplier extends BaseModel {
         this.payment_terms = data.payment_terms || null;
         this.lead_time_days = data.lead_time_days || 7;
         this.minimum_order = data.minimum_order || 0;
-        this.rating = data.rating || 0;
-        this.total_orders = data.total_orders || 0;
-        this.on_time_deliveries = data.on_time_deliveries || 0;
         this.is_active = data.is_active !== undefined ? data.is_active : true;
     }
 
     // ============================================
-    // BUSINESS LOGIC METHODS (KEEP ALL EXISTING)
+    // BUSINESS LOGIC METHODS
     // ============================================
     
     getName() { return this.name; }
-    getRating() { return this.rating; }
-    
-    getOnTimeDeliveryRate() {
-        if (this.total_orders === 0) return 0;
-        return (this.on_time_deliveries / this.total_orders) * 100;
-    }
-
-    updatePerformance(onTime) {
-        this.total_orders++;
-        if (onTime) {
-            this.on_time_deliveries++;
-        }
-        this.rating = this.getOnTimeDeliveryRate() / 20;  // Scale to 0-5
-    }
-    
-    /**
-     * Get performance grade (for UI display)
-     */
-    getPerformanceGrade() {
-        const rate = this.getOnTimeDeliveryRate();
-        if (rate >= 95) return { grade: 'Excellent', color: 'success' };
-        if (rate >= 85) return { grade: 'Good', color: 'info' };
-        if (rate >= 70) return { grade: 'Average', color: 'warning' };
-        return { grade: 'Poor', color: 'danger' };
-    }
 
     // ============================================
     // POLYMORPHISM METHODS (Required by BaseModel)
@@ -63,7 +37,7 @@ class Supplier extends BaseModel {
     _getInsertFields() {
         return ['name', 'contact_person', 'phone', 'email', 'address',
                 'tax_id', 'payment_terms', 'lead_time_days', 'minimum_order',
-                'rating', 'total_orders', 'on_time_deliveries', 'is_active'];
+                'is_active'];
     }
     
     /**
@@ -72,7 +46,7 @@ class Supplier extends BaseModel {
     _getUpdateFields() {
         return ['name', 'contact_person', 'phone', 'email', 'address',
                 'tax_id', 'payment_terms', 'lead_time_days', 'minimum_order',
-                'rating', 'total_orders', 'on_time_deliveries', 'is_active'];
+                'is_active'];
     }
 
     // ============================================
@@ -103,7 +77,7 @@ class Supplier extends BaseModel {
                 values.push(`%${filters.search}%`, `%${filters.search}%`);
             }
             
-            query += ` GROUP BY s.id ORDER BY s.rating DESC`;
+            query += ` GROUP BY s.id ORDER BY s.name`;
             
             if (filters.limit) {
                 query += ` LIMIT $${paramCount++}`;
@@ -161,7 +135,6 @@ class Supplier extends BaseModel {
     // ============================================
     
     toJSON() {
-        const performance = this.getPerformanceGrade();
         return {
             ...super.toJSON(),  // Includes id, created_at, updated_at
             name: this.name,
@@ -173,12 +146,6 @@ class Supplier extends BaseModel {
             payment_terms: this.payment_terms,
             lead_time_days: this.lead_time_days,
             minimum_order: this.minimum_order,
-            rating: this.rating,
-            total_orders: this.total_orders,
-            on_time_deliveries: this.on_time_deliveries,
-            on_time_delivery_rate: this.getOnTimeDeliveryRate(),
-            performance_grade: performance.grade,
-            performance_color: performance.color,
             is_active: this.is_active
         };
     }

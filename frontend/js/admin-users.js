@@ -294,11 +294,9 @@ async function saveUser() {
     // Role-specific fields
     if (role === 'sales') {
         userData.sales_target = parseFloat(document.getElementById('userSalesTarget').value) || null;
-        userData.commission_rate = parseFloat(document.getElementById('userCommissionRate').value) || 5.0;
     }
     if (role === 'warehouse') {
         userData.warehouse_id = parseInt(document.getElementById('userWarehouseId').value) || null;
-        userData.shift = document.getElementById('userShift').value || null;
     }
     if (role === 'supply') {
         userData.purchase_budget = parseFloat(document.getElementById('userPurchaseBudget').value) || null;

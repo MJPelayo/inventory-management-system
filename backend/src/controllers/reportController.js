@@ -183,47 +183,33 @@ const reportController = {
     },
     
     /**
-     * Generate Supplier Performance Report
+     * Generate Supplier Report
      * GET /api/reports/suppliers
      */
     async getSupplierReport(req, res) {
         try {
             const query = `
-                SELECT 
+                SELECT
                     s.id,
                     s.name,
-                    s.rating,
-                    s.total_orders,
-                    s.on_time_deliveries,
-                    ROUND(
-                        (s.on_time_deliveries::float / NULLIF(s.total_orders, 0)) * 100, 
-                        2
-                    ) as on_time_rate,
-                    COUNT(DISTINCT p.id) as products_supplied,
-                    AVG(p.price - p.cost) as avg_product_margin,
-                    MIN(s.lead_time_days) as lead_time_days
+                    s.contact_person,
+                    s.phone,
+                    s.email,
+                    s.lead_time_days,
+                    COUNT(DISTINCT p.id) as products_supplied
                 FROM suppliers s
                 LEFT JOIN products p ON p.supplier_id = s.id
                 WHERE s.is_active = true
-                GROUP BY s.id, s.name, s.rating, s.total_orders, s.on_time_deliveries
-                ORDER BY s.rating DESC
+                GROUP BY s.id, s.name, s.contact_person, s.phone, s.email, s.lead_time_days
+                ORDER BY s.name ASC
             `;
             
             const result = await pool.query(query);
-            
-            // Performance categories
-            const performance = {
-                excellent: result.rows.filter(s => s.on_time_rate >= 95).length,
-                good: result.rows.filter(s => s.on_time_rate >= 85 && s.on_time_rate < 95).length,
-                average: result.rows.filter(s => s.on_time_rate >= 70 && s.on_time_rate < 85).length,
-                poor: result.rows.filter(s => s.on_time_rate < 70).length
-            };
             
             res.status(200).json({
                 success: true,
                 data: {
                     suppliers: result.rows,
-                    performance_summary: performance,
                     total_suppliers: result.rows.length,
                     generated_at: new Date().toISOString()
                 }

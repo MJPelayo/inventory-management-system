@@ -1,5 +1,4 @@
 // frontend/js/admin-suppliers.js
-// UPDATED: Added metrics row, rating stars, performance badges from Version B
 
 // ============================================
 // GLOBAL VARIABLES
@@ -42,47 +41,6 @@ function safeNumber(value, decimals = 1) {
 }
 
 // ============================================
-// GET ON-TIME DELIVERY RATE
-// ============================================
-function getOnTimeRate(supplier) {
-    const totalOrders = safeNumber(supplier.total_orders, 0);
-    if (totalOrders === 0) return 0;
-    const onTimeDeliveries = safeNumber(supplier.on_time_deliveries, 0);
-    return (onTimeDeliveries / totalOrders) * 100;
-}
-
-// ============================================
-// GET PERFORMANCE BADGE CLASS (from Version B)
-// ============================================
-function getPerformanceBadgeClass(onTimeRate) {
-    if (onTimeRate >= 95) return 'badge-success';
-    if (onTimeRate >= 85) return 'badge-info';
-    if (onTimeRate >= 70) return 'badge-warning';
-    return 'badge-danger';
-}
-
-function getPerformanceText(onTimeRate) {
-    if (onTimeRate >= 95) return 'Excellent';
-    if (onTimeRate >= 85) return 'Good';
-    if (onTimeRate >= 70) return 'Average';
-    return 'Poor';
-}
-
-// ============================================
-// GENERATE RATING STARS (from Version B)
-// ============================================
-function getRatingStars(rating) {
-    const numRating = safeNumber(rating, 1);
-    const fullStars = Math.floor(numRating);
-    const halfStar = numRating % 1 >= 0.5;
-    let stars = '';
-    for (let i = 0; i < fullStars; i++) stars += '★';
-    if (halfStar) stars += '½';
-    for (let i = stars.length; i < 5; i++) stars += '☆';
-    return `<span class="rating-stars" title="${numRating.toFixed(1)} out of 5">${stars}</span>`;
-}
-
-// ============================================
 // LOAD SUPPLIERS
 // ============================================
 async function loadSuppliers() {
@@ -100,11 +58,6 @@ async function loadSuppliers() {
         allSuppliers = response.data || [];
         
         const formattedSuppliers = allSuppliers.map(s => {
-            const onTimeRate = getOnTimeRate(s);
-            const rating = safeNumber(s.rating, 1);
-            const performanceClass = getPerformanceBadgeClass(onTimeRate);
-            const performanceText = getPerformanceText(onTimeRate);
-            
             return {
                 id: s.id,
                 name: `<strong>${escapeHtml(s.name)}</strong>`,
@@ -113,10 +66,8 @@ async function loadSuppliers() {
                 email: escapeHtml(s.email || '—'),
                 payment_terms: escapeHtml(s.payment_terms || '—'),
                 lead_time: s.lead_time_days ? `${s.lead_time_days} days` : '—',
-                rating: getRatingStars(rating),
-                performance: `<span class="badge ${performanceClass}">${performanceText} (${onTimeRate.toFixed(0)}%)</span>`,
-                status: s.is_active ? 
-                    '<span class="badge badge-success">Active</span>' : 
+                status: s.is_active ?
+                    '<span class="badge badge-success">Active</span>' :
                     '<span class="badge badge-danger">Inactive</span>'
             };
         });
@@ -129,8 +80,6 @@ async function loadSuppliers() {
             { key: 'email', label: 'Email' },
             { key: 'payment_terms', label: 'Payment Terms' },
             { key: 'lead_time', label: 'Lead Time' },
-            { key: 'rating', label: 'Rating' },
-            { key: 'performance', label: 'Performance' },
             { key: 'status', label: 'Status' }
         ];
         
@@ -169,23 +118,15 @@ function updateSupplierStats() {
     if (!statsContainer) return;
     
     const activeSuppliers = allSuppliers.filter(s => s.is_active).length;
-    const avgRating = allSuppliers.length > 0 
-        ? (allSuppliers.reduce((sum, s) => sum + safeNumber(s.rating, 0), 0) / allSuppliers.length).toFixed(1)
-        : 0;
-    const highPerforming = allSuppliers.filter(s => getOnTimeRate(s) >= 90).length;
-    const totalProductsSupplied = allSuppliers.reduce((sum, s) => sum + safeNumber(s.products_supplied, 0), 0);
     
     statsContainer.innerHTML = `
         <div class="stat-chip">Total: ${allSuppliers.length}</div>
         <div class="stat-chip">Active: ${activeSuppliers}</div>
-        <div class="stat-chip">Avg Rating: ${avgRating} ★</div>
-        <div class="stat-chip">High Performers: ${highPerforming}</div>
-        <div class="stat-chip">Products: ${totalProductsSupplied}</div>
     `;
 }
 
 // ============================================
-// VIEW SUPPLIER DETAILS (with performance metrics)
+// VIEW SUPPLIER DETAILS
 // ============================================
 async function viewSupplierDetails(supplierId) {
     try {
@@ -195,15 +136,6 @@ async function viewSupplierDetails(supplierId) {
         // Get products from this supplier
         const productsRes = await apiCall(`/products?supplier_id=${supplierId}`);
         const products = productsRes.data || [];
-        
-        const onTimeRate = getOnTimeRate(supplier);
-        const rating = safeNumber(supplier.rating, 1);
-        const performanceGrade = getPerformanceText(onTimeRate);
-        let performanceColor = '';
-        if (onTimeRate >= 95) performanceColor = 'var(--success)';
-        else if (onTimeRate >= 85) performanceColor = 'var(--accent-primary)';
-        else if (onTimeRate >= 70) performanceColor = 'var(--warning)';
-        else performanceColor = 'var(--danger)';
         
         const modalHtml = `
             <div class="modal-content" style="max-width: 700px;">
@@ -225,22 +157,10 @@ async function viewSupplierDetails(supplierId) {
                         </div>
                     </div>
                     
-                    <!-- Performance Metrics -->
+                    <!-- Business Info -->
                     <div class="details-section">
-                        <h4>📊 Performance Metrics</h4>
+                        <h4>📋 Business Information</h4>
                         <div class="metrics-grid">
-                            <div class="metric-card">
-                                <div class="metric-label">Rating</div>
-                                <div class="metric-value">${getRatingStars(rating)}</div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">On-Time Delivery</div>
-                                <div class="metric-value" style="color: ${performanceColor}">${onTimeRate.toFixed(0)}%</div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Total Orders</div>
-                                <div class="metric-value">${supplier.total_orders || 0}</div>
-                            </div>
                             <div class="metric-card">
                                 <div class="metric-label">Lead Time</div>
                                 <div class="metric-value">${supplier.lead_time_days || 7} days</div>
@@ -249,23 +169,19 @@ async function viewSupplierDetails(supplierId) {
                                 <div class="metric-label">Min Order</div>
                                 <div class="metric-value">${supplier.minimum_order || 0} units</div>
                             </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Performance</div>
-                                <div class="metric-value" style="color: ${performanceColor}">${performanceGrade}</div>
-                            </div>
                         </div>
                     </div>
                     
                     <!-- Products Supplied -->
                     <div class="details-section">
                         <h4>📦 Products Supplied (${products.length})</h4>
-                        ${products.length > 0 ? 
+                        ${products.length > 0 ?
                             `<div class="product-list">
-                                ${products.slice(0, 15).map(p => 
+                                ${products.slice(0, 15).map(p =>
                                     `<div class="product-chip">${escapeHtml(p.name)}</div>`
                                 ).join('')}
                                 ${products.length > 15 ? `<div class="product-chip">+${products.length - 15} more</div>` : ''}
-                            </div>` : 
+                            </div>` :
                             '<p class="help-text">No products currently linked to this supplier</p>'
                         }
                     </div>
