@@ -3,13 +3,40 @@ const { Product } = require('../models/Product');
 const { Inventory } = require('../models/Inventory');
 const pool = require('../db/pool');
 
+async function getAllSubcategoryIds(categoryId, pool) {
+    const subcategories = [];
+    const queue = [categoryId];
+    
+    while (queue.length > 0) {
+        const currentId = queue.shift();
+        const result = await pool.query(
+            'SELECT id FROM categories WHERE parent_id = $1',
+            [currentId]
+        );
+        for (const row of result.rows) {
+            subcategories.push(row.id);
+            queue.push(row.id);
+        }
+    }
+    return subcategories;
+}
+
 const productController = {
     // Get all products
     async getAllProducts(req, res) {
         try {
             const { category_id, supplier_id, is_active, search } = req.query;
-            const products = await Product.findAll({ 
-                category_id: category_id ? parseInt(category_id) : undefined,
+            
+            let categoryIds = [];
+            if (category_id) {
+                // Get all subcategory IDs as well
+                const subIds = await getAllSubcategoryIds(parseInt(category_id), pool);
+                categoryIds = [parseInt(category_id), ...subIds];
+            }
+            
+            const products = await Product.findAll({
+                category_ids: categoryIds.length > 0 ? categoryIds : undefined,
+                category_id: categoryIds.length === 0 && category_id ? parseInt(category_id) : undefined,
                 supplier_id: supplier_id ? parseInt(supplier_id) : undefined,
                 is_active: is_active === 'true' ? true : is_active === 'false' ? false : undefined,
                 search

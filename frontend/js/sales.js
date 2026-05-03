@@ -505,9 +505,11 @@ async function submitOrder() {
 // FILTER FUNCTIONS
 // ============================================
 function applyFilters() {
+    const categoryId = document.getElementById('categoryFilter')?.value || '';
+    
     currentFilters = {
         search: document.getElementById('searchInput')?.value || '',
-        category_id: document.getElementById('categoryFilter')?.value || '',
+        category_id: categoryId,  // This will work with backend subcategory logic
         min_price: document.getElementById('minPrice')?.value || '',
         max_price: document.getElementById('maxPrice')?.value || ''
     };

@@ -129,7 +129,12 @@ class Product extends BaseModel {
             const values = [];
             let paramCount = 1;
 
-            if (filters.category_id) {
+            if (filters.category_ids && filters.category_ids.length > 0) {
+                const placeholders = filters.category_ids.map((_, i) => `$${paramCount + i}`).join(',');
+                query += ` AND p.category_id IN (${placeholders})`;
+                values.push(...filters.category_ids);
+                paramCount += filters.category_ids.length;
+            } else if (filters.category_id) {
                 query += ` AND p.category_id = $${paramCount++}`;
                 values.push(filters.category_id);
             }
