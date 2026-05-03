@@ -230,13 +230,34 @@ class ChatSystem {
     }
 }
 
-// Initialize chat system (only once)
-let chatSystem;
-document.addEventListener('DOMContentLoaded', () => {
-    // Small delay to ensure auth is loaded
-    setTimeout(() => {
+// Initialize chat system (only once, after auth is ready)
+let chatSystem = null;
+
+function initChatSystem() {
+    if (chatSystem) return; // Already initialized
+    
+    if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
+        chatSystem = new ChatSystem();
+        window.chatSystem = chatSystem; // Make available globally
+        console.log('✅ Chat system initialized');
+    }
+}
+
+// Wait for auth to be ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initChatSystem, 500);
+    });
+} else {
+    setTimeout(initChatSystem, 500);
+}
+
+// Also try to initialize when auth is available (for pages that load auth asynchronously)
+if (window.auth) {
+    const checkInterval = setInterval(() => {
         if (auth.isLoggedIn() && !chatSystem) {
-            chatSystem = new ChatSystem();
+            initChatSystem();
+            clearInterval(checkInterval);
         }
-    }, 500);
-});
+    }, 100);
+}
