@@ -230,10 +230,13 @@ class ChatSystem {
     }
 }
 
-// Initialize chat system
+// Initialize chat system (only once)
 let chatSystem;
 document.addEventListener('DOMContentLoaded', () => {
-    if (auth.isLoggedIn()) {
-        chatSystem = new ChatSystem();
-    }
+    // Small delay to ensure auth is loaded
+    setTimeout(() => {
+        if (auth.isLoggedIn() && !chatSystem) {
+            chatSystem = new ChatSystem();
+        }
+    }, 500);
 });

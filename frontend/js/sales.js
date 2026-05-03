@@ -38,6 +38,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     new Header('appHeader');
     new Sidebar('sidebar', 'dashboard');
     
+    // Initialize chat system after auth is confirmed
+    if (auth.isLoggedIn() && typeof ChatSystem !== 'undefined') {
+        window.chatSystem = new ChatSystem();
+    }
+    
     // Load cart from localStorage
     loadCartFromStorage();
     updateCartCount();

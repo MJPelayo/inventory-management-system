@@ -1,10 +1,5 @@
 // frontend/js/admin.js
-/**
- * Admin Panel JavaScript
- * Handles admin dashboard functionality
- * 
- * @module admin
- */
+
 
 // Check authentication and role
 document.addEventListener('DOMContentLoaded', async () => {
@@ -23,6 +18,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize components
     new Header('appHeader');
     new Sidebar('sidebar', 'dashboard');
+    
+    // Initialize chat system after auth is confirmed
+    if (auth.isLoggedIn() && typeof ChatSystem !== 'undefined') {
+        window.chatSystem = new ChatSystem();
+    }
     
     // Load dashboard data
     await loadDashboardData();
