@@ -101,15 +101,17 @@ function populateCategoryFilters(cats, prefix = '', container = null) {
     const buildOptions = (categories, prefix = '', level = 0) => {
         let html = '';
         for (const cat of categories) {
-            html += `<option value="${cat.id}">${prefix}${escapeHtml(cat.name)}</option>`;
+            const indent = '  '.repeat(level);
+            const displayName = level > 0 ? `${indent}└ ${cat.name}` : cat.name;
+            html += `<option value="${cat.id}">${escapeHtml(displayName)}</option>`;
             if (cat.children && cat.children.length > 0) {
-                html += buildOptions(cat.children, prefix + '  └ ', level + 1);
+                html += buildOptions(cat.children, prefix, level + 1);
             }
         }
         return html;
     };
     
-    categoryFilter.innerHTML = '<option value="">All Categories</option>' + buildOptions(cats);
+    categoryFilter.innerHTML = '<option value="">📁 All Categories</option>' + buildOptions(cats);
 }
 
 // ============================================
