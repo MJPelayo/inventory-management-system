@@ -353,8 +353,18 @@ function markPicklistComplete() {
 // ============================================
 async function generatePickList() {
     try {
-        const response = await apiCall('/orders/sales?status=pending,processing');
-        const pendingOrders = response.data || [];
+        // FIX: Make separate requests instead of comma-separated statuses
+        let pendingOrders = [];
+        
+        try {
+            const pendingRes = await apiCall('/orders/sales?status=pending');
+            pendingOrders = pendingOrders.concat(pendingRes.data || []);
+        } catch (e) {}
+        
+        try {
+            const processingRes = await apiCall('/orders/sales?status=processing');
+            pendingOrders = pendingOrders.concat(processingRes.data || []);
+        } catch (e) {}
         
         if (pendingOrders.length === 0) {
             showToast('No pending orders to generate pick lists', 'info');

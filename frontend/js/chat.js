@@ -230,6 +230,33 @@ class ChatSystem {
     }
 }
 
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'info') {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    
+    toast.textContent = message;
+    toast.className = `toast toast-${type} show`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
 // Initialize chat system (only once, after auth is ready)
 let chatSystem = null;
 

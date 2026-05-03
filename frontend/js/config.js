@@ -39,7 +39,7 @@ function getAuthHeaders() {
 }
 
 // Helper function for API calls
-async function apiCall(endpoint, options = {}) {
+async function apiCall(endpoint, options = {}, expectBinary = false) {
     const url = `${CONFIG.API_BASE_URL}${endpoint}`;
     const headers = getAuthHeaders();
     
@@ -50,6 +50,10 @@ async function apiCall(endpoint, options = {}) {
             ...options.headers
         }
     });
+    
+    if (expectBinary) {
+        return response; // Return raw response for binary downloads (e.g., PDF exports)
+    }
     
     const data = await response.json();
     

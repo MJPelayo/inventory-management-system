@@ -3,7 +3,9 @@
 -- PostgreSQL - Working Version
 -- =====================================================
 
--- DROP TABLES IF EXISTS (for clean setup)
+-- =====================================================
+-- 1. DROP STATEMENTS
+-- =====================================================
 DROP TABLE IF EXISTS discount_approvals CASCADE;
 DROP TABLE IF EXISTS adjustment_reasons CASCADE;
 DROP TABLE IF EXISTS product_requests CASCADE;
@@ -12,6 +14,7 @@ DROP TABLE IF EXISTS internal_requests CASCADE;
 DROP TABLE IF EXISTS internal_messages CASCADE;
 DROP TABLE IF EXISTS user_permissions CASCADE;
 DROP TABLE IF EXISTS permission_audit_log CASCADE;
+DROP TABLE IF EXISTS role_default_permissions CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS system_settings CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
@@ -26,25 +29,31 @@ DROP TABLE IF EXISTS suppliers CASCADE;
 DROP TABLE IF EXISTS warehouses CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
--- ENUM TYPES (without IF NOT EXISTS)
+-- Drop enum types if exist
 DROP TYPE IF EXISTS user_role CASCADE;
+DROP TYPE IF EXISTS order_status CASCADE;
+DROP TYPE IF EXISTS payment_status CASCADE;
+DROP TYPE IF EXISTS movement_type CASCADE;
+DROP TYPE IF EXISTS permission_level CASCADE;
+
+-- =====================================================
+-- 2. CREATE TYPE STATEMENTS
+-- =====================================================
 CREATE TYPE user_role AS ENUM ('admin', 'sales', 'warehouse', 'supply');
 
-DROP TYPE IF EXISTS order_status CASCADE;
 CREATE TYPE order_status AS ENUM ('pending', 'processing', 'ready', 'in_transit', 'delivered', 'cancelled');
 
-DROP TYPE IF EXISTS payment_status CASCADE;
 CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'failed', 'refunded');
 
-DROP TYPE IF EXISTS movement_type CASCADE;
 CREATE TYPE movement_type AS ENUM ('received', 'sold', 'transferred', 'adjusted', 'returned');
 
-DROP TYPE IF EXISTS permission_level CASCADE;
 CREATE TYPE permission_level AS ENUM ('none', 'read', 'create', 'edit', 'delete', 'full');
 
 -- =====================================================
--- 1. users table
+-- 3. CREATE TABLE STATEMENTS (ALL 21 TABLES)
 -- =====================================================
+
+-- Table 1: users
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -62,9 +71,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 2. categories
--- =====================================================
+-- Table 2: categories
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -74,9 +81,7 @@ CREATE TABLE categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 3. suppliers
--- =====================================================
+-- Table 3: suppliers
 CREATE TABLE suppliers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -93,9 +98,7 @@ CREATE TABLE suppliers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 4. warehouses
--- =====================================================
+-- Table 4: warehouses
 CREATE TABLE warehouses (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -107,9 +110,7 @@ CREATE TABLE warehouses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 5. products
--- =====================================================
+-- Table 5: products
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
@@ -126,9 +127,7 @@ CREATE TABLE products (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 6. inventory
--- =====================================================
+-- Table 6: inventory
 CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -141,9 +140,7 @@ CREATE TABLE inventory (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 7. product_locations
--- =====================================================
+-- Table 7: product_locations
 CREATE TABLE product_locations (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -158,9 +155,7 @@ CREATE TABLE product_locations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 8. sales_orders
--- =====================================================
+-- Table 8: sales_orders
 CREATE TABLE sales_orders (
     id SERIAL PRIMARY KEY,
     order_number VARCHAR(50) NOT NULL UNIQUE,
@@ -182,9 +177,7 @@ CREATE TABLE sales_orders (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 9. supply_orders
--- =====================================================
+-- Table 9: supply_orders
 CREATE TABLE supply_orders (
     id SERIAL PRIMARY KEY,
     po_number VARCHAR(50) NOT NULL UNIQUE,
@@ -201,9 +194,7 @@ CREATE TABLE supply_orders (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 10. order_items
--- =====================================================
+-- Table 10: order_items
 CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
@@ -216,9 +207,7 @@ CREATE TABLE order_items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 11. stock_movements
--- =====================================================
+-- Table 11: stock_movements
 CREATE TABLE stock_movements (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id),
@@ -231,9 +220,7 @@ CREATE TABLE stock_movements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 12. discount_approvals
--- =====================================================
+-- Table 12: discount_approvals
 CREATE TABLE discount_approvals (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
@@ -246,9 +233,7 @@ CREATE TABLE discount_approvals (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 13. audit_logs
--- =====================================================
+-- Table 13: audit_logs
 CREATE TABLE audit_logs (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -262,9 +247,7 @@ CREATE TABLE audit_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 14. adjustment_reasons
--- =====================================================
+-- Table 14: adjustment_reasons
 CREATE TABLE adjustment_reasons (
     id SERIAL PRIMARY KEY,
     reason_code VARCHAR(50) UNIQUE NOT NULL,
@@ -273,9 +256,7 @@ CREATE TABLE adjustment_reasons (
     is_active BOOLEAN DEFAULT TRUE
 );
 
--- =====================================================
--- 15. notifications
--- =====================================================
+-- Table 15: notifications
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -287,9 +268,7 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 16. system_settings
--- =====================================================
+-- Table 16: system_settings
 CREATE TABLE system_settings (
     id SERIAL PRIMARY KEY,
     setting_key VARCHAR(100) UNIQUE NOT NULL,
@@ -299,9 +278,7 @@ CREATE TABLE system_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 17. internal_requests
--- =====================================================
+-- Table 17: internal_requests
 CREATE TABLE internal_requests (
     id SERIAL PRIMARY KEY,
     request_type VARCHAR(50) NOT NULL,
@@ -319,9 +296,7 @@ CREATE TABLE internal_requests (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 18. internal_messages
--- =====================================================
+-- Table 18: internal_messages
 CREATE TABLE internal_messages (
     id SERIAL PRIMARY KEY,
     sender_id INTEGER REFERENCES users(id),
@@ -336,9 +311,7 @@ CREATE TABLE internal_messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
--- 19. user_permissions
--- =====================================================
+-- Table 19: user_permissions
 CREATE TABLE user_permissions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -349,9 +322,7 @@ CREATE TABLE user_permissions (
     UNIQUE(user_id, module)
 );
 
--- =====================================================
--- 20. permission_audit_log
--- =====================================================
+-- Table 20: permission_audit_log
 CREATE TABLE permission_audit_log (
     id SERIAL PRIMARY KEY,
     changed_by INTEGER REFERENCES users(id),
@@ -362,8 +333,19 @@ CREATE TABLE permission_audit_log (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table 21: role_default_permissions
+CREATE TABLE role_default_permissions (
+    id SERIAL PRIMARY KEY,
+    role VARCHAR(50) NOT NULL,
+    module VARCHAR(50) NOT NULL,
+    permission VARCHAR(20) DEFAULT 'none',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(role, module)
+);
+
 -- =====================================================
--- INDEXES
+-- 4. CREATE INDEX STATEMENTS
 -- =====================================================
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
@@ -385,7 +367,7 @@ CREATE INDEX idx_internal_requests_status ON internal_requests(status);
 CREATE INDEX idx_user_permissions_user ON user_permissions(user_id);
 
 -- =====================================================
--- TRIGGER FUNCTION for updated_at
+-- 5. CREATE OR REPLACE FUNCTION update_updated_at_column()
 -- =====================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -395,7 +377,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Apply triggers
+-- =====================================================
+-- 6. CREATE TRIGGER STATEMENTS FOR ALL TABLES
+-- =====================================================
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -406,9 +390,10 @@ CREATE TRIGGER update_sales_orders_updated_at BEFORE UPDATE ON sales_orders FOR 
 CREATE TRIGGER update_supply_orders_updated_at BEFORE UPDATE ON supply_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON user_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_product_locations_updated_at BEFORE UPDATE ON product_locations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_role_default_permissions_updated_at BEFORE UPDATE ON role_default_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
--- SAMPLE DATA
+-- 7. INSERT SAMPLE DATA
 -- =====================================================
 
 -- Warehouses
@@ -474,3 +459,25 @@ INSERT INTO system_settings (setting_key, setting_value, setting_type, descripti
 ('email_notifications', 'false', 'boolean', 'Enable email notifications'),
 ('slack_notifications', 'false', 'boolean', 'Enable Slack notifications'),
 ('slack_webhook', '', 'string', 'Slack webhook URL');
+
+-- Role Default Permissions
+INSERT INTO role_default_permissions (role, module, permission) VALUES
+('admin', 'products', 'full'),
+('admin', 'suppliers', 'full'),
+('admin', 'warehouses', 'full'),
+('admin', 'users', 'full'),
+('admin', 'reports', 'full'),
+('admin', 'orders', 'full'),
+('admin', 'inventory', 'full'),
+('admin', 'settings', 'full'),
+('sales', 'products', 'read'),
+('sales', 'inventory', 'read'),
+('sales', 'orders', 'create'),
+('sales', 'reports', 'read'),
+('warehouse', 'inventory', 'edit'),
+('warehouse', 'orders', 'read'),
+('warehouse', 'products', 'read'),
+('supply', 'suppliers', 'edit'),
+('supply', 'orders', 'create'),
+('supply', 'inventory', 'read')
+ON CONFLICT (role, module) DO NOTHING;
