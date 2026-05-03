@@ -1,10 +1,5 @@
 // frontend/js/components.js
-/**
- * Shared UI Components
- * Reusable components across all dashboards
- * 
- * @module components
- */
+
 
 // Sidebar navigation component
 class Sidebar {
@@ -25,7 +20,8 @@ class Sidebar {
                 { icon: '🏷️', text: 'Categories', href: 'categories.html', page: 'categories' },
                 { icon: '🏭', text: 'Suppliers', href: 'suppliers.html', page: 'suppliers' },
                 { icon: '🏢', text: 'Warehouses', href: 'warehouses.html', page: 'warehouses' },
-                { icon: '📈', text: 'Reports', href: 'reports.html', page: 'reports' }
+                { icon: '📈', text: 'Reports', href: 'reports.html', page: 'reports' },
+                { icon: '⚙️', text: 'Settings', href: 'settings.html', page: 'settings' }
             ],
             sales: [
                 { icon: '📊', text: 'Dashboard', href: 'dashboard.html', page: 'dashboard' },
