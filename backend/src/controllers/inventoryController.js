@@ -60,6 +60,8 @@ const inventoryController = {
         }
     },
     
+    // ✅ SECURITY: Uses parameterized queries to prevent SQL injection
+    // Never concatenate user input directly into WHERE clauses
     async getMovements(req, res) {
         try {
             const { product_id, limit = 100 } = req.query;
@@ -75,12 +77,22 @@ const inventoryController = {
             const params = [];
             
             if (product_id) {
+                // ✅ FIX: Use parameterized query, not concatenation
+                const parsedProductId = parseInt(product_id);
+                if (isNaN(parsedProductId)) {
+                    return res.status(400).json({ success: false, error: 'Invalid product_id parameter' });
+                }
                 query += ` WHERE sm.product_id = $1`;
-                params.push(parseInt(product_id));
+                params.push(parsedProductId);
+            }
+            
+            const parsedLimit = parseInt(limit);
+            if (isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 1000) {
+                return res.status(400).json({ success: false, error: 'Invalid limit parameter (must be between 1 and 1000)' });
             }
             
             query += ` ORDER BY sm.created_at DESC LIMIT $${params.length + 1}`;
-            params.push(parseInt(limit));
+            params.push(parsedLimit);
             
             const result = await pool.query(query, params);
             
@@ -291,6 +303,10 @@ const inventoryController = {
             // 2. Reorder points
             // 3. Sales velocity (last 30 days)
             // 4. Supplier lead times
+            const { limit = 30 } = req.query;
+            const parsedLimit = parseInt(limit);
+            const safeLimit = isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 100 ? 30 : parsedLimit;
+            
             const query = `
                 WITH sales_velocity AS (
                     SELECT
@@ -309,7 +325,7 @@ const inventoryController = {
                     i.reorder_point,
                     i.max_stock,
                     COALESCE(sv.daily_sales_rate, 0) as daily_sales_rate,
-                    s.lead_time_days,
+                    COALESCE(s.lead_time_days, 7) as lead_time_days,
                     s.name as supplier_name,
                     s.id as supplier_id,
                     -- Calculate suggested order quantity
@@ -317,7 +333,7 @@ const inventoryController = {
                         -- Max stock minus current (to fill to max)
                         i.max_stock - i.quantity,
                         -- Safety stock calculation (daily sales × lead time × 1.5)
-                        CEIL(COALESCE(sv.daily_sales_rate, 5) * s.lead_time_days * 1.5) - i.quantity,
+                        CEIL(COALESCE(sv.daily_sales_rate, 5) * COALESCE(s.lead_time_days, 7) * 1.5) - i.quantity,
                         -- Minimum order of reorder point
                         i.reorder_point,
                         0
@@ -330,9 +346,9 @@ const inventoryController = {
                     END as priority
                 FROM inventory i
                 JOIN products p ON i.product_id = p.id
-                JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN suppliers s ON p.supplier_id = s.id
                 LEFT JOIN sales_velocity sv ON sv.product_id = p.id
-                WHERE i.quantity <= i.max_stock  -- Only products that need attention
+                WHERE i.quantity <= i.max_stock
                 ORDER BY
                     CASE
                         WHEN i.quantity <= i.reorder_point THEN 1
@@ -340,10 +356,10 @@ const inventoryController = {
                         ELSE 3
                     END,
                     (i.quantity::float / NULLIF(i.reorder_point, 1)) ASC
-                LIMIT 30
+                LIMIT $1
             `;
             
-            const result = await pool.query(query);
+            const result = await pool.query(query, [safeLimit]);
             
             res.status(200).json({
                 success: true,

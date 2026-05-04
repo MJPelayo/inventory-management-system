@@ -251,13 +251,37 @@ const orderController = {
 
     async getSupplyOrders(req, res) {
         try {
-            const orders = await SupplyOrder.findAll();
+            const { status, supplier_id } = req.query;
+            
+            let query = 'SELECT * FROM supply_orders WHERE 1=1';
+            const params = [];
+            let paramCount = 1;
+            
+            // ✅ Parameterized queries
+            if (status) {
+                query += ` AND status = $${paramCount++}`;
+                params.push(status);
+            }
+            if (supplier_id) {
+                const parsedSupplierId = parseInt(supplier_id);
+                if (isNaN(parsedSupplierId)) {
+                    return res.status(400).json({ success: false, error: 'Invalid supplier_id parameter' });
+                }
+                query += ` AND supplier_id = $${paramCount++}`;
+                params.push(parsedSupplierId);
+            }
+            
+            query += ' ORDER BY created_at DESC';
+            
+            const result = await pool.query(query, params);
+            
             res.status(200).json({
                 success: true,
-                data: orders.map(o => o.toJSON()),
-                count: orders.length
+                data: result.rows.map(row => new SupplyOrder(row).toJSON()),
+                count: result.rows.length
             });
         } catch (error) {
+            console.error('Failed to get supply orders:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     },

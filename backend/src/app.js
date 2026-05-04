@@ -17,6 +17,26 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================
+// SANITIZATION MIDDLEWARE
+// ============================================
+
+const { sanitizeRequestBody, sanitizeQueryParams } = require('./middleware/sanitize');
+const { sqlInjectionProtection } = require('./middleware/security');
+
+// Apply SQL injection protection before routes
+app.use(sqlInjectionProtection);
+
+// Apply sanitization to all routes (except auth to avoid password issues)
+app.use(sanitizeQueryParams);
+app.use('/api', (req, res, next) => {
+    // Skip sanitization for auth routes (preserve password)
+    if (req.path === '/auth/login' || req.path === '/auth/register') {
+        return next();
+    }
+    sanitizeRequestBody(req, res, next);
+});
+
+// ============================================
 // SERVE STATIC FRONTEND FILES
 // ============================================
 

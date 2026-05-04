@@ -25,28 +25,60 @@ const productController = {
     // Get all products
     async getAllProducts(req, res) {
         try {
-            const { category_id, supplier_id, is_active, search } = req.query;
+            const { category_id, supplier_id, is_active, search, limit, offset } = req.query;
             
-            let categoryIds = [];
+            let query = `
+                SELECT p.*, c.name as category_name, s.name as supplier_name
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN suppliers s ON p.supplier_id = s.id
+                WHERE 1=1
+            `;
+            const params = [];
+            let paramCount = 1;
+            
+            // ✅ All filters use parameterized queries
             if (category_id) {
-                // Get all subcategory IDs as well
-                const subIds = await getAllSubcategoryIds(parseInt(category_id), pool);
-                categoryIds = [parseInt(category_id), ...subIds];
+                query += ` AND p.category_id = $${paramCount++}`;
+                params.push(parseInt(category_id));
             }
             
-            const products = await Product.findAll({
-                category_ids: categoryIds.length > 0 ? categoryIds : undefined,
-                category_id: categoryIds.length === 0 && category_id ? parseInt(category_id) : undefined,
-                supplier_id: supplier_id ? parseInt(supplier_id) : undefined,
-                is_active: is_active === 'true' ? true : is_active === 'false' ? false : undefined,
-                search
-            });
+            if (supplier_id) {
+                query += ` AND p.supplier_id = $${paramCount++}`;
+                params.push(parseInt(supplier_id));
+            }
+            
+            if (is_active !== undefined) {
+                query += ` AND p.is_active = $${paramCount++}`;
+                params.push(is_active === 'true');
+            }
+            
+            if (search) {
+                query += ` AND (p.name ILIKE $${paramCount++} OR p.sku ILIKE $${paramCount++})`;
+                params.push(`%${search}%`, `%${search}%`);
+            }
+            
+            query += ' ORDER BY p.name';
+            
+            if (limit) {
+                query += ` LIMIT $${paramCount++}`;
+                params.push(parseInt(limit));
+            }
+            
+            if (offset) {
+                query += ` OFFSET $${paramCount++}`;
+                params.push(parseInt(offset));
+            }
+            
+            const result = await pool.query(query, params);
+            
             res.status(200).json({
                 success: true,
-                data: products.map(p => p.toJSON()),
-                count: products.length
+                data: result.rows,
+                count: result.rows.length
             });
         } catch (error) {
+            console.error('Failed to get products:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     },
