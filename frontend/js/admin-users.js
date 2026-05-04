@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     new Header('appHeader');
     new Sidebar('sidebar', 'users');
     
+    // Load user roles from database
+    await dropdownLoader.loadAll();
+    await dropdownLoader.populateSelect('userRole', 'user_roles', 'role_code', 'role_name');
+    
     await loadUsers();
     setupEventListeners();
     setupRoleFieldToggle();

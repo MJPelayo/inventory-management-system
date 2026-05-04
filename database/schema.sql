@@ -28,6 +28,12 @@ DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS suppliers CASCADE;
 DROP TABLE IF EXISTS warehouses CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS payment_terms CASCADE;
+DROP TABLE IF EXISTS delivery_types CASCADE;
+DROP TABLE IF EXISTS order_statuses CASCADE;
+DROP TABLE IF EXISTS payment_statuses CASCADE;
+DROP TABLE IF EXISTS user_roles CASCADE;
+DROP TABLE IF EXISTS shipping_methods CASCADE;
 
 -- Drop enum types if exist
 DROP TYPE IF EXISTS user_role CASCADE;
@@ -60,6 +66,7 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role user_role NOT NULL,
+    role_id INTEGER REFERENCES user_roles(id),
     department VARCHAR(100),
     sales_target DECIMAL(12,2),
     warehouse_id INTEGER,
@@ -164,6 +171,9 @@ CREATE TABLE sales_orders (
     customer_phone VARCHAR(20),
     shipping_address TEXT,
     delivery_type VARCHAR(20) NOT NULL CHECK (delivery_type IN ('delivery', 'pickup')),
+    delivery_type_id INTEGER REFERENCES delivery_types(id),
+    order_status_id INTEGER REFERENCES order_statuses(id),
+    payment_status_id INTEGER REFERENCES payment_statuses(id),
     status order_status DEFAULT 'pending',
     payment_status payment_status DEFAULT 'pending',
     subtotal DECIMAL(10,2) DEFAULT 0,
@@ -393,8 +403,10 @@ CREATE TRIGGER update_product_locations_updated_at BEFORE UPDATE ON product_loca
 CREATE TRIGGER update_role_default_permissions_updated_at BEFORE UPDATE ON role_default_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
--- payment_terms (NEW TABLE - dynamic dropdown values)
+-- DROPDOWN MASTER TABLES (All dynamic values from database)
 -- =====================================================
+
+-- 1. Payment Terms
 CREATE TABLE IF NOT EXISTS payment_terms (
     id SERIAL PRIMARY KEY,
     term_code VARCHAR(50) NOT NULL UNIQUE,
@@ -407,7 +419,73 @@ CREATE TABLE IF NOT EXISTS payment_terms (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default payment terms
+-- 2. Delivery Types
+CREATE TABLE IF NOT EXISTS delivery_types (
+    id SERIAL PRIMARY KEY,
+    type_code VARCHAR(50) NOT NULL UNIQUE,
+    type_name VARCHAR(100) NOT NULL,
+    requires_address BOOLEAN DEFAULT FALSE,
+    icon VARCHAR(50),
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Order Statuses
+CREATE TABLE IF NOT EXISTS order_statuses (
+    id SERIAL PRIMARY KEY,
+    status_code VARCHAR(50) NOT NULL UNIQUE,
+    status_name VARCHAR(100) NOT NULL,
+    color VARCHAR(20) DEFAULT 'gray',
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Payment Statuses
+CREATE TABLE IF NOT EXISTS payment_statuses (
+    id SERIAL PRIMARY KEY,
+    status_code VARCHAR(50) NOT NULL UNIQUE,
+    status_name VARCHAR(100) NOT NULL,
+    color VARCHAR(20) DEFAULT 'gray',
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. User Roles (Dynamic)
+CREATE TABLE IF NOT EXISTS user_roles (
+    id SERIAL PRIMARY KEY,
+    role_code VARCHAR(50) NOT NULL UNIQUE,
+    role_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Shipping Methods
+CREATE TABLE IF NOT EXISTS shipping_methods (
+    id SERIAL PRIMARY KEY,
+    method_code VARCHAR(50) NOT NULL UNIQUE,
+    method_name VARCHAR(100) NOT NULL,
+    base_cost DECIMAL(10,2) DEFAULT 0,
+    estimated_days INTEGER DEFAULT 0,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
+-- INSERT DEFAULT DATA FOR DROPDOWN MASTER TABLES
+-- =====================================================
+
+-- Payment Terms
 INSERT INTO payment_terms (term_code, term_name, days, sort_order) VALUES
 ('NET_15', 'Net 15 (15 days)', 15, 10),
 ('NET_30', 'Net 30 (30 days)', 30, 20),
@@ -416,11 +494,77 @@ INSERT INTO payment_terms (term_code, term_name, days, sort_order) VALUES
 ('COD', 'COD (Cash on Delivery)', 0, 50),
 ('PREPAID', 'Prepaid', 0, 60),
 ('LETTER_OF_CREDIT', 'Letter of Credit', 0, 70),
-('WIRE_TRANSFER', 'Wire Transfer', 0, 80);
+('WIRE_TRANSFER', 'Wire Transfer', 0, 80)
+ON CONFLICT (term_code) DO NOTHING;
 
--- Add trigger for payment_terms
+-- Delivery Types
+INSERT INTO delivery_types (type_code, type_name, requires_address, icon, sort_order) VALUES
+('PICKUP', 'Store Pickup', FALSE, '🏪', 10),
+('DELIVERY', 'Home Delivery', TRUE, '🚚', 20),
+('EXPRESS', 'Express Delivery', TRUE, '⚡', 30),
+('SAME_DAY', 'Same Day Delivery', TRUE, '🏃', 40)
+ON CONFLICT (type_code) DO NOTHING;
+
+-- Order Statuses
+INSERT INTO order_statuses (status_code, status_name, color, sort_order) VALUES
+('PENDING', 'Pending', 'warning', 10),
+('PROCESSING', 'Processing', 'info', 20),
+('READY', 'Ready for Pickup', 'primary', 30),
+('IN_TRANSIT', 'In Transit', 'info', 40),
+('DELIVERED', 'Delivered', 'success', 50),
+('CANCELLED', 'Cancelled', 'danger', 60)
+ON CONFLICT (status_code) DO NOTHING;
+
+-- Payment Statuses
+INSERT INTO payment_statuses (status_code, status_name, color, sort_order) VALUES
+('PENDING', 'Pending', 'warning', 10),
+('PAID', 'Paid', 'success', 20),
+('FAILED', 'Failed', 'danger', 30),
+('REFUNDED', 'Refunded', 'info', 40),
+('PARTIALLY_PAID', 'Partially Paid', 'warning', 25)
+ON CONFLICT (status_code) DO NOTHING;
+
+-- User Roles
+INSERT INTO user_roles (role_code, role_name, description, sort_order) VALUES
+('admin', 'System Administrator', 'Full system access', 10),
+('sales', 'Sales Manager', 'Create orders, view customers', 20),
+('warehouse', 'Warehouse Manager', 'Manage inventory, fulfill orders', 30),
+('supply', 'Supply Manager', 'Manage suppliers, purchase orders', 40)
+ON CONFLICT (role_code) DO NOTHING;
+
+-- Shipping Methods
+INSERT INTO shipping_methods (method_code, method_name, base_cost, estimated_days, sort_order) VALUES
+('STANDARD', 'Standard Shipping', 5.99, 5, 10),
+('EXPEDITED', 'Expedited Shipping', 12.99, 2, 20),
+('OVERNIGHT', 'Overnight Shipping', 24.99, 1, 30),
+('FREE', 'Free Shipping', 0.00, 7, 5)
+ON CONFLICT (method_code) DO NOTHING;
+
+-- =====================================================
+-- TRIGGERS FOR DROPDOWN MASTER TABLES
+-- =====================================================
 CREATE TRIGGER update_payment_terms_updated_at
 BEFORE UPDATE ON payment_terms
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_delivery_types_updated_at
+BEFORE UPDATE ON delivery_types
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_order_statuses_updated_at
+BEFORE UPDATE ON order_statuses
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_payment_statuses_updated_at
+BEFORE UPDATE ON payment_statuses
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_roles_updated_at
+BEFORE UPDATE ON user_roles
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_shipping_methods_updated_at
+BEFORE UPDATE ON shipping_methods
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================

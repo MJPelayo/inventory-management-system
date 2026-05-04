@@ -90,6 +90,7 @@ app.use('/api/requests', authenticateToken, require('./routes/requestRoutes'));
 // Notification routes
 app.use('/api/notifications', authenticateToken, require('./routes/notificationRoutes'));
 app.use('/api/payment-terms', authenticateToken, require('./routes/paymentTermRoutes'));
+app.use('/api/dropdowns', authenticateToken, require('./routes/dropdownRoutes'));
 
 // ============================================
 // SYSTEM ROUTES (for frontend compatibility)

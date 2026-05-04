@@ -50,6 +50,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadCartFromStorage();
     updateCartCount();
     
+    // Load delivery types from database
+    await dropdownLoader.loadAll();
+    await dropdownLoader.populateSelect('deliveryType', 'delivery_types', 'type_code', 'type_name');
+    
     // Load initial data
     await loadCategories();
     await loadProducts();

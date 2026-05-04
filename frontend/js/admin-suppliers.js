@@ -6,7 +6,6 @@
 let suppliersTable = null;
 let currentSupplierId = null;
 let allSuppliers = [];
-let paymentTerms = [];
 
 // ============================================
 // PAGE INITIALIZATION
@@ -28,7 +27,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     new Header('appHeader');
     new Sidebar('sidebar', 'suppliers');
     
-    await loadPaymentTerms();
+    // Load dropdowns from database
+    await dropdownLoader.loadAll();
+    await dropdownLoader.populateSelect('supplierPaymentTerms', 'payment_terms', 'id', 'term_name');
+    
     await loadSuppliers();
     setupEventListeners();
 });
@@ -42,30 +44,6 @@ function safeNumber(value, decimals = 1) {
     return isNaN(num) ? 0 : num;
 }
 
-// ============================================
-// LOAD PAYMENT TERMS
-// ============================================
-async function loadPaymentTerms() {
-    try {
-        const response = await apiCall('/payment-terms');
-        paymentTerms = response.data || [];
-        
-        const paymentSelect = document.getElementById('supplierPaymentTerms');
-        if (paymentSelect) {
-            paymentSelect.innerHTML = '<option value="">Select Payment Terms</option>' +
-                paymentTerms.map(term =>
-                    `<option value="${term.id}">${escapeHtml(term.term_name)}</option>`
-                ).join('');
-        }
-    } catch (error) {
-        console.error('Failed to load payment terms:', error);
-        // Fallback to empty select
-        const paymentSelect = document.getElementById('supplierPaymentTerms');
-        if (paymentSelect) {
-            paymentSelect.innerHTML = '<option value="">Select Payment Terms</option>';
-        }
-    }
-}
 
 // ============================================
 // LOAD SUPPLIERS
@@ -425,8 +403,7 @@ function setupEventListeners() {
 // ============================================
 function getPaymentTermName(paymentTermId) {
     if (!paymentTermId) return '—';
-    const term = paymentTerms.find(t => t.id === paymentTermId);
-    return term ? escapeHtml(term.term_name) : '—';
+    return dropdownLoader.getPaymentTermName(paymentTermId) || '—';
 }
 
 function escapeHtml(str) {
