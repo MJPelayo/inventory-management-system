@@ -91,12 +91,66 @@ class Header {
                 <h1>Inventory Management System</h1>
             </div>
             <div class="header-right">
+                <div id="sessionStatus" class="session-status" style="display: none;">
+                    <span class="session-dot"></span>
+                    <span id="sessionTimer">Session active</span>
+                </div>
                 <div class="header-user">
                     <span class="user-name">${user?.name || 'User'}</span>
                     <span class="user-role">${user?.role || 'role'}</span>
                 </div>
             </div>
         `;
+        
+        // Start session timer display
+        this.startSessionTimer();
+    }
+    
+    startSessionTimer() {
+        const sessionStatus = document.getElementById('sessionStatus');
+        const sessionTimer = document.getElementById('sessionTimer');
+        
+        if (!sessionStatus || !sessionTimer) return;
+        
+        const updateTimer = () => {
+            const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+            if (!token) {
+                sessionStatus.style.display = 'none';
+                return;
+            }
+            
+            try {
+                const decoded = auth.decodeToken(token);
+                if (decoded && decoded.exp) {
+                    const now = Math.floor(Date.now() / 1000);
+                    const timeLeft = decoded.exp - now;
+                    
+                    if (timeLeft > 0) {
+                        sessionStatus.style.display = 'flex';
+                        const minutesLeft = Math.floor(timeLeft / 60);
+                        const secondsLeft = timeLeft % 60;
+                        
+                        if (minutesLeft > 5) {
+                            sessionStatus.className = 'session-status';
+                            sessionTimer.textContent = `Session: ${minutesLeft}m remaining`;
+                        } else if (minutesLeft > 1) {
+                            sessionStatus.className = 'session-status warning';
+                            sessionTimer.textContent = `Session: ${minutesLeft}m remaining - refreshing soon`;
+                        } else {
+                            sessionStatus.className = 'session-status expiring';
+                            sessionTimer.textContent = `Session: ${minutesLeft}m ${secondsLeft}s - refreshing...`;
+                        }
+                    } else {
+                        sessionStatus.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to decode token:', error);
+            }
+        };
+        
+        updateTimer();
+        setInterval(updateTimer, 1000);
     }
 }
 

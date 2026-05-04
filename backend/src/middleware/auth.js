@@ -342,6 +342,105 @@ const refreshToken = (token) => {
     }
 };
 
+/**
+ * Generate new token from existing valid token
+ * POST /api/auth/refresh
+ */
+async function refreshTokenHandler(req, res) {
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+            success: false,
+            error: 'Refresh token required'
+        });
+    }
+    
+    const oldToken = authHeader.split(' ')[1];
+    
+    if (isTokenBlacklisted(oldToken)) {
+        return res.status(401).json({
+            success: false,
+            error: 'Token has been revoked'
+        });
+    }
+    
+    try {
+        // Verify old token
+        const decoded = jwt.verify(oldToken, JWT_SECRET, {
+            algorithms: ['HS256'],
+            ignoreExpiration: false
+        });
+        
+        // Check if token is about to expire or has expired
+        // We only refresh tokens that are within 1 hour of expiration OR expired within last 5 minutes
+        const now = Math.floor(Date.now() / 1000);
+        const timeToExpiry = decoded.exp - now;
+        const timeSinceExpiry = now - decoded.exp;
+        
+        const isNearExpiry = timeToExpiry < 3600 && timeToExpiry > 0; // Within 1 hour
+        const isRecentlyExpired = timeSinceExpiry < 300 && timeSinceExpiry > 0; // Expired within 5 minutes
+        
+        if (!isNearExpiry && !isRecentlyExpired) {
+            return res.status(403).json({
+                success: false,
+                error: 'Token not eligible for refresh'
+            });
+        }
+        
+        // Get fresh user data
+        const user = await User.findById(decoded.id);
+        
+        if (!user || !user.isActive()) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not found or inactive'
+            });
+        }
+        
+        // Revoke old token
+        const remainingTtl = (decoded.exp - now) * 1000;
+        if (remainingTtl > 0) {
+            blacklistToken(oldToken, remainingTtl);
+        }
+        
+        // Generate new token
+        const newToken = generateToken(user.getId(), user.getEmail(), user.getRole());
+        
+        res.status(200).json({
+            success: true,
+            data: {
+                token: newToken,
+                expires_in: process.env.JWT_EXPIRE || '24h'
+            },
+            message: 'Token refreshed successfully'
+        });
+        
+    } catch (error) {
+        console.error('Token refresh error:', error.name);
+        
+        if (error.name === 'TokenExpiredError') {
+            // Token is too old to refresh (more than 5 minutes expired)
+            return res.status(401).json({
+                success: false,
+                error: 'Token expired too long ago. Please login again.'
+            });
+        }
+        
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(403).json({
+                success: false,
+                error: 'Invalid token'
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            error: 'Failed to refresh token'
+        });
+    }
+}
+
 module.exports = {
     authenticateToken,
     authorize,
@@ -349,5 +448,6 @@ module.exports = {
     revokeToken,
     refreshToken,
     optionalAuth,
-    isTokenBlacklisted
+    isTokenBlacklisted,
+    refreshTokenHandler  // Add this export
 };
