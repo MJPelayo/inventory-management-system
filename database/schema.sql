@@ -90,7 +90,7 @@ CREATE TABLE suppliers (
     email VARCHAR(100),
     address TEXT,
     tax_id VARCHAR(50) UNIQUE,
-    payment_terms VARCHAR(50),
+    payment_term_id INTEGER REFERENCES payment_terms(id),
     lead_time_days INTEGER DEFAULT 7,
     minimum_order INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
@@ -391,6 +391,37 @@ CREATE TRIGGER update_supply_orders_updated_at BEFORE UPDATE ON supply_orders FO
 CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON user_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_product_locations_updated_at BEFORE UPDATE ON product_locations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_role_default_permissions_updated_at BEFORE UPDATE ON role_default_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================
+-- payment_terms (NEW TABLE - dynamic dropdown values)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS payment_terms (
+    id SERIAL PRIMARY KEY,
+    term_code VARCHAR(50) NOT NULL UNIQUE,
+    term_name VARCHAR(100) NOT NULL,
+    days INTEGER DEFAULT 0,
+    description TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default payment terms
+INSERT INTO payment_terms (term_code, term_name, days, sort_order) VALUES
+('NET_15', 'Net 15 (15 days)', 15, 10),
+('NET_30', 'Net 30 (30 days)', 30, 20),
+('NET_45', 'Net 45 (45 days)', 45, 30),
+('NET_60', 'Net 60 (60 days)', 60, 40),
+('COD', 'COD (Cash on Delivery)', 0, 50),
+('PREPAID', 'Prepaid', 0, 60),
+('LETTER_OF_CREDIT', 'Letter of Credit', 0, 70),
+('WIRE_TRANSFER', 'Wire Transfer', 0, 80);
+
+-- Add trigger for payment_terms
+CREATE TRIGGER update_payment_terms_updated_at
+BEFORE UPDATE ON payment_terms
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- 7. INSERT SAMPLE DATA

@@ -6,6 +6,7 @@
 let suppliersTable = null;
 let currentSupplierId = null;
 let allSuppliers = [];
+let paymentTerms = [];
 
 // ============================================
 // PAGE INITIALIZATION
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     new Header('appHeader');
     new Sidebar('sidebar', 'suppliers');
     
+    await loadPaymentTerms();
     await loadSuppliers();
     setupEventListeners();
 });
@@ -38,6 +40,31 @@ function safeNumber(value, decimals = 1) {
     if (value === null || value === undefined) return 0;
     const num = parseFloat(value);
     return isNaN(num) ? 0 : num;
+}
+
+// ============================================
+// LOAD PAYMENT TERMS
+// ============================================
+async function loadPaymentTerms() {
+    try {
+        const response = await apiCall('/payment-terms');
+        paymentTerms = response.data || [];
+        
+        const paymentSelect = document.getElementById('supplierPaymentTerms');
+        if (paymentSelect) {
+            paymentSelect.innerHTML = '<option value="">Select Payment Terms</option>' +
+                paymentTerms.map(term =>
+                    `<option value="${term.id}">${escapeHtml(term.term_name)}</option>`
+                ).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load payment terms:', error);
+        // Fallback to empty select
+        const paymentSelect = document.getElementById('supplierPaymentTerms');
+        if (paymentSelect) {
+            paymentSelect.innerHTML = '<option value="">Select Payment Terms</option>';
+        }
+    }
 }
 
 // ============================================
@@ -64,7 +91,7 @@ async function loadSuppliers() {
                 contact: escapeHtml(s.contact_person || '—'),
                 phone: escapeHtml(s.phone || '—'),
                 email: escapeHtml(s.email || '—'),
-                payment_terms: escapeHtml(s.payment_terms || '—'),
+                payment_terms: getPaymentTermName(s.payment_term_id),
                 lead_time: s.lead_time_days ? `${s.lead_time_days} days` : '—',
                 status: s.is_active ?
                     '<span class="badge badge-success">Active</span>' :
@@ -241,8 +268,8 @@ async function openSupplierModal(supplierId = null) {
             document.getElementById('supplierTaxId').value = supplier.tax_id || '';
             
             // Set payment terms dropdown
-            if (paymentTermsSelect && supplier.payment_terms) {
-                paymentTermsSelect.value = supplier.payment_terms;
+            if (paymentTermsSelect && supplier.payment_term_id) {
+                paymentTermsSelect.value = supplier.payment_term_id;
             }
             
             document.getElementById('supplierLeadTime').value = supplier.lead_time_days || 7;
@@ -302,7 +329,7 @@ async function saveSupplier() {
         email: email || null,
         address: document.getElementById('supplierAddress').value.trim() || null,
         tax_id: document.getElementById('supplierTaxId').value.trim() || null,
-        payment_terms: paymentTermsSelect ? paymentTermsSelect.value || null : null,
+        payment_term_id: paymentTermsSelect ? parseInt(paymentTermsSelect.value) || null : null,
         lead_time_days: leadTime,
         minimum_order: parseInt(document.getElementById('supplierMinOrder').value) || 0,
         is_active: document.getElementById('supplierActive').checked
@@ -396,6 +423,12 @@ function setupEventListeners() {
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
+function getPaymentTermName(paymentTermId) {
+    if (!paymentTermId) return '—';
+    const term = paymentTerms.find(t => t.id === paymentTermId);
+    return term ? escapeHtml(term.term_name) : '—';
+}
+
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');

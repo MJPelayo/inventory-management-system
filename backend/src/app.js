@@ -69,6 +69,7 @@ app.use('/api/requests', authenticateToken, require('./routes/requestRoutes'));
 
 // Notification routes
 app.use('/api/notifications', authenticateToken, require('./routes/notificationRoutes'));
+app.use('/api/payment-terms', authenticateToken, require('./routes/paymentTermRoutes'));
 
 // ============================================
 // SYSTEM ROUTES (for frontend compatibility)

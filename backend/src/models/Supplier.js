@@ -15,7 +15,7 @@ class Supplier extends BaseModel {
         this.email = data.email || null;
         this.address = data.address || null;
         this.tax_id = data.tax_id || null;
-        this.payment_terms = data.payment_terms || null;
+        this.payment_term_id = data.payment_term_id || null;
         this.lead_time_days = data.lead_time_days || 7;
         this.minimum_order = data.minimum_order || 0;
         this.is_active = data.is_active !== undefined ? data.is_active : true;
@@ -36,17 +36,26 @@ class Supplier extends BaseModel {
      */
     _getInsertFields() {
         return ['name', 'contact_person', 'phone', 'email', 'address',
-                'tax_id', 'payment_terms', 'lead_time_days', 'minimum_order',
+                'tax_id', 'payment_term_id', 'lead_time_days', 'minimum_order',
                 'is_active'];
     }
-    
+
     /**
      * Get fields for UPDATE operation
      */
     _getUpdateFields() {
         return ['name', 'contact_person', 'phone', 'email', 'address',
-                'tax_id', 'payment_terms', 'lead_time_days', 'minimum_order',
+                'tax_id', 'payment_term_id', 'lead_time_days', 'minimum_order',
                 'is_active'];
+    }
+
+    /**
+     * Get payment term details for this supplier
+     */
+    async getPaymentTerm() {
+        if (!this.payment_term_id) return null;
+        const { PaymentTerm } = require('./PaymentTerm');
+        return await PaymentTerm.findById(this.payment_term_id);
     }
 
     // ============================================
@@ -143,7 +152,7 @@ class Supplier extends BaseModel {
             email: this.email,
             address: this.address,
             tax_id: this.tax_id,
-            payment_terms: this.payment_terms,
+            payment_term_id: this.payment_term_id,
             lead_time_days: this.lead_time_days,
             minimum_order: this.minimum_order,
             is_active: this.is_active
