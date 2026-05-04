@@ -112,18 +112,40 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Price ($) *</label>
-                            <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
+                            <input type="number" id="productPrice" step="0.01" min="0" required placeholder="0.00">
+                            <small class="help-text error-message" id="priceError" style="display:none; color: var(--danger);"></small>
                         </div>
                         
                         <div class="form-group">
                             <label>Cost ($) *</label>
-                            <input type="number" id="productCost" step="0.01" required placeholder="0.00">
+                            <input type="number" id="productCost" step="0.01" min="0" required placeholder="0.00">
+                            <small class="help-text error-message" id="costError" style="display:none; color: var(--danger);"></small>
                         </div>
                         
                         <div class="form-group">
                             <label>Brand</label>
                             <input type="text" id="productBrand" placeholder="e.g., Apple, Samsung">
                         </div>
+                    </div>
+
+                    <!-- Margin Preview (enhanced with validation) -->
+                    <div id="marginPreview" class="margin-preview" style="display:none;">
+                        <div class="margin-preview-item">
+                            <div class="mp-label">Profit Margin</div>
+                            <div class="mp-val" id="previewMargin">0%</div>
+                        </div>
+                        <div class="margin-preview-item">
+                            <div class="mp-label">Profit per Unit</div>
+                            <div class="mp-val" id="previewProfit">$0.00</div>
+                        </div>
+                        <div class="margin-preview-item">
+                            <div class="mp-label">Markup</div>
+                            <div class="mp-val" id="previewMarkup">0%</div>
+                        </div>
+                    </div>
+
+                    <div id="validationWarning" class="validation-warning" style="display:none;">
+                        <p>⚠️ <span id="validationMessage"></span></p>
                     </div>
                     
                     <div class="form-row">

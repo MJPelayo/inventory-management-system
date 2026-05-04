@@ -203,6 +203,28 @@
 .mp-val.warn { color: var(--warning); }
 .mp-val.bad { color: var(--danger); }
 
+/* Validation Warning */
+.validation-warning {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.validation-warning p {
+    margin: 0;
+    color: var(--danger);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.error-message {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    display: block;
+}
+
 /* Product name in table */
 .product-name {
     font-weight: 500;
@@ -217,4 +239,44 @@
 .mono {
     font-family: 'DM Mono', monospace;
     font-size: 12px;
+}
+
+/* Validation Styles */
+.validation-warning {
+    background: var(--warning-bg);
+    border-left: 4px solid var(--warning);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin: 16px 0;
+}
+
+.validation-warning p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--warning);
+}
+
+.error-message {
+    font-size: 0.7rem;
+    margin-top: 4px;
+}
+
+input:invalid {
+    border-color: var(--danger);
+}
+
+.field-error {
+    border-color: var(--danger) !important;
+    background: var(--danger-bg);
+}
+
+.field-success {
+    border-color: var(--success) !important;
+}
+
+/* Price/Cost input specific styles */
+input[type="number"].price-input,
+input[type="number"].cost-input {
+    font-family: var(--font-mono);
+    font-weight: 500;
 }

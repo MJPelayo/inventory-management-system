@@ -119,25 +119,197 @@ function getMarginClass(margin) {
 // ============================================
 // UPDATE MARGIN PREVIEW (NEW from Version B)
 // ============================================
+// Enhanced margin preview with validation
 function updateMarginPreview() {
-    const price = parseFloat(document.getElementById('productPrice').value) || 0;
-    const cost = parseFloat(document.getElementById('productCost').value) || 0;
+    const priceInput = document.getElementById('productPrice');
+    const costInput = document.getElementById('productCost');
+    const price = parseFloat(priceInput?.value) || 0;
+    const cost = parseFloat(costInput?.value) || 0;
     const preview = document.getElementById('marginPreview');
+    const warningDiv = document.getElementById('validationWarning');
+    const warningMessage = document.getElementById('validationMessage');
     
-    if (price > 0 && preview) {
-        preview.style.display = 'block';
-        const margin = calcMargin(price, cost);
+    // Reset validation styles
+    if (priceInput) priceInput.classList.remove('field-error', 'field-success');
+    if (costInput) costInput.classList.remove('field-error', 'field-success');
+    
+    const priceError = document.getElementById('priceError');
+    const costError = document.getElementById('costError');
+    if (priceError) priceError.style.display = 'none';
+    if (costError) costError.style.display = 'none';
+    
+    let isValid = true;
+    let warningText = '';
+    
+    // Validation 1: Price cannot be negative
+    if (price < 0) {
+        isValid = false;
+        warningText = 'Price cannot be negative.';
+        if (priceInput) {
+            priceInput.classList.add('field-error');
+            if (priceError) {
+                priceError.textContent = 'Price cannot be negative';
+                priceError.style.display = 'block';
+            }
+        }
+    }
+    
+    // Validation 2: Cost cannot be negative
+    if (cost < 0) {
+        isValid = false;
+        warningText = warningText || 'Cost cannot be negative.';
+        if (costInput) {
+            costInput.classList.add('field-error');
+            if (costError) {
+                costError.textContent = 'Cost cannot be negative';
+                costError.style.display = 'block';
+            }
+        }
+    }
+    
+    // Validation 3: Cost cannot exceed price (if both are positive)
+    if (cost > price && price > 0) {
+        isValid = false;
+        warningText = warningText || 'Cost cannot be greater than price.';
+        if (costInput) costInput.classList.add('field-error');
+        if (priceInput) priceInput.classList.add('field-error');
+        if (costError) {
+            costError.textContent = 'Cost cannot exceed price ($' + price.toFixed(2) + ')';
+            costError.style.display = 'block';
+        }
+    }
+    
+    // Show/hide warning
+    if (warningDiv && warningMessage) {
+        if (!isValid) {
+            warningMessage.textContent = warningText;
+            warningDiv.style.display = 'block';
+        } else {
+            warningDiv.style.display = 'none';
+        }
+    }
+    
+    // Show margin preview only if valid
+    if (price > 0 && isValid) {
+        if (preview) preview.style.display = 'block';
+        
+        const margin = ((price - cost) / price) * 100;
+        const profit = price - cost;
+        const markup = cost > 0 ? ((price - cost) / cost) * 100 : 0;
+        
         const marginElement = document.getElementById('previewMargin');
+        const profitElement = document.getElementById('previewProfit');
+        const markupElement = document.getElementById('previewMarkup');
+        
         if (marginElement) {
             marginElement.textContent = margin.toFixed(1) + '%';
             marginElement.className = `mp-val ${margin >= 40 ? 'good' : margin >= 20 ? 'warn' : 'bad'}`;
         }
-        const profitElement = document.getElementById('previewProfit');
-        if (profitElement) profitElement.textContent = '$' + (price - cost).toFixed(2);
-        const markupElement = document.getElementById('previewMarkup');
-        if (markupElement) markupElement.textContent = calcMarkup(price, cost).toFixed(1) + '%';
+        if (profitElement) profitElement.textContent = '$' + profit.toFixed(2);
+        if (markupElement) markupElement.textContent = markup.toFixed(1) + '%';
+        
+        // Add success styling for valid inputs
+        if (priceInput && price > 0) priceInput.classList.add('field-success');
+        if (costInput && cost > 0 && cost <= price) costInput.classList.add('field-success');
+        
     } else if (preview) {
         preview.style.display = 'none';
+    }
+    
+    return isValid;
+}
+
+// Price/Cost specific validators
+function validatePrice() {
+    const priceInput = document.getElementById('productPrice');
+    const priceError = document.getElementById('priceError');
+    
+    if (!priceInput) return true;
+    
+    const price = parseFloat(priceInput.value);
+    
+    if (isNaN(price)) {
+        if (priceError) {
+            priceError.textContent = 'Please enter a valid price';
+            priceError.style.display = 'block';
+        }
+        priceInput.classList.add('field-error');
+        return false;
+    }
+    
+    if (price < 0) {
+        if (priceError) {
+            priceError.textContent = 'Price cannot be negative';
+            priceError.style.display = 'block';
+        }
+        priceInput.classList.add('field-error');
+        return false;
+    }
+    
+    if (priceError) priceError.style.display = 'none';
+    return true;
+}
+
+function validateCost() {
+    const costInput = document.getElementById('productCost');
+    const priceInput = document.getElementById('productPrice');
+    const costError = document.getElementById('costError');
+    
+    if (!costInput) return true;
+    
+    const cost = parseFloat(costInput.value);
+    const price = parseFloat(priceInput?.value) || 0;
+    
+    if (isNaN(cost)) {
+        if (costError) {
+            costError.textContent = 'Please enter a valid cost';
+            costError.style.display = 'block';
+        }
+        costInput.classList.add('field-error');
+        return false;
+    }
+    
+    if (cost < 0) {
+        if (costError) {
+            costError.textContent = 'Cost cannot be negative';
+            costError.style.display = 'block';
+        }
+        costInput.classList.add('field-error');
+        return false;
+    }
+    
+    if (price > 0 && cost > price) {
+        if (costError) {
+            costError.textContent = `Cost cannot exceed price ($${price.toFixed(2)})`;
+            costError.style.display = 'block';
+        }
+        costInput.classList.add('field-error');
+        return false;
+    }
+    
+    if (costError) costError.style.display = 'none';
+    return true;
+}
+
+// Add input event listeners for real-time validation
+function setupPriceCostValidation() {
+    const priceInput = document.getElementById('productPrice');
+    const costInput = document.getElementById('productCost');
+    
+    if (priceInput) {
+        priceInput.addEventListener('input', () => {
+            validatePrice();
+            updateMarginPreview();
+        });
+        priceInput.addEventListener('blur', validatePrice);
+    }
+    
+    if (costInput) {
+        costInput.addEventListener('input', () => {
+            validateCost();
+            updateMarginPreview();
+        });
+        costInput.addEventListener('blur', validateCost);
     }
 }
 
@@ -399,6 +571,20 @@ async function openProductModal(productId = null) {
     document.getElementById('modalTitle').textContent = isEdit ? 'Edit Product' : 'Add Product';
     document.getElementById('productId').value = '';
     
+    // Reset validation UI
+    const warningDiv = document.getElementById('validationWarning');
+    if (warningDiv) warningDiv.style.display = 'none';
+    
+    const priceError = document.getElementById('priceError');
+    const costError = document.getElementById('costError');
+    if (priceError) priceError.style.display = 'none';
+    if (costError) costError.style.display = 'none';
+    
+    const priceInput = document.getElementById('productPrice');
+    const costInput = document.getElementById('productCost');
+    if (priceInput) priceInput.classList.remove('field-error', 'field-success');
+    if (costInput) costInput.classList.remove('field-error', 'field-success');
+    
     const inventorySection = document.getElementById('inventorySection');
     if (inventorySection) inventorySection.style.display = isEdit ? 'block' : 'none';
     
@@ -421,12 +607,18 @@ async function openProductModal(productId = null) {
             document.getElementById('productSupplier').value = product.supplier_id || '';
             document.getElementById('productActive').checked = product.is_active;
             
+            // Setup validation and update preview
+            setupPriceCostValidation();
             updateMarginPreview();
+            
         } catch (error) {
             console.error('Failed to load product:', error);
             alert('Failed to load product data');
             return;
         }
+    } else {
+        // For new product, also setup validation
+        setupPriceCostValidation();
     }
     
     modal.style.display = 'flex';
@@ -444,29 +636,49 @@ async function saveProduct() {
     const productId = document.getElementById('productId').value;
     const isEdit = productId !== '';
     
+    // Run all validations
+    const isPriceValid = validatePrice();
+    const isCostValid = validateCost();
+    const isMarginValid = updateMarginPreview();
+    
+    if (!isPriceValid || !isCostValid || !isMarginValid) {
+        showToast('Please fix validation errors before saving', 'error');
+        return;
+    }
+    
     const name = document.getElementById('productName').value.trim();
     const sku = document.getElementById('productSku').value.trim();
     const price = parseFloat(document.getElementById('productPrice').value);
     const cost = parseFloat(document.getElementById('productCost').value);
     
+    // Additional name/sku validation
     if (!name || name.length < 2) {
-        alert('Product name must be at least 2 characters');
+        showToast('Product name must be at least 2 characters', 'error');
+        document.getElementById('productName').focus();
         return;
     }
+    
     if (!sku || sku.length < 2) {
-        alert('SKU must be at least 2 characters');
+        showToast('SKU must be at least 2 characters', 'error');
+        document.getElementById('productSku').focus();
         return;
     }
+    
     if (isNaN(price) || price < 0) {
-        alert('Valid price is required');
+        showToast('Valid price is required', 'error');
+        document.getElementById('productPrice').focus();
         return;
     }
+    
     if (isNaN(cost) || cost < 0) {
-        alert('Valid cost is required');
+        showToast('Valid cost is required', 'error');
+        document.getElementById('productCost').focus;
         return;
     }
+    
     if (cost > price) {
-        alert('Cost cannot be greater than price');
+        showToast('Cost cannot be greater than price', 'error');
+        document.getElementById('productCost').focus();
         return;
     }
     
@@ -481,18 +693,25 @@ async function saveProduct() {
     
     try {
         if (isEdit) {
-            await apiCall(`/products/${productId}`, { method: 'PUT', body: JSON.stringify(productData) });
+            await apiCall(`/products/${productId}`, {
+                method: 'PUT',
+                body: JSON.stringify(productData)
+            });
             showToast('Product updated successfully', 'success');
         } else {
-            await apiCall('/products', { method: 'POST', body: JSON.stringify(productData) });
+            await apiCall('/products', {
+                method: 'POST',
+                body: JSON.stringify(productData)
+            });
             showToast('Product created successfully', 'success');
         }
         
         closeProductModal();
         await loadProducts();
+        
     } catch (error) {
         console.error('Failed to save product:', error);
-        alert(error.message || 'Failed to save product');
+        showToast(error.message || 'Failed to save product', 'error');
     }
 }
 
@@ -596,8 +815,8 @@ async function loadProductsForBulkUpdate() {
             <div class="bulk-product-item">
                 <span class="product-name">${escapeHtml(p.name)} (${p.sku})</span>
                 <span class="current-price">Current: $${parseFloat(p.price).toFixed(2)}</span>
-                <input type="number" id="newPrice_${p.id}" class="new-price-input" 
-                       placeholder="New price" step="0.01" value="${p.price}">
+                <input type="number" id="newPrice_${p.id}" class="new-price-input"
+                       placeholder="0.00" step="0.01" min="0" required value="${p.price}">
             </div>
         `).join('');
     } catch (error) {
@@ -609,19 +828,39 @@ async function applyBulkPriceUpdate() {
     const response = await apiCall('/products?is_active=true');
     const products = response.data || [];
     const updates = [];
+    let hasError = false;
     
     for (const product of products) {
         const newPriceInput = document.getElementById(`newPrice_${product.id}`);
         if (newPriceInput) {
             const newPrice = parseFloat(newPriceInput.value);
-            if (!isNaN(newPrice) && newPrice !== product.price) {
+            
+            // Validate price
+            if (isNaN(newPrice)) {
+                showToast(`Invalid price for ${product.name}`, 'error');
+                hasError = true;
+                continue;
+            }
+            
+            if (newPrice < 0) {
+                showToast(`Price cannot be negative for ${product.name}`, 'error');
+                hasError = true;
+                continue;
+            }
+            
+            if (newPrice !== product.price) {
                 updates.push({ id: product.id, price: newPrice });
             }
         }
     }
     
+    if (hasError) {
+        showToast('Please fix validation errors', 'error');
+        return;
+    }
+    
     if (updates.length === 0) {
-        alert('No price changes detected');
+        showToast('No price changes detected', 'info');
         return;
     }
     
@@ -636,7 +875,7 @@ async function applyBulkPriceUpdate() {
         closeBulkPriceModal();
         await loadProducts();
     } catch (error) {
-        alert(error.message || 'Bulk update failed');
+        showToast(error.message || 'Bulk update failed', 'error');
     }
 }
 
@@ -677,10 +916,7 @@ function setupEventListeners() {
     }
     if (searchInput) searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadProducts(); });
     
-    const priceInput = document.getElementById('productPrice');
-    const costInput = document.getElementById('productCost');
-    if (priceInput) priceInput.addEventListener('input', updateMarginPreview);
-    if (costInput) costInput.addEventListener('input', updateMarginPreview);
+    // Price/Cost validation event listeners are now set up in openProductModal via setupPriceCostValidation()
 }
 
 // ============================================
@@ -696,6 +932,8 @@ window.openBulkPriceModal = openBulkPriceModal;
 window.closeBulkPriceModal = closeBulkPriceModal;
 window.applyBulkPriceUpdate = applyBulkPriceUpdate;
 window.updateMarginPreview = updateMarginPreview;
+window.validatePrice = validatePrice;
+window.validateCost = validateCost;
 window.toggleViewMode = toggleViewMode;
 window.editProduct = (id) => openProductModal(id);
 
