@@ -78,6 +78,11 @@ app.use('/api/audit-logs', require('./routes/auditLogRoutes'));
 // Permission routes
 app.use('/api/permissions', require('./routes/permissionRoutes'));
 
+// Permission audit log alias (for frontend compatibility)
+const permissionController = require('./controllers/permissionController');
+const { authenticateToken, authorize } = require('./middleware/auth');
+app.get('/api/audit/permissions', authenticateToken, authorize('admin'), permissionController.getPermissionAuditLog);
+
 // Settings routes
 app.use('/api/settings', require('./routes/settingsRoutes'));
 
