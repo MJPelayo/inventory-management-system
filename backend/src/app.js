@@ -52,7 +52,7 @@ app.use('/pages', express.static(path.join(__dirname, '../../frontend/pages')));
 // ============================================
 
 // Import auth middleware (proper JWT-based authentication)
-const { authenticateToken, optionalAuth } = require('./middleware/auth');
+const { authenticateToken, authorize, optionalAuth } = require('./middleware/auth');
 
 // Routes - Public routes first (no auth required)
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -80,7 +80,6 @@ app.use('/api/permissions', require('./routes/permissionRoutes'));
 
 // Permission audit log alias (for frontend compatibility)
 const permissionController = require('./controllers/permissionController');
-const { authenticateToken, authorize } = require('./middleware/auth');
 app.get('/api/audit/permissions', authenticateToken, authorize('admin'), permissionController.getPermissionAuditLog);
 
 // Settings routes
