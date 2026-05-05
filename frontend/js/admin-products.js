@@ -7,7 +7,8 @@ let productsTable = null;
 let currentProductId = null;
 let categoriesList = [];
 let suppliersList = [];
-let viewMode = 'table'; // 'table' or 'card'
+let warehousesList = [];
+let viewMode = 'table';
 
 // ============================================
 // PAGE INITIALIZATION
@@ -35,17 +36,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============================================
-// LOAD DROPDOWN DATA
+// LOAD DROPDOWN DATA (Categories, Suppliers, Warehouses)
 // ============================================
 async function loadDropdownData() {
     try {
+        // Load categories from database
         const categoriesRes = await apiCall('/categories');
         categoriesList = categoriesRes.data || [];
         populateCategoryDropdowns(categoriesList);
         
+        // Load suppliers from database
         const suppliersRes = await apiCall('/suppliers?is_active=true');
         suppliersList = suppliersRes.data || [];
         populateSupplierDropdowns(suppliersList);
+        
+        // Load warehouses from database for inventory section
+        const warehousesRes = await apiCall('/warehouses?is_active=true');
+        warehousesList = warehousesRes.data || [];
+        populateWarehouseDropdown();
+        
     } catch (error) {
         console.error('Failed to load dropdown data:', error);
     }
@@ -55,13 +64,15 @@ function populateCategoryDropdowns(categories) {
     const categorySelect = document.getElementById('productCategory');
     const filterCategory = document.getElementById('filterCategory');
     
-    const buildOptions = (cats, prefix = '') => {
+    const buildOptions = (cats, prefix = '', level = 0) => {
         let html = '';
         for (const cat of cats) {
             if (!cat.parent_id) {
-                html += `<option value="${cat.id}">${prefix}${escapeHtml(cat.name)}</option>`;
-                const children = cats.filter(c => c.parent_id === cat.id);
-                html += buildOptions(children, prefix + '  └ ');
+                const indent = '  '.repeat(level);
+                const displayName = level > 0 ? `${indent}└ ${cat.name}` : cat.name;
+                html += `<option value="${cat.id}">${escapeHtml(displayName)}</option>`;
+                const children = categories.filter(c => c.parent_id === cat.id);
+                html += buildOptions(children, prefix, level + 1);
             }
         }
         return html;
@@ -70,7 +81,7 @@ function populateCategoryDropdowns(categories) {
     const options = buildOptions(categories);
     
     if (categorySelect) {
-        categorySelect.innerHTML = '<option value="">Select Category</option>' + options;
+        categorySelect.innerHTML = '<option value="">-- Select Category --</option>' + options;
     }
     if (filterCategory) {
         filterCategory.innerHTML = '<option value="">All Categories</option>' + options;
@@ -81,27 +92,27 @@ function populateSupplierDropdowns(suppliers) {
     const supplierSelect = document.getElementById('productSupplier');
     const filterSupplier = document.getElementById('filterSupplier');
     
-    const options = suppliers.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+    const options = '<option value="">-- Select Supplier --</option>' +
+        suppliers.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
     
-    if (supplierSelect) {
-        supplierSelect.innerHTML = '<option value="">Select Supplier</option>' + options;
-    }
-    if (filterSupplier) {
-        filterSupplier.innerHTML = '<option value="">All Suppliers</option>' + options;
+    if (supplierSelect) supplierSelect.innerHTML = options;
+    if (filterSupplier) filterSupplier.innerHTML = '<option value="">All Suppliers</option>' + options;
+}
+
+function populateWarehouseDropdown() {
+    const warehouseSelect = document.getElementById('inventoryWarehouse');
+    if (warehouseSelect) {
+        warehouseSelect.innerHTML = '<option value="">-- Select Warehouse --</option>' +
+            warehousesList.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
     }
 }
 
 // ============================================
-// CALCULATE MARGIN (from Version B)
+// MARGIN CALCULATION (business logic only, not stored)
 // ============================================
 function calcMargin(price, cost) {
     if (!price || price === 0) return 0;
     return ((price - cost) / price) * 100;
-}
-
-function calcMarkup(price, cost) {
-    if (!cost || cost === 0) return 0;
-    return ((price - cost) / cost) * 100;
 }
 
 function getMarginBadgeClass(margin) {
@@ -110,87 +121,14 @@ function getMarginBadgeClass(margin) {
     return 'badge-danger';
 }
 
-function getMarginClass(margin) {
-    if (margin >= 40) return 'good';
-    if (margin >= 20) return 'warn';
-    return 'bad';
-}
-
-// ============================================
-// UPDATE MARGIN PREVIEW (NEW from Version B)
-// ============================================
-// Enhanced margin preview with validation
 function updateMarginPreview() {
     const priceInput = document.getElementById('productPrice');
     const costInput = document.getElementById('productCost');
     const price = parseFloat(priceInput?.value) || 0;
     const cost = parseFloat(costInput?.value) || 0;
     const preview = document.getElementById('marginPreview');
-    const warningDiv = document.getElementById('validationWarning');
-    const warningMessage = document.getElementById('validationMessage');
     
-    // Reset validation styles
-    if (priceInput) priceInput.classList.remove('field-error', 'field-success');
-    if (costInput) costInput.classList.remove('field-error', 'field-success');
-    
-    const priceError = document.getElementById('priceError');
-    const costError = document.getElementById('costError');
-    if (priceError) priceError.style.display = 'none';
-    if (costError) costError.style.display = 'none';
-    
-    let isValid = true;
-    let warningText = '';
-    
-    // Validation 1: Price cannot be negative
-    if (price < 0) {
-        isValid = false;
-        warningText = 'Price cannot be negative.';
-        if (priceInput) {
-            priceInput.classList.add('field-error');
-            if (priceError) {
-                priceError.textContent = 'Price cannot be negative';
-                priceError.style.display = 'block';
-            }
-        }
-    }
-    
-    // Validation 2: Cost cannot be negative
-    if (cost < 0) {
-        isValid = false;
-        warningText = warningText || 'Cost cannot be negative.';
-        if (costInput) {
-            costInput.classList.add('field-error');
-            if (costError) {
-                costError.textContent = 'Cost cannot be negative';
-                costError.style.display = 'block';
-            }
-        }
-    }
-    
-    // Validation 3: Cost cannot exceed price (if both are positive)
-    if (cost > price && price > 0) {
-        isValid = false;
-        warningText = warningText || 'Cost cannot be greater than price.';
-        if (costInput) costInput.classList.add('field-error');
-        if (priceInput) priceInput.classList.add('field-error');
-        if (costError) {
-            costError.textContent = 'Cost cannot exceed price ($' + price.toFixed(2) + ')';
-            costError.style.display = 'block';
-        }
-    }
-    
-    // Show/hide warning
-    if (warningDiv && warningMessage) {
-        if (!isValid) {
-            warningMessage.textContent = warningText;
-            warningDiv.style.display = 'block';
-        } else {
-            warningDiv.style.display = 'none';
-        }
-    }
-    
-    // Show margin preview only if valid
-    if (price > 0 && isValid) {
+    if (price > 0) {
         if (preview) preview.style.display = 'block';
         
         const margin = ((price - cost) / price) * 100;
@@ -208,108 +146,8 @@ function updateMarginPreview() {
         if (profitElement) profitElement.textContent = '$' + profit.toFixed(2);
         if (markupElement) markupElement.textContent = markup.toFixed(1) + '%';
         
-        // Add success styling for valid inputs
-        if (priceInput && price > 0) priceInput.classList.add('field-success');
-        if (costInput && cost > 0 && cost <= price) costInput.classList.add('field-success');
-        
     } else if (preview) {
         preview.style.display = 'none';
-    }
-    
-    return isValid;
-}
-
-// Price/Cost specific validators
-function validatePrice() {
-    const priceInput = document.getElementById('productPrice');
-    const priceError = document.getElementById('priceError');
-    
-    if (!priceInput) return true;
-    
-    const price = parseFloat(priceInput.value);
-    
-    if (isNaN(price)) {
-        if (priceError) {
-            priceError.textContent = 'Please enter a valid price';
-            priceError.style.display = 'block';
-        }
-        priceInput.classList.add('field-error');
-        return false;
-    }
-    
-    if (price < 0) {
-        if (priceError) {
-            priceError.textContent = 'Price cannot be negative';
-            priceError.style.display = 'block';
-        }
-        priceInput.classList.add('field-error');
-        return false;
-    }
-    
-    if (priceError) priceError.style.display = 'none';
-    return true;
-}
-
-function validateCost() {
-    const costInput = document.getElementById('productCost');
-    const priceInput = document.getElementById('productPrice');
-    const costError = document.getElementById('costError');
-    
-    if (!costInput) return true;
-    
-    const cost = parseFloat(costInput.value);
-    const price = parseFloat(priceInput?.value) || 0;
-    
-    if (isNaN(cost)) {
-        if (costError) {
-            costError.textContent = 'Please enter a valid cost';
-            costError.style.display = 'block';
-        }
-        costInput.classList.add('field-error');
-        return false;
-    }
-    
-    if (cost < 0) {
-        if (costError) {
-            costError.textContent = 'Cost cannot be negative';
-            costError.style.display = 'block';
-        }
-        costInput.classList.add('field-error');
-        return false;
-    }
-    
-    if (price > 0 && cost > price) {
-        if (costError) {
-            costError.textContent = `Cost cannot exceed price ($${price.toFixed(2)})`;
-            costError.style.display = 'block';
-        }
-        costInput.classList.add('field-error');
-        return false;
-    }
-    
-    if (costError) costError.style.display = 'none';
-    return true;
-}
-
-// Add input event listeners for real-time validation
-function setupPriceCostValidation() {
-    const priceInput = document.getElementById('productPrice');
-    const costInput = document.getElementById('productCost');
-    
-    if (priceInput) {
-        priceInput.addEventListener('input', () => {
-            validatePrice();
-            updateMarginPreview();
-        });
-        priceInput.addEventListener('blur', validatePrice);
-    }
-    
-    if (costInput) {
-        costInput.addEventListener('input', () => {
-            validateCost();
-            updateMarginPreview();
-        });
-        costInput.addEventListener('blur', validateCost);
     }
 }
 
@@ -322,17 +160,27 @@ async function loadProducts() {
         const supplierId = document.getElementById('filterSupplier')?.value || '';
         const searchTerm = document.getElementById('filterSearch')?.value || '';
         
-        let query = '/products?';
-        if (categoryId) query += `category_id=${categoryId}&`;
-        if (supplierId) query += `supplier_id=${supplierId}&`;
-        if (searchTerm) query += `search=${encodeURIComponent(searchTerm)}&`;
+        let query = '/products?is_active=true';
+        if (categoryId) query += `&category_id=${categoryId}`;
+        if (supplierId) query += `&supplier_id=${supplierId}`;
+        if (searchTerm) query += `&search=${encodeURIComponent(searchTerm)}`;
         
         const response = await apiCall(query);
-        const products = response.data || [];
+        let products = response.data || [];
+        
+        // For each product, get inventory to show stock count
+        for (let i = 0; i < products.length; i++) {
+            try {
+                const productDetail = await apiCall(`/products/${products[i].id}`);
+                products[i].inventory = productDetail.data.inventory || [];
+                products[i].total_stock = products[i].inventory.reduce((sum, inv) => sum + (inv.quantity || 0), 0);
+            } catch (e) {
+                products[i].total_stock = 0;
+            }
+        }
         
         updateProductStats(products);
         
-        // Route to appropriate view based on viewMode
         if (viewMode === 'card') {
             displayProductsCardView(products);
         } else {
@@ -346,12 +194,11 @@ async function loadProducts() {
     }
 }
 
-// ============================================
-// TABLE VIEW (DataTable)
-// ============================================
 function displayProductsTableView(products) {
     const formattedProducts = products.map(p => {
         const margin = calcMargin(p.price, p.cost);
+        const stockClass = p.total_stock <= 0 ? 'stock-out' : p.total_stock <= 10 ? 'stock-low' : 'stock-ok';
+        
         return {
             id: p.id,
             name: `<div class="product-name">${escapeHtml(p.name)}</div>${p.description ? `<div class="product-desc">${escapeHtml(p.description.substring(0, 50))}</div>` : ''}`,
@@ -360,6 +207,7 @@ function displayProductsTableView(products) {
             category: escapeHtml(p.category_name || '—'),
             price: `$${parseFloat(p.price).toFixed(2)}`,
             cost: `$${parseFloat(p.cost).toFixed(2)}`,
+            stock: `<span class="${stockClass}">${p.total_stock}</span>`,
             margin: `<span class="badge ${getMarginBadgeClass(margin)}">${margin.toFixed(1)}%</span>`,
             status: p.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'
         };
@@ -373,6 +221,7 @@ function displayProductsTableView(products) {
         { key: 'category', label: 'Category' },
         { key: 'price', label: 'Price' },
         { key: 'cost', label: 'Cost' },
+        { key: 'stock', label: 'Stock' },
         { key: 'margin', label: 'Margin' },
         { key: 'status', label: 'Status' }
     ];
@@ -392,9 +241,6 @@ function displayProductsTableView(products) {
     }
 }
 
-// ============================================
-// CARD VIEW
-// ============================================
 function displayProductsCardView(products) {
     const container = document.getElementById('productsTable');
     if (!container) return;
@@ -406,141 +252,33 @@ function displayProductsCardView(products) {
     
     container.innerHTML = `
         <div class="products-card-grid">
-            ${products.map(product => `
-                <div class="product-card">
-                    <div class="card-header">
-                        <h3 class="product-name">${escapeHtml(product.name)}</h3>
-                        <span class="product-sku">${escapeHtml(product.sku)}</span>
-                    </div>
-                    <div class="card-body">
-                        ${product.brand ? `<div class="product-brand">${escapeHtml(product.brand)}</div>` : ''}
-                        <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
-                        <div class="product-margin ${getMarginClass(calcMargin(product.price, product.cost))}">
-                            Margin: ${calcMargin(product.price, product.cost).toFixed(1)}%
+            ${products.map(product => {
+                const stockClass = product.total_stock <= 0 ? 'out' : product.total_stock <= 10 ? 'low' : 'ok';
+                const stockText = product.total_stock <= 0 ? 'Out of Stock' : product.total_stock <= 10 ? `Low: ${product.total_stock}` : `${product.total_stock} units`;
+                
+                return `
+                    <div class="product-card">
+                        <div class="card-header">
+                            <h3 class="product-name">${escapeHtml(product.name)}</h3>
+                            <span class="product-sku">${escapeHtml(product.sku)}</span>
+                        </div>
+                        <div class="card-body">
+                            ${product.brand ? `<div class="product-brand">${escapeHtml(product.brand)}</div>` : ''}
+                            <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                            <div class="product-stock stock-${stockClass}">📦 ${stockText}</div>
+                            <div class="product-margin ${calcMargin(product.price, product.cost) >= 40 ? 'good' : calcMargin(product.price, product.cost) >= 20 ? 'warn' : 'bad'}">
+                                Margin: ${calcMargin(product.price, product.cost).toFixed(1)}%
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn-sm" onclick="editProduct(${product.id})">Edit</button>
+                            <button class="btn-sm btn-danger" onclick="deleteProduct(${product.id})">Delete</button>
                         </div>
                     </div>
-                    <div class="card-footer">
-                        <button class="btn-sm" onclick="editProduct(${product.id})">Edit</button>
-                        <button class="btn-sm btn-danger" onclick="deleteProduct(${product.id})">Delete</button>
-                    </div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
-    
-    // Add CSS for card grid if not present
-    if (!document.querySelector('#cardGridStyles')) {
-        const style = document.createElement('style');
-        style.id = 'cardGridStyles';
-        style.textContent = `
-            .products-card-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                gap: 20px;
-                padding: 16px;
-            }
-            .product-card {
-                background: var(--surface, #ffffff);
-                border: 1px solid var(--border, #e2e8f0);
-                border-radius: 12px;
-                padding: 16px;
-                transition: all 0.2s;
-                display: flex;
-                flex-direction: column;
-            }
-            .product-card:hover {
-                transform: translateY(-2px);
-                box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-            }
-            .product-card .card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 12px;
-                padding: 0;
-                background: none;
-                border: none;
-            }
-            .product-card .card-header h3 {
-                margin: 0;
-                font-size: 1rem;
-                font-weight: 600;
-            }
-            .product-card .card-body {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                margin-bottom: 12px;
-            }
-            .product-card .card-footer {
-                display: flex;
-                gap: 8px;
-                justify-content: flex-end;
-                padding-top: 12px;
-                border-top: 1px solid var(--border-light, #e2e8f0);
-            }
-            .product-sku {
-                font-family: 'DM Mono', monospace;
-                font-size: 0.75rem;
-                color: var(--text-muted, #64748b);
-                background: var(--bg-tertiary, #f1f5f9);
-                padding: 2px 6px;
-                border-radius: 4px;
-            }
-            .product-brand {
-                font-size: 0.875rem;
-                color: var(--text-secondary, #475569);
-            }
-            .product-price {
-                font-size: 1.25rem;
-                font-weight: 700;
-                color: var(--text-primary, #1e293b);
-            }
-            .product-margin {
-                font-size: 0.875rem;
-                font-weight: 500;
-            }
-            .product-margin.good { color: var(--success, #16a34a); }
-            .product-margin.warn { color: var(--warning, #ca8a04); }
-            .product-margin.bad { color: var(--danger, #dc2626); }
-            .btn-sm {
-                padding: 6px 12px;
-                border-radius: 6px;
-                font-size: 0.8rem;
-                border: 1px solid var(--border, #e2e8f0);
-                background: var(--surface, #ffffff);
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-            .btn-sm:hover {
-                background: var(--bg-tertiary, #f1f5f9);
-            }
-            .btn-sm.btn-danger {
-                color: var(--danger, #dc2626);
-                border-color: var(--danger, #dc2626);
-            }
-            .btn-sm.btn-danger:hover {
-                background: var(--danger, #dc2626);
-                color: white;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-}
-
-// ============================================
-// TOGGLE VIEW MODE
-// ============================================
-function toggleViewMode() {
-    const toggleBtn = document.getElementById('viewToggle');
-    viewMode = viewMode === 'table' ? 'card' : 'table';
-    
-    if (toggleBtn) {
-        toggleBtn.textContent = viewMode === 'table' ? '📋 Table View' : '🃏 Card View';
-    }
-    
-    loadProducts(); // Reload with new view mode
 }
 
 function updateProductStats(products) {
@@ -559,43 +297,110 @@ function updateProductStats(products) {
     `;
 }
 
+function toggleViewMode() {
+    const toggleBtn = document.getElementById('viewToggle');
+    viewMode = viewMode === 'table' ? 'card' : 'table';
+    
+    if (toggleBtn) {
+        toggleBtn.textContent = viewMode === 'table' ? '📋 Table View' : '🃏 Card View';
+    }
+    
+    loadProducts();
+}
+
 // ============================================
-// PRODUCT MODAL (with margin preview)
+// INVENTORY MANAGEMENT (Using existing DB fields)
+// ============================================
+let inventoryItems = [];
+
+function addInventoryRow(warehouseId = null, quantity = 0) {
+    const container = document.getElementById('inventoryRowsContainer');
+    const rowId = Date.now();
+    
+    const warehouseOptions = warehousesList.map(w => 
+        `<option value="${w.id}" ${warehouseId === w.id ? 'selected' : ''}>${escapeHtml(w.name)}</option>`
+    ).join('');
+    
+    const row = document.createElement('div');
+    row.className = 'inventory-row';
+    row.dataset.rowId = rowId;
+    row.innerHTML = `
+        <div class="inventory-row-fields">
+            <select class="inv-warehouse-select" data-row="${rowId}" style="flex: 2;">
+                <option value="">-- Select Warehouse --</option>
+                ${warehouseOptions}
+            </select>
+            <input type="number" class="inv-quantity" placeholder="Quantity" value="${quantity}" min="0" style="flex: 1;">
+            <button type="button" class="btn-icon remove-inventory-row" title="Remove" style="margin-left: 8px;">✖</button>
+        </div>
+    `;
+    
+    container.appendChild(row);
+}
+
+function removeInventoryRow(btn) {
+    const row = btn.closest('.inventory-row');
+    if (row && document.querySelectorAll('.inventory-row').length > 1) {
+        row.remove();
+    } else {
+        showToast('Product must have at least one inventory entry', 'error');
+    }
+}
+
+async function loadExistingInventory(productId) {
+    try {
+        const response = await apiCall(`/products/${productId}`);
+        const product = response.data;
+        const inventory = product.inventory || [];
+        
+        const container = document.getElementById('inventoryRowsContainer');
+        container.innerHTML = '';
+        
+        if (inventory.length === 0) {
+            addInventoryRow();
+        } else {
+            for (const inv of inventory) {
+                addInventoryRow(inv.warehouse_id, inv.quantity);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Failed to load inventory:', error);
+        addInventoryRow();
+    }
+}
+
+// ============================================
+// OPEN PRODUCT MODAL (Add/Edit - SAME FIELDS)
 // ============================================
 async function openProductModal(productId = null) {
     currentProductId = productId;
     const modal = document.getElementById('productModal');
     const isEdit = productId !== null;
     
+    // Reset form
     document.getElementById('productForm').reset();
     document.getElementById('modalTitle').textContent = isEdit ? 'Edit Product' : 'Add Product';
     document.getElementById('productId').value = '';
     
-    // Reset validation UI
-    const warningDiv = document.getElementById('validationWarning');
-    if (warningDiv) warningDiv.style.display = 'none';
+    // Reset inventory rows
+    const inventoryContainer = document.getElementById('inventoryRowsContainer');
+    if (inventoryContainer) inventoryContainer.innerHTML = '';
     
-    const priceError = document.getElementById('priceError');
-    const costError = document.getElementById('costError');
-    if (priceError) priceError.style.display = 'none';
-    if (costError) costError.style.display = 'none';
-    
-    const priceInput = document.getElementById('productPrice');
-    const costInput = document.getElementById('productCost');
-    if (priceInput) priceInput.classList.remove('field-error', 'field-success');
-    if (costInput) costInput.classList.remove('field-error', 'field-success');
-    
-    const inventorySection = document.getElementById('inventorySection');
-    if (inventorySection) inventorySection.style.display = isEdit ? 'block' : 'none';
-    
+    // Reset preview
     const marginPreview = document.getElementById('marginPreview');
     if (marginPreview) marginPreview.style.display = 'none';
+    
+    // Show inventory section for BOTH add and edit
+    const inventorySection = document.getElementById('inventorySection');
+    if (inventorySection) inventorySection.style.display = 'block';
     
     if (isEdit) {
         try {
             const response = await apiCall(`/products/${productId}`);
             const product = response.data;
             
+            // Fill basic product info (matches database fields exactly)
             document.getElementById('productId').value = product.id;
             document.getElementById('productName').value = product.name;
             document.getElementById('productSku').value = product.sku;
@@ -607,19 +412,24 @@ async function openProductModal(productId = null) {
             document.getElementById('productSupplier').value = product.supplier_id || '';
             document.getElementById('productActive').checked = product.is_active;
             
-            // Setup validation and update preview
-            setupPriceCostValidation();
-            updateMarginPreview();
+            // Load existing inventory (from inventory table)
+            await loadExistingInventory(productId);
             
         } catch (error) {
             console.error('Failed to load product:', error);
-            alert('Failed to load product data');
+            showToast('Failed to load product data', 'error');
             return;
         }
     } else {
-        // For new product, also setup validation
-        setupPriceCostValidation();
+        // For new product, add one empty inventory row
+        addInventoryRow();
     }
+    
+    // Setup validation listeners
+    const priceInput = document.getElementById('productPrice');
+    const costInput = document.getElementById('productCost');
+    if (priceInput) priceInput.addEventListener('input', updateMarginPreview);
+    if (costInput) costInput.addEventListener('input', updateMarginPreview);
     
     modal.style.display = 'flex';
 }
@@ -630,28 +440,18 @@ function closeProductModal() {
 }
 
 // ============================================
-// SAVE PRODUCT
+// SAVE PRODUCT (Only uses existing DB fields)
 // ============================================
 async function saveProduct() {
     const productId = document.getElementById('productId').value;
     const isEdit = productId !== '';
     
-    // Run all validations
-    const isPriceValid = validatePrice();
-    const isCostValid = validateCost();
-    const isMarginValid = updateMarginPreview();
-    
-    if (!isPriceValid || !isCostValid || !isMarginValid) {
-        showToast('Please fix validation errors before saving', 'error');
-        return;
-    }
-    
+    // Validate basic product info
     const name = document.getElementById('productName').value.trim();
     const sku = document.getElementById('productSku').value.trim();
     const price = parseFloat(document.getElementById('productPrice').value);
     const cost = parseFloat(document.getElementById('productCost').value);
     
-    // Additional name/sku validation
     if (!name || name.length < 2) {
         showToast('Product name must be at least 2 characters', 'error');
         document.getElementById('productName').focus();
@@ -672,7 +472,7 @@ async function saveProduct() {
     
     if (isNaN(cost) || cost < 0) {
         showToast('Valid cost is required', 'error');
-        document.getElementById('productCost').focus;
+        document.getElementById('productCost').focus();
         return;
     }
     
@@ -682,8 +482,33 @@ async function saveProduct() {
         return;
     }
     
+    // Collect inventory data (to be saved to inventory table)
+    const inventoryRows = document.querySelectorAll('.inventory-row');
+    const inventoryData = [];
+    
+    for (const row of inventoryRows) {
+        const warehouseId = row.querySelector('.inv-warehouse-select').value;
+        const quantity = parseInt(row.querySelector('.inv-quantity').value) || 0;
+        
+        if (!warehouseId) {
+            showToast('Please select a warehouse for all inventory entries', 'error');
+            return;
+        }
+        
+        if (quantity > 0) {
+            inventoryData.push({
+                warehouse_id: parseInt(warehouseId),
+                quantity: quantity
+            });
+        }
+    }
+    
+    // Build product data - ONLY fields that exist in products table
     const productData = {
-        name, sku, price, cost,
+        name: name,
+        sku: sku,
+        price: price,
+        cost: cost,
         brand: document.getElementById('productBrand').value || null,
         description: document.getElementById('productDescription').value || null,
         category_id: parseInt(document.getElementById('productCategory').value) || null,
@@ -692,22 +517,66 @@ async function saveProduct() {
     };
     
     try {
+        showToast(isEdit ? 'Updating product...' : 'Creating product...', 'info');
+        
+        let response;
         if (isEdit) {
-            await apiCall(`/products/${productId}`, {
+            response = await apiCall(`/products/${productId}`, {
                 method: 'PUT',
                 body: JSON.stringify(productData)
             });
-            showToast('Product updated successfully', 'success');
         } else {
-            await apiCall('/products', {
+            response = await apiCall('/products', {
                 method: 'POST',
                 body: JSON.stringify(productData)
             });
-            showToast('Product created successfully', 'success');
         }
         
-        closeProductModal();
-        await loadProducts();
+        if (response.success) {
+            const savedProductId = response.data.id;
+            
+            // Handle inventory updates - ONLY for inventory table fields
+            for (const inv of inventoryData) {
+                try {
+                    // Check if inventory record exists
+                    const existingInv = await apiCall(`/inventory/warehouse/${inv.warehouse_id}`);
+                    const existing = existingInv.data?.find(i => i.product_id === parseInt(savedProductId));
+                    
+                    if (existing) {
+                        // Update existing inventory
+                        await apiCall('/inventory/adjust', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                product_id: parseInt(savedProductId),
+                                warehouse_id: inv.warehouse_id,
+                                new_quantity: inv.quantity,
+                                reason_code: 'ADMIN_UPDATE',
+                                notes: 'Admin updated product inventory'
+                            })
+                        });
+                    } else if (inv.quantity > 0) {
+                        // Create new inventory record - only fields in inventory table
+                        await apiCall('/inventory/receive', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                product_id: parseInt(savedProductId),
+                                warehouse_id: inv.warehouse_id,
+                                quantity: inv.quantity,
+                                reason: 'Initial stock setup'
+                            })
+                        });
+                    }
+                } catch (invError) {
+                    console.error('Failed to update inventory:', invError);
+                }
+            }
+            
+            showToast(isEdit ? 'Product updated successfully' : 'Product created successfully', 'success');
+            closeProductModal();
+            await loadProducts();
+        } else {
+            throw new Error(response.error);
+        }
         
     } catch (error) {
         console.error('Failed to save product:', error);
@@ -719,19 +588,19 @@ async function saveProduct() {
 // DELETE PRODUCT
 // ============================================
 async function deleteProduct(productId) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Are you sure you want to delete this product? This will also remove its inventory records.')) return;
     
     try {
         await apiCall(`/products/${productId}`, { method: 'DELETE' });
         showToast('Product deleted successfully', 'success');
         await loadProducts();
     } catch (error) {
-        alert(error.message || 'Failed to delete product');
+        showToast(error.message || 'Failed to delete product', 'error');
     }
 }
 
 // ============================================
-// VIEW PRODUCT DETAILS
+// VIEW PRODUCT DETAILS (Using existing DB data)
 // ============================================
 async function viewProductDetails(productId) {
     try {
@@ -740,12 +609,16 @@ async function viewProductDetails(productId) {
         
         let inventoryHtml = '<div class="inventory-list">';
         if (product.inventory && product.inventory.length > 0) {
-            inventoryHtml += product.inventory.map(inv => `
-                <div class="inventory-item">
-                    <strong>${escapeHtml(inv.warehouse_name)}</strong>
-                    <span>Quantity: ${inv.quantity}</span>
-                </div>
-            `).join('');
+            for (const inv of product.inventory) {
+                const warehouse = warehousesList.find(w => w.id === inv.warehouse_id);
+                const warehouseName = warehouse ? warehouse.name : `Warehouse #${inv.warehouse_id}`;
+                
+                inventoryHtml += `
+                    <div class="inventory-item">
+                        <strong>${escapeHtml(warehouseName)}</strong>: ${inv.quantity} units
+                    </div>
+                `;
+            }
         } else {
             inventoryHtml += '<p>No inventory records</p>';
         }
@@ -761,18 +634,21 @@ async function viewProductDetails(productId) {
                     <div class="details-grid">
                         <div><strong>SKU:</strong> ${product.sku}</div>
                         <div><strong>Brand:</strong> ${product.brand || '—'}</div>
-                        <div><strong>Price:</strong> $${product.price}</div>
-                        <div><strong>Cost:</strong> $${product.cost}</div>
+                        <div><strong>Category:</strong> ${product.category_name || '—'}</div>
+                        <div><strong>Supplier:</strong> ${product.supplier_name || '—'}</div>
+                        <div><strong>Price:</strong> $${parseFloat(product.price).toFixed(2)}</div>
+                        <div><strong>Cost:</strong> $${parseFloat(product.cost).toFixed(2)}</div>
                         <div><strong>Margin:</strong> ${calcMargin(product.price, product.cost).toFixed(1)}%</div>
                         <div><strong>Status:</strong> ${product.is_active ? 'Active' : 'Inactive'}</div>
                     </div>
+                    ${product.description ? `<hr><div><strong>Description:</strong><br>${escapeHtml(product.description)}</div>` : ''}
                     <hr>
-                    <h4>Inventory</h4>
+                    <h4>📦 Inventory</h4>
                     ${inventoryHtml}
                 </div>
                 <div class="modal-footer">
                     <button class="btn" onclick="closeViewModal()">Close</button>
-                    <button class="btn btn-primary" onclick="closeViewModal(); openProductModal(${product.id})">Edit</button>
+                    <button class="btn btn-primary" onclick="closeViewModal(); openProductModal(${product.id})">Edit Product</button>
                 </div>
             </div>
         `;
@@ -783,8 +659,10 @@ async function viewProductDetails(productId) {
         modal.style.display = 'flex';
         modal.innerHTML = modalHtml;
         document.body.appendChild(modal);
+        
     } catch (error) {
-        alert('Failed to load product details');
+        console.error('Failed to load product details:', error);
+        showToast('Failed to load product details', 'error');
     }
 }
 
@@ -816,7 +694,7 @@ async function loadProductsForBulkUpdate() {
                 <span class="product-name">${escapeHtml(p.name)} (${p.sku})</span>
                 <span class="current-price">Current: $${parseFloat(p.price).toFixed(2)}</span>
                 <input type="number" id="newPrice_${p.id}" class="new-price-input"
-                       placeholder="0.00" step="0.01" min="0" required value="${p.price}">
+                       placeholder="0.00" step="0.01" min="0" value="${p.price}">
             </div>
         `).join('');
     } catch (error) {
@@ -828,35 +706,15 @@ async function applyBulkPriceUpdate() {
     const response = await apiCall('/products?is_active=true');
     const products = response.data || [];
     const updates = [];
-    let hasError = false;
     
     for (const product of products) {
         const newPriceInput = document.getElementById(`newPrice_${product.id}`);
         if (newPriceInput) {
             const newPrice = parseFloat(newPriceInput.value);
-            
-            // Validate price
-            if (isNaN(newPrice)) {
-                showToast(`Invalid price for ${product.name}`, 'error');
-                hasError = true;
-                continue;
-            }
-            
-            if (newPrice < 0) {
-                showToast(`Price cannot be negative for ${product.name}`, 'error');
-                hasError = true;
-                continue;
-            }
-            
-            if (newPrice !== product.price) {
+            if (!isNaN(newPrice) && newPrice !== product.price && newPrice >= 0) {
                 updates.push({ id: product.id, price: newPrice });
             }
         }
-    }
-    
-    if (hasError) {
-        showToast('Please fix validation errors', 'error');
-        return;
     }
     
     if (updates.length === 0) {
@@ -880,6 +738,41 @@ async function applyBulkPriceUpdate() {
 }
 
 // ============================================
+// SETUP EVENT LISTENERS
+// ============================================
+function setupEventListeners() {
+    const applyFilter = document.getElementById('applyFilter');
+    const resetFilter = document.getElementById('resetFilter');
+    const searchInput = document.getElementById('filterSearch');
+    const addInventoryBtn = document.getElementById('addInventoryBtn');
+    
+    if (applyFilter) applyFilter.addEventListener('click', loadProducts);
+    if (resetFilter) {
+        resetFilter.addEventListener('click', () => {
+            if (document.getElementById('filterCategory')) document.getElementById('filterCategory').value = '';
+            if (document.getElementById('filterSupplier')) document.getElementById('filterSupplier').value = '';
+            if (searchInput) searchInput.value = '';
+            loadProducts();
+        });
+    }
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loadProducts();
+        });
+    }
+    if (addInventoryBtn) {
+        addInventoryBtn.addEventListener('click', () => addInventoryRow());
+    }
+    
+    // Delegate remove inventory row events
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-inventory-row')) {
+            removeInventoryRow(e.target);
+        }
+    });
+}
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 function escapeHtml(str) {
@@ -900,25 +793,6 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-function setupEventListeners() {
-    const applyFilter = document.getElementById('applyFilter');
-    const resetFilter = document.getElementById('resetFilter');
-    const searchInput = document.getElementById('filterSearch');
-    
-    if (applyFilter) applyFilter.addEventListener('click', loadProducts);
-    if (resetFilter) {
-        resetFilter.addEventListener('click', () => {
-            if (document.getElementById('filterCategory')) document.getElementById('filterCategory').value = '';
-            if (document.getElementById('filterSupplier')) document.getElementById('filterSupplier').value = '';
-            if (searchInput) searchInput.value = '';
-            loadProducts();
-        });
-    }
-    if (searchInput) searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loadProducts(); });
-    
-    // Price/Cost validation event listeners are now set up in openProductModal via setupPriceCostValidation()
-}
-
 // ============================================
 // EXPORT GLOBALS
 // ============================================
@@ -931,10 +805,8 @@ window.closeViewModal = closeViewModal;
 window.openBulkPriceModal = openBulkPriceModal;
 window.closeBulkPriceModal = closeBulkPriceModal;
 window.applyBulkPriceUpdate = applyBulkPriceUpdate;
-window.updateMarginPreview = updateMarginPreview;
-window.validatePrice = validatePrice;
-window.validateCost = validateCost;
 window.toggleViewMode = toggleViewMode;
 window.editProduct = (id) => openProductModal(id);
+window.addInventoryRow = addInventoryRow;
 
 console.log('✅ Admin Products module loaded');
