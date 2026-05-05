@@ -6,23 +6,32 @@ const messageController = {
     /**
      * GET /api/messages
      * Get user's messages (both sent and received)
+     * Shows messages where:
+     * - User is the sender
+     * - User is the direct recipient
+     * - Message is sent to user's role (recipient_role matches user's role)
+     * - Message is sent to all (recipient_role is NULL)
      */
     async getMessages(req, res) {
         const userId = req.user.id;
+        const userRole = req.user.role;
         const { limit = 50 } = req.query;
         
         try {
             const result = await pool.query(
-                `SELECT 
+                `SELECT
                     im.*,
                     u.name as sender_name,
                     u.role as sender_role
                  FROM internal_messages im
                  LEFT JOIN users u ON im.sender_id = u.id
-                 WHERE im.recipient_id = $1 OR im.sender_id = $1
+                 WHERE im.sender_id = $1
+                    OR im.recipient_id = $1
+                    OR im.recipient_role = $2
+                    OR im.recipient_role IS NULL
                  ORDER BY im.created_at DESC
-                 LIMIT $2`,
-                [userId, limit]
+                 LIMIT $3`,
+                [userId, userRole, limit]
             );
             
             res.status(200).json({
@@ -39,6 +48,8 @@ const messageController = {
     /**
      * POST /api/messages
      * Send a new message
+     * When sending to a role, the message is visible to all users with that role
+     * When sending to 'all', the message is visible to everyone (recipient_role is NULL)
      */
     async sendMessage(req, res) {
         const { recipient_role, recipient_id, subject, message } = req.body;
@@ -54,14 +65,31 @@ const messageController = {
             let recipientId = recipient_id;
             let recipientRole = recipient_role;
             
-            // If sending to role, find a user with that role
-            if (recipientRole && !recipientId) {
-                const userResult = await pool.query(
-                    `SELECT id FROM users WHERE role = $1 AND is_active = true LIMIT 1`,
+            // 'all' means message is visible to everyone (recipient_role is NULL)
+            if (recipientRole === 'all') {
+                recipientRole = null;
+                recipientId = null;
+            }
+            
+            // If sending to a specific role, don't set recipient_id
+            // All users with that role will see the message
+            if (recipientRole && ['admin', 'sales', 'warehouse', 'supply'].includes(recipientRole)) {
+                recipientId = null;
+                
+                // Create notifications for all users with that role
+                const notifResult = await pool.query(
+                    `SELECT id FROM users WHERE role = $1 AND is_active = true`,
                     [recipientRole]
                 );
-                if (userResult.rows.length > 0) {
-                    recipientId = userResult.rows[0].id;
+                
+                for (const userRow of notifResult.rows) {
+                    if (userRow.id !== senderId) {
+                        await pool.query(
+                            `INSERT INTO notifications (user_id, title, message, type)
+                             VALUES ($1, $2, $3, $4)`,
+                            [userRow.id, `New message from ${senderName} (${senderRole})`, subject || message.substring(0, 100), 'message']
+                        );
+                    }
                 }
             }
             
@@ -71,15 +99,6 @@ const messageController = {
                  RETURNING *`,
                 [senderId, senderName, senderRole, recipientRole, recipientId, subject || null, message]
             );
-            
-            // Create notification for recipient
-            if (recipientId) {
-                await pool.query(
-                    `INSERT INTO notifications (user_id, title, message, type)
-                     VALUES ($1, $2, $3, $4)`,
-                    [recipientId, `New message from ${senderName}`, subject || message.substring(0, 100), 'message']
-                );
-            }
             
             res.status(201).json({
                 success: true,
@@ -94,17 +113,20 @@ const messageController = {
     
     /**
      * GET /api/messages/unread
-     * Get unread message count
+     * Get unread message count for role-based and direct messages
      */
     async getUnreadCount(req, res) {
         const userId = req.user.id;
+        const userRole = req.user.role;
         
         try {
             const result = await pool.query(
-                `SELECT COUNT(*) as count 
-                 FROM internal_messages 
-                 WHERE recipient_id = $1 AND is_read = false`,
-                [userId]
+                `SELECT COUNT(*) as count
+                 FROM internal_messages
+                 WHERE (recipient_id = $1 OR recipient_role = $2 OR recipient_role IS NULL)
+                   AND is_read = false
+                   AND sender_id != $1`,
+                [userId, userRole]
             );
             
             res.status(200).json({
@@ -119,23 +141,26 @@ const messageController = {
     
     /**
      * PUT /api/messages/:id/read
-     * Mark message as read
+     * Mark message as read (supports role-based messages)
      */
     async markAsRead(req, res) {
         const messageId = parseInt(req.params.id);
         const userId = req.user.id;
+        const userRole = req.user.role;
         
         try {
             const result = await pool.query(
-                `UPDATE internal_messages 
+                `UPDATE internal_messages
                  SET is_read = true, read_at = CURRENT_TIMESTAMP
-                 WHERE id = $1 AND recipient_id = $2
+                 WHERE id = $1
+                   AND (recipient_id = $2 OR recipient_role = $3 OR recipient_role IS NULL)
+                   AND sender_id != $2
                  RETURNING id`,
-                [messageId, userId]
+                [messageId, userId, userRole]
             );
             
             if (result.rows.length === 0) {
-                return res.status(404).json({ success: false, error: 'Message not found' });
+                return res.status(404).json({ success: false, error: 'Message not found or not accessible' });
             }
             
             res.status(200).json({

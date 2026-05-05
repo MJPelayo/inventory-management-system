@@ -977,3 +977,134 @@ body {
 .session-warning-content .btn {
     margin: 0 8px;
 }
+
+/* ========================================
+   Additional Chat Styles
+   ======================================== */
+
+/* Message Header and Footer */
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    gap: 8px;
+}
+
+.recipient-info {
+    font-size: 10px;
+    opacity: 0.6;
+    font-weight: normal;
+}
+
+.message-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    gap: 8px;
+}
+
+.btn-reply {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.7;
+    text-decoration: underline;
+    padding: 2px 4px;
+    font-family: var(--font-sans);
+}
+
+.btn-reply:hover {
+    opacity: 1;
+}
+
+.chat-message.sent .btn-reply {
+    color: white;
+}
+
+/* Requests Header */
+.requests-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 2000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-lg);
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-success {
+    background: var(--success);
+}
+
+.toast-error {
+    background: var(--danger);
+}
+
+.toast-info {
+    background: var(--accent-primary);
+}
+
+.toast-warning {
+    background: var(--warning);
+}
+
+/* Request Form */
+.request-form {
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    margin: 12px;
+}
+
+.request-form h4 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.request-meta {
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+/* Scrollbar styling for chat messages */
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
