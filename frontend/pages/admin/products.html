@@ -176,24 +176,15 @@
                         </label>
                     </div>
                     
-                    <!-- Inventory Section (only for existing products) -->
+                    <!-- Inventory Section -->
                     <div id="inventorySection" style="display:none;">
                         <hr>
-                        <h4>Add Inventory</h4>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Warehouse</label>
-                                <select id="inventoryWarehouse">
-                                    <option value="">Select Warehouse</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Quantity</label>
-                                <input type="number" id="inventoryQuantity" placeholder="0">
-                            </div>
-                            <div class="form-group" style="display: flex; align-items: flex-end;">
-                                <button type="button" class="btn btn-secondary" onclick="addInventoryToProduct()">Add Stock</button>
-                            </div>
+                        <div class="inventory-section-header">
+                            <h4>📦 Product Inventory</h4>
+                            <button type="button" id="addInventoryBtn" class="btn btn-secondary btn-sm">+ Add Warehouse</button>
+                        </div>
+                        <div id="inventoryRowsContainer">
+                            <!-- Dynamic inventory rows will be added here -->
                         </div>
                     </div>
                 </form>

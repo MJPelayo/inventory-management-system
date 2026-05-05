@@ -115,7 +115,13 @@
                         <div id="capacityNote" class="capacity-note" style="display: none;"></div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="occupancyField">
+                        <label>Current Occupancy (units)</label>
+                        <input type="number" id="warehouseOccupancy" value="0" min="0" step="1" placeholder="e.g., 5000">
+                        <small class="help-text">Current number of units stored in this warehouse</small>
+                    </div>
+                    
+                    <div class="form-group" id="statusField">
                         <label class="checkbox-label">
                             <input type="checkbox" id="warehouseActive" checked>
                             <span>Active Warehouse</span>

@@ -280,3 +280,56 @@ input[type="number"].cost-input {
     font-family: var(--font-mono);
     font-weight: 500;
 }
+
+/* Inventory Section */
+.inventory-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.inventory-section-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+#inventoryRowsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.inventory-row {
+    background: var(--bg-tertiary);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+
+.inventory-row-fields {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inventory-row-fields select,
+.inventory-row-fields input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+
+.inv-warehouse-select {
+    flex: 2;
+}
+
+.inv-quantity {
+    flex: 1;
+}
+
+.remove-inventory-row:hover {
+    color: var(--danger);
+}

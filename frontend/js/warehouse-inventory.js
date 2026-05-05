@@ -238,21 +238,36 @@ function openAdjustStockModal() {
     document.getElementById('adjustStockModal').style.display = 'flex';
 }
 
-function openAdjustStockModalForProduct(productId, warehouseId, productName, currentQty, sku) {
+async function openAdjustStockModalForProduct(productId, warehouseId, productName, currentQty, sku) {
     // Set the product select to this product
     const productSelect = document.getElementById('adjustProductSelect');
     if (productSelect) {
         productSelect.value = productId;
-        // Trigger the change event to load data
-        onProductSelectForAdjustment();
     }
     
-    document.getElementById('adjustProductName').value = productName;
-    document.getElementById('adjustProductSku').value = sku;
-    document.getElementById('adjustCurrentQty').value = currentQty;
-    document.getElementById('adjustNewQty').value = currentQty;
-    document.getElementById('adjustProductId').value = productId;
-    document.getElementById('adjustWarehouseId').value = warehouseId;
+    // Set all form fields directly with the provided data
+    const productNameEl = document.getElementById('adjustProductName');
+    const productSkuEl = document.getElementById('adjustProductSku');
+    const currentQtyEl = document.getElementById('adjustCurrentQty');
+    const newQtyEl = document.getElementById('adjustNewQty');
+    const productIdEl = document.getElementById('adjustProductId');
+    const warehouseIdEl = document.getElementById('adjustWarehouseId');
+    
+    if (productNameEl) productNameEl.value = productName || '';
+    if (productSkuEl) productSkuEl.value = sku || '';
+    if (currentQtyEl) currentQtyEl.value = currentQty ?? 0;
+    if (newQtyEl) newQtyEl.value = currentQty ?? 0;
+    if (productIdEl) productIdEl.value = productId;
+    if (warehouseIdEl) warehouseIdEl.value = warehouseId;
+    
+    // Reset other fields
+    const reasonEl = document.getElementById('adjustReason');
+    const notesEl = document.getElementById('adjustNotes');
+    const approvalWarningEl = document.getElementById('approvalWarning');
+    
+    if (reasonEl) reasonEl.value = '';
+    if (notesEl) notesEl.value = '';
+    if (approvalWarningEl) approvalWarningEl.style.display = 'none';
     
     document.getElementById('adjustStockModal').style.display = 'flex';
 }
