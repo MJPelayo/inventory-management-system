@@ -59,7 +59,82 @@ CREATE TYPE permission_level AS ENUM ('none', 'read', 'create', 'edit', 'delete'
 -- 3. CREATE TABLE STATEMENTS (ALL 21 TABLES)
 -- =====================================================
 
--- Table 1: users
+-- Table 1: user_roles (must come before users due to foreign key reference)
+CREATE TABLE user_roles (
+    id SERIAL PRIMARY KEY,
+    role_code VARCHAR(50) NOT NULL UNIQUE,
+    role_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 2: payment_terms
+CREATE TABLE payment_terms (
+    id SERIAL PRIMARY KEY,
+    term_code VARCHAR(50) NOT NULL UNIQUE,
+    term_name VARCHAR(100) NOT NULL,
+    days INTEGER DEFAULT 0,
+    description TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 3: delivery_types
+CREATE TABLE delivery_types (
+    id SERIAL PRIMARY KEY,
+    type_code VARCHAR(50) NOT NULL UNIQUE,
+    type_name VARCHAR(100) NOT NULL,
+    requires_address BOOLEAN DEFAULT FALSE,
+    icon VARCHAR(50),
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 4: order_statuses
+CREATE TABLE order_statuses (
+    id SERIAL PRIMARY KEY,
+    status_code VARCHAR(50) NOT NULL UNIQUE,
+    status_name VARCHAR(100) NOT NULL,
+    color VARCHAR(20) DEFAULT 'gray',
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 5: payment_statuses
+CREATE TABLE payment_statuses (
+    id SERIAL PRIMARY KEY,
+    status_code VARCHAR(50) NOT NULL UNIQUE,
+    status_name VARCHAR(100) NOT NULL,
+    color VARCHAR(20) DEFAULT 'gray',
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 6: shipping_methods
+CREATE TABLE shipping_methods (
+    id SERIAL PRIMARY KEY,
+    method_code VARCHAR(50) NOT NULL UNIQUE,
+    method_name VARCHAR(100) NOT NULL,
+    base_cost DECIMAL(10,2) DEFAULT 0,
+    estimated_days INTEGER DEFAULT 0,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 7: users
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -78,7 +153,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 2: categories
+-- Table 8: categories
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -88,7 +163,7 @@ CREATE TABLE categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 3: suppliers
+-- Table 9: suppliers
 CREATE TABLE suppliers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -105,7 +180,7 @@ CREATE TABLE suppliers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 4: warehouses
+-- Table 10: warehouses
 CREATE TABLE warehouses (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -117,7 +192,7 @@ CREATE TABLE warehouses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 5: products
+-- Table 11: products
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
@@ -134,7 +209,7 @@ CREATE TABLE products (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 6: inventory
+-- Table 12: inventory
 CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -147,7 +222,7 @@ CREATE TABLE inventory (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 7: product_locations
+-- Table 13: product_locations
 CREATE TABLE product_locations (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -162,7 +237,7 @@ CREATE TABLE product_locations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 8: sales_orders
+-- Table 14: sales_orders
 CREATE TABLE sales_orders (
     id SERIAL PRIMARY KEY,
     order_number VARCHAR(50) NOT NULL UNIQUE,
@@ -187,7 +262,7 @@ CREATE TABLE sales_orders (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 9: supply_orders
+-- Table 15: supply_orders
 CREATE TABLE supply_orders (
     id SERIAL PRIMARY KEY,
     po_number VARCHAR(50) NOT NULL UNIQUE,
@@ -204,7 +279,7 @@ CREATE TABLE supply_orders (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 10: order_items
+-- Table 16: order_items
 CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
@@ -217,7 +292,7 @@ CREATE TABLE order_items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 11: stock_movements
+-- Table 17: stock_movements
 CREATE TABLE stock_movements (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id),
@@ -230,7 +305,7 @@ CREATE TABLE stock_movements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 12: discount_approvals
+-- Table 18: discount_approvals
 CREATE TABLE discount_approvals (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
@@ -243,7 +318,7 @@ CREATE TABLE discount_approvals (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 13: audit_logs
+-- Table 19: audit_logs
 CREATE TABLE audit_logs (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -257,7 +332,7 @@ CREATE TABLE audit_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 14: adjustment_reasons
+-- Table 20: adjustment_reasons
 CREATE TABLE adjustment_reasons (
     id SERIAL PRIMARY KEY,
     reason_code VARCHAR(50) UNIQUE NOT NULL,
@@ -266,7 +341,7 @@ CREATE TABLE adjustment_reasons (
     is_active BOOLEAN DEFAULT TRUE
 );
 
--- Table 15: notifications
+-- Table 21: notifications
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -278,7 +353,7 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 16: system_settings
+-- Table 22: system_settings
 CREATE TABLE system_settings (
     id SERIAL PRIMARY KEY,
     setting_key VARCHAR(100) UNIQUE NOT NULL,
@@ -288,7 +363,7 @@ CREATE TABLE system_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 17: internal_requests
+-- Table 23: internal_requests
 CREATE TABLE internal_requests (
     id SERIAL PRIMARY KEY,
     request_type VARCHAR(50) NOT NULL,
@@ -306,7 +381,7 @@ CREATE TABLE internal_requests (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 18: internal_messages
+-- Table 24: internal_messages
 CREATE TABLE internal_messages (
     id SERIAL PRIMARY KEY,
     sender_id INTEGER REFERENCES users(id),
@@ -321,7 +396,7 @@ CREATE TABLE internal_messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 19: user_permissions
+-- Table 25: user_permissions
 CREATE TABLE user_permissions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -332,7 +407,7 @@ CREATE TABLE user_permissions (
     UNIQUE(user_id, module)
 );
 
--- Table 20: permission_audit_log
+-- Table 26: permission_audit_log
 CREATE TABLE permission_audit_log (
     id SERIAL PRIMARY KEY,
     changed_by INTEGER REFERENCES users(id),
@@ -343,7 +418,7 @@ CREATE TABLE permission_audit_log (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 21: role_default_permissions
+-- Table 27: role_default_permissions
 CREATE TABLE role_default_permissions (
     id SERIAL PRIMARY KEY,
     role VARCHAR(50) NOT NULL,
@@ -401,85 +476,6 @@ CREATE TRIGGER update_supply_orders_updated_at BEFORE UPDATE ON supply_orders FO
 CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON user_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_product_locations_updated_at BEFORE UPDATE ON product_locations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_role_default_permissions_updated_at BEFORE UPDATE ON role_default_permissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- =====================================================
--- DROPDOWN MASTER TABLES (All dynamic values from database)
--- =====================================================
-
--- 1. Payment Terms
-CREATE TABLE IF NOT EXISTS payment_terms (
-    id SERIAL PRIMARY KEY,
-    term_code VARCHAR(50) NOT NULL UNIQUE,
-    term_name VARCHAR(100) NOT NULL,
-    days INTEGER DEFAULT 0,
-    description TEXT,
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 2. Delivery Types
-CREATE TABLE IF NOT EXISTS delivery_types (
-    id SERIAL PRIMARY KEY,
-    type_code VARCHAR(50) NOT NULL UNIQUE,
-    type_name VARCHAR(100) NOT NULL,
-    requires_address BOOLEAN DEFAULT FALSE,
-    icon VARCHAR(50),
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 3. Order Statuses
-CREATE TABLE IF NOT EXISTS order_statuses (
-    id SERIAL PRIMARY KEY,
-    status_code VARCHAR(50) NOT NULL UNIQUE,
-    status_name VARCHAR(100) NOT NULL,
-    color VARCHAR(20) DEFAULT 'gray',
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 4. Payment Statuses
-CREATE TABLE IF NOT EXISTS payment_statuses (
-    id SERIAL PRIMARY KEY,
-    status_code VARCHAR(50) NOT NULL UNIQUE,
-    status_name VARCHAR(100) NOT NULL,
-    color VARCHAR(20) DEFAULT 'gray',
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 5. User Roles (Dynamic)
-CREATE TABLE IF NOT EXISTS user_roles (
-    id SERIAL PRIMARY KEY,
-    role_code VARCHAR(50) NOT NULL UNIQUE,
-    role_name VARCHAR(100) NOT NULL,
-    description TEXT,
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 9. Shipping Methods
-CREATE TABLE IF NOT EXISTS shipping_methods (
-    id SERIAL PRIMARY KEY,
-    method_code VARCHAR(50) NOT NULL UNIQUE,
-    method_name VARCHAR(100) NOT NULL,
-    base_cost DECIMAL(10,2) DEFAULT 0,
-    estimated_days INTEGER DEFAULT 0,
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- =====================================================
 -- INSERT DEFAULT DATA FOR DROPDOWN MASTER TABLES
@@ -543,6 +539,10 @@ ON CONFLICT (method_code) DO NOTHING;
 -- =====================================================
 -- TRIGGERS FOR DROPDOWN MASTER TABLES
 -- =====================================================
+CREATE TRIGGER update_user_roles_updated_at
+BEFORE UPDATE ON user_roles
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_payment_terms_updated_at
 BEFORE UPDATE ON payment_terms
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -557,10 +557,6 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_payment_statuses_updated_at
 BEFORE UPDATE ON payment_statuses
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_user_roles_updated_at
-BEFORE UPDATE ON user_roles
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_shipping_methods_updated_at
