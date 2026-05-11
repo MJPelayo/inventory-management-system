@@ -270,6 +270,10 @@ async function submitStockAdjustment() {
     const newQuantity = parseInt(document.getElementById('adjustNewQty').value);
     const reason = document.getElementById('adjustReason').value;
     const notes = document.getElementById('adjustNotes').value;
+    const aisle = document.getElementById('adjustAisle')?.value;
+    const shelf = document.getElementById('adjustShelf')?.value;
+    const side = document.getElementById('adjustSide')?.value;
+    const layer = document.getElementById('adjustLayer')?.value;
     
     if (!productId) {
         showToast('Please select a product', 'error');
@@ -306,8 +310,31 @@ async function submitStockAdjustment() {
         
         if (response.success) {
             showToast(`Stock adjusted from ${currentQty} to ${newQuantity}`, 'success');
+            
+            // ✅ Update location if provided
+            if (aisle && shelf) {
+                try {
+                    await apiCall(`/inventory/locations/move`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            product_id: parseInt(productId),
+                            warehouse_id: parseInt(warehouseId),
+                            new_location: {
+                                aisle_number: parseInt(aisle),
+                                side: side || 'left',
+                                shelf_number: parseInt(shelf),
+                                layer: layer || 'middle'
+                            }
+                        })
+                    });
+                    showToast('Location updated', 'success');
+                } catch (locError) {
+                    console.log('Location update not available:', locError);
+                }
+            }
+            
             closeAdjustStockModal();
-            await loadInventory(); // Refresh the table
+            await loadInventory();
         } else {
             throw new Error(response.error);
         }
