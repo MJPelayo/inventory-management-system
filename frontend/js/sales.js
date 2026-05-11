@@ -466,34 +466,40 @@ async function submitOrder() {
     };
     
     try {
-        // First check if discount needs approval
-        if (discountPercent > 10) {
-            // Request discount approval first
-            const tempOrder = await apiCall('/orders/sales', {
-                method: 'POST',
-                body: JSON.stringify(orderData)
-            });
-            
-            // Request approval
-            await apiCall(`/orders/sales/${tempOrder.data.id}/discount-request`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    requested_discount: discountPercent,
-                    reason: discountReason || 'Customer discount request'
-                })
-            });
-            
-            showToast('Order created with discount pending approval. Admin will review.', 'info');
-        } else {
-            // Create order directly
-            await apiCall('/orders/sales', {
-                method: 'POST',
-                body: JSON.stringify(orderData)
-            });
-            showToast('Order placed successfully!', 'success');
+        showToast('Creating order...', 'info');
+        
+        // ✅ Create order first
+        const response = await apiCall('/orders/sales', {
+            method: 'POST',
+            body: JSON.stringify(orderData)
+        });
+        
+        if (!response.success) {
+            throw new Error(response.error);
         }
         
-        // Clear cart and close modal
+        const order = response.data;
+        
+        // ✅ If discount needs approval, request it
+        if (discountPercent > 10 && discountReason) {
+            try {
+                await apiCall(`/orders/sales/${order.id}/discount-request`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        requested_discount: discountPercent,
+                        reason: discountReason
+                    })
+                });
+                showToast(`Order #${order.order_number} created with discount pending approval!`, 'info');
+            } catch (e) {
+                console.log('Discount request failed:', e);
+                showToast(`Order #${order.order_number} created. Discount approval required.`, 'warning');
+            }
+        } else {
+            showToast(`Order #${order.order_number} created successfully!`, 'success');
+        }
+        
+        // Clear cart
         cart = [];
         saveCartToStorage();
         updateCartCount();
