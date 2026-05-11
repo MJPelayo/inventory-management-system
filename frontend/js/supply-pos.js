@@ -302,10 +302,9 @@ async function savePurchaseOrder() {
         const unitPrice = parseFloat(row.querySelector('.po-unit-price').value);
         
         if (productId && quantity > 0 && unitPrice > 0) {
-            const product = allProducts.find(p => p.id == productId);
             items.push({
                 product_id: parseInt(productId),
-                product_name: product?.name || '',
+                product_name: '',
                 quantity: quantity,
                 unit_price: unitPrice
             });
@@ -327,6 +326,7 @@ async function savePurchaseOrder() {
     try {
         showToast('Creating purchase order...', 'info');
         
+        // ✅ FIX: Use correct endpoint
         const response = await apiCall('/orders/supply', {
             method: 'POST',
             body: JSON.stringify(poData)
