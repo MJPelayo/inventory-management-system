@@ -57,6 +57,9 @@ class ThemeManager {
         this.currentTheme = this.loadTheme();
         this.applyTheme(this.currentTheme);
         this.setupClickListener();
+        
+        // Event listeners are now set up by Header component after it renders
+        // This prevents duplicate event bindings
     }
 
     loadTheme() {
@@ -78,7 +81,7 @@ class ThemeManager {
         return 'classic';
     }
 
-    applyTheme(themeName) {
+    applyTheme(themeName, updateUI = true) {
         if (!ThemeManager.THEMES[themeName]) {
             themeName = 'classic';
         }
@@ -87,17 +90,19 @@ class ThemeManager {
         localStorage.setItem(CONFIG.THEME_KEY, themeName);
         this.currentTheme = themeName;
 
-        // Update theme button text if it exists
-        const themeBtn = document.querySelector('.theme-btn');
-        if (themeBtn) {
-            const currentTheme = ThemeManager.THEMES[themeName];
-            themeBtn.innerHTML = `${currentTheme.icon} ${currentTheme.name} <span class="dropdown-arrow">▼</span>`;
-        }
+        if (updateUI) {
+            // Update theme button text if it exists
+            const themeBtn = document.querySelector('.theme-btn');
+            if (themeBtn) {
+                const currentTheme = ThemeManager.THEMES[themeName];
+                themeBtn.innerHTML = `${currentTheme.icon} ${currentTheme.name} <span class="dropdown-arrow">▼</span>`;
+            }
 
-        // Update active state in dropdown
-        document.querySelectorAll('.theme-option').forEach(opt => {
-            opt.classList.toggle('active', opt.dataset.theme === themeName);
-        });
+            // Update active state in dropdown
+            document.querySelectorAll('.theme-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.theme === themeName);
+            });
+        }
 
         // Send event for any listeners
         window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: themeName } }));
@@ -106,23 +111,51 @@ class ThemeManager {
     }
 
     getThemeSelectorHTML() {
-        const current = ThemeManager.THEMES[this.currentTheme];
+        const current = ThemeManager.THEMES[this.currentTheme || 'classic'];
         return `
             <div class="theme-selector" id="themeSelector">
-                <button class="theme-btn" onclick="if(themeManager) themeManager.toggleDropdown()">
+                <button type="button" class="theme-btn" id="themeBtn">
                     ${current.icon} ${current.name} <span class="dropdown-arrow">▼</span>
                 </button>
                 <div class="theme-dropdown" id="themeDropdown" style="display: none;">
                     ${Object.entries(ThemeManager.THEMES).map(([key, theme]) => `
-                        <button class="theme-option ${this.currentTheme === key ? 'active' : ''}" 
-                                data-theme="${key}" 
-                                onclick="themeManager.applyTheme('${key}'); themeManager.closeDropdown();">
+                        <button type="button" class="theme-option ${this.currentTheme === key ? 'active' : ''}"
+                                data-theme="${key}">
                             ${theme.icon} ${theme.name}
                         </button>
                     `).join('')}
                 </div>
             </div>
         `;
+    }
+    
+    setupThemeSelectorEvents() {
+        // Set up event listeners for theme button and options
+        // Called by Header component after rendering
+        const themeBtn = document.getElementById('themeBtn');
+        const dropdown = document.getElementById('themeDropdown');
+        
+        if (themeBtn && !themeBtn.dataset.themeListenerAttached) {
+            themeBtn.dataset.themeListenerAttached = 'true';
+            themeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleDropdown();
+            });
+        }
+        
+        if (dropdown && !dropdown.dataset.themeOptionsAttached) {
+            dropdown.dataset.themeOptionsAttached = 'true';
+            dropdown.querySelectorAll('.theme-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const themeName = e.target.dataset.theme;
+                    if (themeName) {
+                        this.applyTheme(themeName);
+                        this.closeDropdown();
+                    }
+                });
+            });
+        }
     }
 
     toggleDropdown() {
@@ -161,13 +194,29 @@ function initThemeManager() {
         window.themeManager = themeManager;
         console.log('✅ Theme Manager initialized');
     }
+    return themeManager;
 }
+
+// Immediate initialization - apply theme from storage first to prevent flash
+(function applyStoredThemeImmediately() {
+    // Use a try-catch in case CONFIG is not loaded yet
+    try {
+        const themeKey = typeof CONFIG !== 'undefined' ? CONFIG.THEME_KEY : 'ims_theme';
+        const savedTheme = localStorage.getItem(themeKey);
+        if (savedTheme && ThemeManager.THEMES[savedTheme]) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            console.log(`🎨 Stored theme applied immediately: ${savedTheme}`);
+        }
+    } catch (e) {
+        console.log('Theme not applied immediately (CONFIG not loaded yet)');
+    }
+})();
 
 // Wait for config to be ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initThemeManager, 100);
+        initThemeManager();
     });
 } else {
-    setTimeout(initThemeManager, 100);
+    initThemeManager();
 }

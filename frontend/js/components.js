@@ -88,16 +88,18 @@ class Header {
         const user = auth.getCurrentUser();
         let themeSelectorHtml = '';
         
-        // Get theme selector HTML from themeManager if available
+        // Always use themeManager for consistent behavior
+        // theme.js ensures themeManager is initialized before this runs
         if (typeof themeManager !== 'undefined' && themeManager) {
             themeSelectorHtml = themeManager.getThemeSelectorHTML();
         } else {
-            // Fallback
+            // Minimal fallback - will be replaced when themeManager initializes
             themeSelectorHtml = `
-                <div class="theme-selector">
-                    <button class="theme-btn" onclick="if(window.themeManager) themeManager.toggleDropdown()">
-                        🎨 Theme ▼
+                <div class="theme-selector" id="themeSelector">
+                    <button type="button" class="theme-btn" id="themeBtn">
+                        🎨 Theme <span class="dropdown-arrow">▼</span>
                     </button>
+                    <div class="theme-dropdown" id="themeDropdown" style="display: none;"></div>
                 </div>
             `;
         }
@@ -118,6 +120,11 @@ class Header {
                 </div>
             </div>
         `;
+        
+        // Let ThemeManager handle its own event listeners
+        if (typeof themeManager !== 'undefined' && themeManager) {
+            themeManager.setupThemeSelectorEvents();
+        }
         
         // Start session timer display
         this.startSessionTimer();
