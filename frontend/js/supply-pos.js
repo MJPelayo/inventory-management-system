@@ -316,10 +316,14 @@ async function savePurchaseOrder() {
         return;
     }
     
+    // Calculate subtotal
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    
     const poData = {
         supplier_id: parseInt(supplierId),
         expected_delivery: expectedDelivery || null,
         items: items,
+        subtotal: subtotal,
         shipping_cost: shippingCost
     };
     
