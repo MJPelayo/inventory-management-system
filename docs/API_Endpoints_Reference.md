@@ -22,7 +22,13 @@ Complete reference for all working API endpoints with curl test commands.
 12. [Reports](#reports)
 13. [Export](#export)
 14. [Audit Logs](#audit-logs)
-15. [Credentials Management](#credentials-management)
+15. [Dropdowns](#dropdowns)
+16. [Payment Terms](#payment-terms)
+17. [Permissions](#permissions)
+18. [Settings](#settings)
+19. [Messages](#messages)
+20. [Requests](#requests)
+21. [Notifications](#notifications)
 
 ---
 
@@ -40,7 +46,7 @@ curl.exe http://localhost:3000/api/health
 ```json
 {
   "status": "OK",
-  "timestamp": "2026-04-24T01:00:00.000Z"
+  "timestamp": "2026-05-11T17:00:00.000Z"
 }
 ```
 
@@ -116,6 +122,17 @@ curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/au
 | Header | Value | Required |
 |--------|-------|----------|
 | Authorization | Bearer `<token>` | Yes |
+
+---
+
+### POST `/api/auth/refresh`
+Refresh an existing JWT token.
+
+**curl Command:**
+```bash
+curl.exe -X POST http://localhost:3000/api/auth/refresh ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
 
 ---
 
@@ -484,13 +501,19 @@ curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/in
 
 ---
 
-### GET `/api/inventory/movements?product_id=:id`
+### GET `/api/inventory/movements`
 Get stock movement history for a product.
 
 **curl Command:**
 ```bash
 curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" "http://localhost:3000/api/inventory/movements?product_id=1"
 ```
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| product_id | number | Filter by product |
+| limit | number | Limit results (default: 100) |
 
 ---
 
@@ -500,6 +523,16 @@ Get auto-reorder suggestions based on sales velocity.
 **curl Command:**
 ```bash
 curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/inventory/reorder-suggestions
+```
+
+---
+
+### GET `/api/inventory/product/:productId/warehouse/:warehouseId/location`
+Get product location details in a warehouse.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/inventory/product/1/warehouse/1/location
 ```
 
 ---
@@ -719,7 +752,6 @@ curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" "http://localhost:3000/api/r
 |-----------|------|-------------|
 | start_date | string | Filter by start date (ISO format) |
 | end_date | string | Filter by end date (ISO format) |
-| format | string | `json` or `pdf` |
 
 ---
 
@@ -729,6 +761,16 @@ Generate inventory report.
 **curl Command:**
 ```bash
 curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" "http://localhost:3000/api/reports/inventory?warehouse_id=1"
+```
+
+---
+
+### GET `/api/reports/inventory/export` (Admin/Warehouse)
+Export inventory report as CSV.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" "http://localhost:3000/api/reports/inventory/export" --output inventory-report.csv
 ```
 
 ---
@@ -816,6 +858,373 @@ curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/au
 
 ---
 
+## Dropdowns
+
+### GET `/api/dropdowns/all`
+Get all dropdown data in one call.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/dropdowns/all
+```
+
+**Response includes:** payment_terms, delivery_types, order_statuses, payment_statuses, user_roles, shipping_methods
+
+---
+
+### GET `/api/dropdowns/payment-terms`
+Get payment terms dropdown.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/dropdowns/payment-terms
+```
+
+---
+
+### GET `/api/dropdowns/delivery-types`
+Get delivery types dropdown.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/dropdowns/delivery-types
+```
+
+---
+
+### GET `/api/dropdowns/order-statuses`
+Get order statuses dropdown.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/dropdowns/order-statuses
+```
+
+---
+
+### GET `/api/dropdowns/payment-statuses`
+Get payment statuses dropdown.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/dropdowns/payment-statuses
+```
+
+---
+
+### GET `/api/dropdowns/user-roles`
+Get user roles dropdown.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/dropdowns/user-roles
+```
+
+---
+
+### GET `/api/dropdowns/shipping-methods`
+Get shipping methods dropdown.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/dropdowns/shipping-methods
+```
+
+---
+
+## Payment Terms
+
+### GET `/api/payment-terms`
+Get all payment terms.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/payment-terms
+```
+
+---
+
+### GET `/api/payment-terms/:id`
+Get payment term by ID.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/payment-terms/1
+```
+
+---
+
+## Permissions (Admin Only)
+
+### GET `/api/permissions/users/:id/permissions`
+Get user permissions.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/permissions/users/1/permissions
+```
+
+---
+
+### PUT `/api/permissions/users/:id/permissions`
+Update user permissions.
+
+**curl Command:**
+```bash
+curl.exe -X PUT http://localhost:3000/api/permissions/users/1/permissions ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"module\":\"products\",\"permission\":\"edit\"}"
+```
+
+---
+
+### POST `/api/permissions/users/:id/permissions/reset`
+Reset user permissions to role defaults.
+
+**curl Command:**
+```bash
+curl.exe -X POST http://localhost:3000/api/permissions/users/1/permissions/reset ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
+### GET `/api/permissions/settings/role-defaults`
+Get role default permissions.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/permissions/settings/role-defaults
+```
+
+---
+
+### PUT `/api/permissions/settings/role-defaults`
+Update role default permissions.
+
+**curl Command:**
+```bash
+curl.exe -X PUT http://localhost:3000/api/permissions/settings/role-defaults ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"role\":\"sales\",\"module\":\"products\",\"permission\":\"read\"}"
+```
+
+---
+
+### GET `/api/permissions/audit/permissions`
+Get permission change history.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/permissions/audit/permissions
+```
+
+---
+
+### GET `/api/audit/permissions`
+Alias for permission audit log.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/audit/permissions
+```
+
+---
+
+## Settings (Admin Only)
+
+### GET `/api/settings/system`
+Get all system settings.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/settings/system
+```
+
+---
+
+### GET `/api/settings/system/:key`
+Get single system setting.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/settings/system/session_timeout
+```
+
+---
+
+### PUT `/api/settings/system`
+Update system settings.
+
+**curl Command:**
+```bash
+curl.exe -X PUT http://localhost:3000/api/settings/system ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"setting_key\":\"session_timeout\",\"setting_value\":\"1440\",\"setting_type\":\"integer\",\"description\":\"Session timeout in minutes\"}"
+```
+
+---
+
+## Messages
+
+### GET `/api/messages`
+Get user's messages (sent and received).
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/messages
+```
+
+---
+
+### POST `/api/messages`
+Send a new message.
+
+**curl Command:**
+```bash
+curl.exe -X POST http://localhost:3000/api/messages ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"recipient_id\":2,\"subject\":\"Question\",\"message\":\"Hello, can you help me?\"}"
+```
+
+---
+
+### GET `/api/messages/unread`
+Get unread message count.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/messages/unread
+```
+
+---
+
+### PUT `/api/messages/:id/read`
+Mark message as read.
+
+**curl Command:**
+```bash
+curl.exe -X PUT http://localhost:3000/api/messages/1/read ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
+### GET `/api/messages/conversation/:userId`
+Get conversation with specific user.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/messages/conversation/2
+```
+
+---
+
+## Requests
+
+### GET `/api/requests`
+Get all requests (filtered by role).
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/requests
+```
+
+---
+
+### GET `/api/requests/my`
+Get requests made by current user.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/requests/my
+```
+
+---
+
+### POST `/api/requests`
+Create a new request.
+
+**curl Command:**
+```bash
+curl.exe -X POST http://localhost:3000/api/requests ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"request_type\":\"deletion\",\"entity_type\":\"product\",\"entity_id\":5,\"reason\":\"Product discontinued\"}"
+```
+
+---
+
+### POST `/api/requests/:id/approve` (Admin Only)
+Approve a request.
+
+**curl Command:**
+```bash
+curl.exe -X POST http://localhost:3000/api/requests/1/approve ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
+### POST `/api/requests/:id/deny` (Admin Only)
+Deny a request.
+
+**curl Command:**
+```bash
+curl.exe -X POST http://localhost:3000/api/requests/1/deny ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
+## Notifications
+
+### GET `/api/notifications`
+Get user notifications.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/notifications
+```
+
+---
+
+### GET `/api/notifications/unread/count`
+Get unread notification count.
+
+**curl Command:**
+```bash
+curl.exe -H "Authorization: Bearer YOUR_TOKEN_HERE" http://localhost:3000/api/notifications/unread/count
+```
+
+---
+
+### PUT `/api/notifications/:id/read`
+Mark notification as read.
+
+**curl Command:**
+```bash
+curl.exe -X PUT http://localhost:3000/api/notifications/1/read ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
+### PUT `/api/notifications/read/all`
+Mark all notifications as read.
+
+**curl Command:**
+```bash
+curl.exe -X PUT http://localhost:3000/api/notifications/read/all ^
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
 ## Credentials Management
 
 ### View All Credentials
@@ -856,20 +1265,27 @@ Usage: `npm run reset-password <email> <newPassword>`
 | Module | Endpoints | Methods |
 |--------|-----------|---------|
 | Health | 1 | GET |
-| Auth | 3 | POST, POST, GET |
-| Users | 5 | GET, GET, POST, PUT, DELETE |
-| Products | 7 | GET, GET, GET, POST, PUT, DELETE, PUT (bulk) |
-| Categories | 6 | GET, GET, GET, POST, PUT, DELETE |
-| Suppliers | 5 | GET, GET, POST, PUT, DELETE |
-| Warehouses | 5 | GET, GET, POST, PUT, DELETE |
-| Inventory | 7 | GET(3), POST(3), GET(suggestions) |
-| Sales Orders | 4 | POST, GET, GET, PUT |
+| Auth | 4 | POST(2), GET, POST(refresh) |
+| Users | 5 | GET(2), POST, PUT, DELETE |
+| Products | 7 | GET(3), POST, PUT(2), DELETE |
+| Categories | 6 | GET(3), POST, PUT, DELETE |
+| Suppliers | 5 | GET(2), POST, PUT, DELETE |
+| Warehouses | 5 | GET(2), POST, PUT, DELETE |
+| Inventory | 8 | GET(5), POST(3) |
+| Sales Orders | 4 | POST, GET(2), PUT |
 | Discount Approvals | 2 | POST, PUT |
-| Supply Orders | 5 | POST, GET, GET, POST, POST (cancel) |
-| Reports | 3 | GET (3 reports) |
-| Export | 3 | GET (3 exports) |
-| Audit Logs | 2 | GET, GET (by entity) |
-| **TOTAL** | **57** | |
+| Supply Orders | 5 | POST, GET(2), POST(2) |
+| Reports | 4 | GET(4) |
+| Export | 3 | GET(3) |
+| Audit Logs | 2 | GET(2) |
+| Dropdowns | 7 | GET(7) |
+| Payment Terms | 2 | GET(2) |
+| Permissions | 7 | GET(4), PUT, POST(2) |
+| Settings | 3 | GET(2), PUT |
+| Messages | 5 | GET(3), POST, PUT |
+| Requests | 5 | GET(2), POST(3) |
+| Notifications | 4 | GET(2), PUT(2) |
+| **TOTAL** | **95** | |
 
 ---
 
@@ -877,7 +1293,10 @@ Usage: `npm run reset-password <email> <newPassword>`
 
 - All protected endpoints require a valid JWT token in the `Authorization: Bearer <token>` header
 - JWT tokens expire after 24 hours and can be revoked on logout
+- Token refresh is available via `/api/auth/refresh` endpoint
 - Passwords are hashed using bcrypt (10 rounds)
 - All timestamps are in ISO 8601 format
 - Monetary values are returned as decimal strings with 2 decimal places
 - The system supports token blacklisting for logout functionality
+- Role-based access control (RBAC) is enforced on all protected endpoints
+- Input sanitization and SQL injection protection middleware is applied globally

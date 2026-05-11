@@ -78,6 +78,8 @@ npm run dev
 
 Server will run on: **http://localhost:3000**
 
+The frontend is served statically from the `frontend/` directory and will be accessible at the same URL.
+
 ---
 
 ## 🔐 Credentials & Testing
@@ -161,47 +163,89 @@ inventory-management-system/
 ├── backend/
 │   ├── src/
 │   │   ├── models/
-│   │   │   ├── User.js              # User business logic
-│   │   │   ├── Product.js           # Product business logic
-│   │   │   ├── Category.js          # Category hierarchy
-│   │   │   ├── Supplier.js          # Supplier management
-│   │   │   ├── Warehouse.js         # Warehouse management
-│   │   │   ├── Inventory.js         # Stock tracking
-│   │   │   ├── StockMovement.js     # Audit trail
-│   │   │   ├── SalesOrder.js        # Customer orders
-│   │   │   ├── SupplyOrder.js       # Purchase orders
-│   │   │   └── AuditLog.js          # Security logging
+│   │   │   ├── BaseModel.js           # Base class for all models
+│   │   │   ├── User.js                # User business logic
+│   │   │   ├── Product.js             # Product business logic
+│   │   │   ├── Category.js            # Category hierarchy
+│   │   │   ├── Supplier.js            # Supplier management
+│   │   │   ├── Warehouse.js           # Warehouse management
+│   │   │   ├── Inventory.js           # Stock tracking
+│   │   │   ├── StockMovement.js       # Audit trail
+│   │   │   ├── SalesOrder.js          # Customer orders
+│   │   │   ├── SupplyOrder.js         # Purchase orders
+│   │   │   ├── AuditLog.js            # Security logging
+│   │   │   ├── DeliveryType.js        # Dropdown data
+│   │   │   ├── OrderStatus.js         # Dropdown data
+│   │   │   ├── PaymentStatus.js       # Dropdown data
+│   │   │   ├── PaymentTerm.js         # Dropdown data
+│   │   │   ├── ShippingMethod.js      # Dropdown data
+│   │   │   └── UserRole.js            # Dropdown data
 │   │   ├── controllers/
 │   │   │   ├── auditLogController.js
 │   │   │   ├── authController.js
-│   │   │   ├── userController.js
-│   │   │   ├── productController.js
+│   │   │   ├── categoryController.js
+│   │   │   ├── dropdownController.js
+│   │   │   ├── exportController.js
 │   │   │   ├── inventoryController.js
+│   │   │   ├── inventoryReportController.js
+│   │   │   ├── messageController.js
+│   │   │   ├── notificationController.js
 │   │   │   ├── orderController.js
+│   │   │   ├── paymentTermController.js
+│   │   │   ├── permissionController.js
+│   │   │   ├── productController.js
 │   │   │   ├── reportController.js
-│   │   │   └── exportController.js
+│   │   │   ├── requestController.js
+│   │   │   ├── settingsController.js
+│   │   │   ├── supplierController.js
+│   │   │   ├── userController.js
+│   │   │   └── warehouseController.js
 │   │   ├── routes/
 │   │   │   ├── auditLogRoutes.js
 │   │   │   ├── authRoutes.js
-│   │   │   ├── userRoutes.js
-│   │   │   ├── productRoutes.js
+│   │   │   ├── categoryRoutes.js
+│   │   │   ├── dropdownRoutes.js
+│   │   │   ├── exportRoutes.js
 │   │   │   ├── inventoryRoutes.js
+│   │   │   ├── messageRoutes.js
+│   │   │   ├── notificationRoutes.js
 │   │   │   ├── orderRoutes.js
+│   │   │   ├── paymentTermRoutes.js
+│   │   │   ├── permissionRoutes.js
+│   │   │   ├── productRoutes.js
 │   │   │   ├── reportRoutes.js
-│   │   │   └── exportRoutes.js
+│   │   │   ├── requestRoutes.js
+│   │   │   ├── settingsRoutes.js
+│   │   │   ├── supplierRoutes.js
+│   │   │   ├── userRoutes.js
+│   │   │   └── warehouseRoutes.js
 │   │   ├── middleware/
-│   │   │   └── auth.js              # JWT + RBAC
+│   │   │   ├── auth.js                # JWT + RBAC
+│   │   │   ├── permissions.js         # Fine-grained permissions
+│   │   │   ├── sanitize.js            # Input sanitization
+│   │   │   └── security.js            # SQL injection protection
 │   │   ├── db/
-│   │   │   └── pool.js              # PostgreSQL connection
-│   │   ├── app.js
-│   │   └── server.js
+│   │   │   ├── pool.js                # PostgreSQL connection
+│   │   │   └── queryBuilder.js        # Query builder utility
+│   │   ├── app.js                     # Express app setup
+│   │   └── server.js                  # Entry point
 │   ├── scripts/
-│   │   ├── full-reset.js            # Database reset
-│   │   └── show-credentials.js      # Display all credentials
+│   │   ├── full-reset.js              # Database reset
+│   │   └── show-credentials.js        # Display credentials
 │   ├── package.json
 │   └── .env
 ├── database/
-│   └── schema.sql                   # Complete DB schema (15 tables)
+│   └── schema.sql                     # Complete DB schema (27 tables)
+├── frontend/
+│   ├── index.html
+│   ├── css/
+│   ├── js/
+│   ├── pages/
+│   │   ├── admin/
+│   │   ├── sales/
+│   │   ├── supply/
+│   │   └── warehouse/
+│   └── assets/
 └── docs/
     ├── API_Endpoints_Reference.md
     ├── UML_Diagrams.md
@@ -210,29 +254,41 @@ inventory-management-system/
 
 ---
 
-## 🗄️ Database Tables (15 Total)
+## 🗄️ Database Tables (27 Total)
 
 | # | Table | Description |
 |---|-------|-------------|
 | 1 | users | User accounts with roles (admin, sales, warehouse, supply) |
-| 2 | categories | Product categories with hierarchical structure |
-| 3 | suppliers | Supplier information and performance metrics |
-| 4 | warehouses | Warehouse locations and capacity |
-| 5 | products | Product catalog with SKU, pricing |
-| 6 | inventory | Product quantities per warehouse |
-| 7 | product_locations | Detailed storage (aisle/side/shelf/layer) |
-| 8 | sales_orders | Customer sales orders |
-| 9 | supply_orders | Purchase orders to suppliers |
-| 10 | order_items | Order line items (polymorphic) |
-| 11 | stock_movements | Audit trail for inventory changes |
-| 12 | discount_approvals | Discount approval workflow |
-| 13 | audit_logs | User action tracking (security) |
-| 14 | product_requests | New product requests (Sales → Supply) |
+| 2 | user_roles | Role definitions and descriptions |
+| 3 | categories | Product categories with hierarchical structure |
+| 4 | suppliers | Supplier information and performance metrics |
+| 5 | warehouses | Warehouse locations and capacity |
+| 6 | products | Product catalog with SKU, pricing |
+| 7 | inventory | Product quantities per warehouse |
+| 8 | product_locations | Detailed storage (aisle/side/shelf/layer) |
+| 9 | sales_orders | Customer sales orders |
+| 10 | supply_orders | Purchase orders to suppliers |
+| 11 | order_items | Order line items (polymorphic) |
+| 12 | stock_movements | Audit trail for inventory changes |
+| 13 | discount_approvals | Discount approval workflow |
+| 14 | audit_logs | User action tracking (security) |
 | 15 | adjustment_reasons | Stock adjustment reason codes |
+| 16 | notifications | User notifications |
+| 17 | system_settings | System configuration settings |
+| 18 | internal_requests | Cross-role requests (deletion, approvals) |
+| 19 | internal_messages | Internal messaging system |
+| 20 | user_permissions | Fine-grained user permissions |
+| 21 | permission_audit_log | Permission change history |
+| 22 | role_default_permissions | Default permissions per role |
+| 23 | payment_terms | Payment term options |
+| 24 | delivery_types | Delivery type options |
+| 25 | order_statuses | Order status options |
+| 26 | payment_statuses | Payment status options |
+| 27 | shipping_methods | Shipping method options |
 
 ---
 
-## 🔌 Complete API Endpoints (57 Total)
+## 🔌 Complete API Endpoints (95 Total)
 
 ### Public Endpoints (No Auth)
 
@@ -249,6 +305,7 @@ inventory-management-system/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | /api/auth/me | Get current user |
+| POST | /api/auth/refresh | Refresh token |
 
 #### Users (Admin only)
 
@@ -291,6 +348,7 @@ inventory-management-system/
 | GET | /api/inventory/low-stock | Low stock items |
 | GET | /api/inventory/movements | Stock history |
 | GET | /api/inventory/reorder-suggestions | Auto-reorder suggestions |
+| GET | /api/inventory/product/:id/warehouse/:id/location | Product location |
 | POST | /api/inventory/receive | Receive stock |
 | POST | /api/inventory/transfer | Transfer stock |
 | POST | /api/inventory/adjust | Adjust stock |
@@ -327,6 +385,7 @@ inventory-management-system/
 |--------|----------|--------|
 | GET | /api/reports/sales | Admin, Sales |
 | GET | /api/reports/inventory | Admin, Warehouse |
+| GET | /api/reports/inventory/export | Admin, Warehouse |
 | GET | /api/reports/suppliers | Admin, Supply |
 
 #### Export (Admin only)
@@ -344,6 +403,74 @@ inventory-management-system/
 | GET | /api/audit-logs | Get all audit logs |
 | GET | /api/audit-logs/entity/:type/:id | Get logs for specific entity |
 
+#### Dropdowns
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/dropdowns/all | Get all dropdowns |
+| GET | /api/dropdowns/payment-terms | Payment terms |
+| GET | /api/dropdowns/delivery-types | Delivery types |
+| GET | /api/dropdowns/order-statuses | Order statuses |
+| GET | /api/dropdowns/payment-statuses | Payment statuses |
+| GET | /api/dropdowns/user-roles | User roles |
+| GET | /api/dropdowns/shipping-methods | Shipping methods |
+
+#### Payment Terms
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/payment-terms | List payment terms |
+| GET | /api/payment-terms/:id | Get payment term |
+
+#### Permissions (Admin only)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/permissions/users/:id/permissions | Get user permissions |
+| PUT | /api/permissions/users/:id/permissions | Update permissions |
+| POST | /api/permissions/users/:id/permissions/reset | Reset to defaults |
+| GET | /api/permissions/settings/role-defaults | Get role defaults |
+| PUT | /api/permissions/settings/role-defaults | Update role defaults |
+| GET | /api/permissions/audit/permissions | Permission audit log |
+| GET | /api/audit/permissions | Alias for permission audit |
+
+#### Settings (Admin only)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/settings/system | Get all settings |
+| GET | /api/settings/system/:key | Get single setting |
+| PUT | /api/settings/system | Update settings |
+
+#### Messages
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/messages | Get messages |
+| POST | /api/messages | Send message |
+| GET | /api/messages/unread | Unread count |
+| PUT | /api/messages/:id/read | Mark as read |
+| GET | /api/messages/conversation/:userId | Get conversation |
+
+#### Requests
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/requests | Get all requests |
+| GET | /api/requests/my | Get my requests |
+| POST | /api/requests | Create request |
+| POST | /api/requests/:id/approve | Approve (Admin) |
+| POST | /api/requests/:id/deny | Deny (Admin) |
+
+#### Notifications
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/notifications | Get notifications |
+| GET | /api/notifications/unread/count | Unread count |
+| PUT | /api/notifications/:id/read | Mark as read |
+| PUT | /api/notifications/read/all | Mark all as read |
+
 ---
 
 ## ✅ Verification Checklist
@@ -359,6 +486,7 @@ After setup, verify everything works:
 - [ ] Inventory API shows stock levels
 - [ ] `npm run show-creds` displays all credentials
 - [ ] `npm run reset-password` works for recovery
+- [ ] Frontend is accessible at http://localhost:3000
 
 ---
 
@@ -411,13 +539,13 @@ node scripts/full-reset.js
 **What it does:**
 1. Drops all existing tables and ENUM types
 2. Reads and executes [`database/schema.sql`](database/schema.sql)
-3. Creates all 15 tables with sample data
+3. Creates all 27 tables with sample data
 
 ⚠️ **Warning:** This will delete all existing data in the database!
 
 ---
 
-## 🔐 Security Features
+## 🔒 Security Features
 
 Your backend includes enterprise-grade security:
 
@@ -427,11 +555,14 @@ Your backend includes enterprise-grade security:
 | Authentication | JWT with HS256 |
 | Token Expiry | 24 hours |
 | Token Revocation | Blacklist support |
+| Token Refresh | Automatic refresh before expiry |
 | Algorithm Security | Explicit algorithms, no confusion attacks |
 | Role-Based Access | Middleware verification on every request |
+| Fine-Grained Permissions | Module-level permissions (read/create/edit/delete/full) |
 | Audit Logging | All sensitive actions logged |
 | Input Validation | On all controllers |
-| SQL Injection Protection | Parameterized queries |
+| SQL Injection Protection | Parameterized queries + detection middleware |
+| Input Sanitization | Global sanitization middleware |
 
 ---
 
@@ -448,11 +579,12 @@ Your backend includes enterprise-grade security:
 
 ---
 
-## 🎯 Checkpoint 3 - Complete Features
+## 🎯 System Features
 
 | Feature | Status |
 |---------|--------|
 | User Management with RBAC | ✅ |
+| Fine-Grained Permissions | ✅ |
 | Product Catalog with Categories | ✅ |
 | Multi-Warehouse Inventory | ✅ |
 | Stock Movement Audit Trail | ✅ |
@@ -460,16 +592,21 @@ Your backend includes enterprise-grade security:
 | Supply Order Management | ✅ |
 | Low Stock Alerts | ✅ |
 | Stock Receiving & Transfers | ✅ |
+| Stock Adjustments with Reason Codes | ✅ |
+| Product Location Tracking | ✅ |
+| Auto-Reorder Suggestions | ✅ |
 | Reporting System (Sales/Inventory/Supplier) | ✅ |
 | Data Export (CSV) | ✅ |
 | Audit Logging | ✅ |
-| Product Requests (Sales → Supply) | ✅ |
-| Adjustment Reasons | ✅ |
 | Discount Approval Workflow | ✅ |
 | Bulk Price Update | ✅ |
-| Auto-Reorder Suggestions | ✅ |
-| JWT Authentication with Revocation | ✅ |
+| JWT Authentication with Refresh | ✅ |
 | Password Recovery Scripts | ✅ |
+| Internal Messaging System | ✅ |
+| Cross-Role Requests | ✅ |
+| Notifications System | ✅ |
+| System Settings Management | ✅ |
+| Dropdown Master Data | ✅ |
 | Complete API Documentation | ✅ |
 | UML Diagrams | ✅ |
 
@@ -480,7 +617,7 @@ Your backend includes enterprise-grade security:
 You can now:
 1. Start the server with `npm run dev`
 2. Login with `admin@ims.com` / `admin123`
-3. Test all 57 API endpoints
-4. Proceed to frontend development
+3. Test all 95 API endpoints
+4. Access the frontend at http://localhost:3000
 
 Credentials are printed on startup - save them for your demo!

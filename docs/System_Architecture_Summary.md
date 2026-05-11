@@ -83,8 +83,8 @@ VALUES
 │  3. Server: jwt.sign({id, email, role}, JWT_SECRET)             │
 │  4. Server → Client: { user, token }                            │
 └─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    PROTECTED REQUESTS                            │
 ├─────────────────────────────────────────────────────────────────┤
@@ -106,6 +106,10 @@ VALUES
 | **Token Revocation** | Blacklist support for logout functionality |
 | **Algorithm Security** | Protected against algorithm confusion attacks |
 | **Input Validation** | All controllers validate incoming data |
+| **Token Refresh** | Tokens can be refreshed within 1h of expiry or 5min after expiry |
+| **Fine-Grained Permissions** | Module-level permissions (read/create/edit/delete/full) via [`permissions.js`](backend/src/middleware/permissions.js) |
+| **Input Sanitization** | Global sanitization middleware via [`sanitize.js`](backend/src/middleware/sanitize.js) |
+| **SQL Injection Protection** | Detection middleware via [`security.js`](backend/src/middleware/security.js) |
 
 ---
 
@@ -199,6 +203,21 @@ router.get('/reports/sales',
 );
 ```
 
+#### Fine-Grained Permissions
+
+Beyond role-based access, the system supports module-level permissions managed via [`permissions.js`](backend/src/middleware/permissions.js):
+
+| Permission Level | Actions Allowed |
+|:-----------------|:----------------|
+| `none` | No access |
+| `read` | View only |
+| `create` | View + Create |
+| `edit` | View + Create + Edit |
+| `delete` | View + Create + Edit + Delete |
+| `full` | All actions + Manage permissions |
+
+Permissions are checked via the [`requirePermission()`](backend/src/middleware/permissions.js:57) middleware and fall back to role-based defaults if no custom permission is set.
+
 ---
 
 ## 📁 Module Structure
@@ -208,46 +227,77 @@ router.get('/reports/sales',
 ```
 backend/src/
 │
-├── models/                    # Database models (15 files)
-│   ├── User.js                # User accounts & authentication
-│   ├── Product.js             # Product catalog management
-│   ├── Inventory.js           # Stock level tracking
-│   ├── Category.js            # Product categories (hierarchical)
-│   ├── Supplier.js            # Supplier information
-│   ├── Warehouse.js           # Warehouse locations
-│   ├── SalesOrder.js          # Customer sales orders
-│   ├── SupplyOrder.js         # Purchase orders to suppliers
-│   ├── StockMovement.js       # Audit trail for stock changes
-│   ├── AuditLog.js            # Security action logging
-│   └── ...
+├── models/                    # Database models (17 files)
+│   ├── BaseModel.js           # Base class with shared CRUD operations
+│   ├── User.js                # User accounts & authentication (extends BaseModel)
+│   ├── Product.js             # Product catalog management (extends BaseModel)
+│   ├── Supplier.js            # Supplier information (extends BaseModel)
+│   ├── Inventory.js           # Stock level tracking (standalone)
+│   ├── Category.js            # Product categories (hierarchical, standalone)
+│   ├── Warehouse.js           # Warehouse locations (standalone)
+│   ├── SalesOrder.js          # Customer sales orders (standalone)
+│   ├── SupplyOrder.js         # Purchase orders to suppliers (standalone)
+│   ├── StockMovement.js       # Audit trail for stock changes (standalone)
+│   ├── AuditLog.js            # Security action logging (standalone)
+│   ├── DeliveryType.js        # Delivery type dropdown data (standalone)
+│   ├── OrderStatus.js         # Order status dropdown data (standalone)
+│   ├── PaymentStatus.js       # Payment status dropdown data (standalone)
+│   ├── PaymentTerm.js         # Payment term dropdown data (standalone)
+│   ├── ShippingMethod.js      # Shipping method dropdown data (standalone)
+│   └── UserRole.js            # Role definitions dropdown data (standalone)
 │
-├── controllers/               # Request handlers (11 files)
+├── controllers/               # Request handlers (19 files)
 │   ├── authController.js      # Login, register, profile
 │   ├── userController.js      # User CRUD operations
-│   ├── productController.js   # Product management
-│   ├── inventoryController.js # Stock operations
-│   ├── orderController.js     # Sales & supply orders
-│   ├── reportController.js    # Report generation
+│   ├── productController.js   # Product management, bulk price updates
+│   ├── categoryController.js  # Category CRUD, hierarchy tree
+│   ├── supplierController.js  # Supplier CRUD
+│   ├── warehouseController.js # Warehouse CRUD
+│   ├── inventoryController.js # Stock receive/transfer/adjust, reorder suggestions
+│   ├── inventoryReportController.js # Inventory report with CSV export
+│   ├── orderController.js     # Sales & supply orders, discount workflow
+│   ├── reportController.js    # Report generation (sales/inventory/supplier)
 │   ├── exportController.js    # CSV data exports
-│   └── ...
+│   ├── auditLogController.js  # Audit log retrieval
+│   ├── dropdownController.js  # Dropdown master data aggregation
+│   ├── paymentTermController.js # Payment terms management
+│   ├── permissionController.js # Fine-grained permissions management
+│   ├── settingsController.js  # System settings management
+│   ├── messageController.js   # Internal messaging system
+│   ├── requestController.js   # Cross-role requests (deletion, approvals)
+│   └── notificationController.js # User notifications
 │
-├── routes/                    # API endpoints (11 files)
+├── routes/                    # API endpoints (18 files)
 │   ├── authRoutes.js          # /api/auth/*
 │   ├── userRoutes.js          # /api/users/*
 │   ├── productRoutes.js       # /api/products/*
+│   ├── categoryRoutes.js      # /api/categories/*
+│   ├── supplierRoutes.js      # /api/suppliers/*
+│   ├── warehouseRoutes.js     # /api/warehouses/*
 │   ├── inventoryRoutes.js     # /api/inventory/*
 │   ├── orderRoutes.js         # /api/orders/*
 │   ├── reportRoutes.js        # /api/reports/*
 │   ├── exportRoutes.js        # /api/export/*
-│   └── ...
+│   ├── auditLogRoutes.js      # /api/audit-logs/*
+│   ├── dropdownRoutes.js      # /api/dropdowns/*
+│   ├── paymentTermRoutes.js   # /api/payment-terms/*
+│   ├── permissionRoutes.js    # /api/permissions/*
+│   ├── settingsRoutes.js      # /api/settings/*
+│   ├── messageRoutes.js       # /api/messages/*
+│   ├── requestRoutes.js       # /api/requests/*
+│   └── notificationRoutes.js  # /api/notifications/*
 │
-├── middleware/                # Custom middleware
-│   └── auth.js                # JWT verification + RBAC
+├── middleware/                # Custom middleware (4 files)
+│   ├── auth.js                # JWT verification, RBAC, token blacklist/refresh
+│   ├── permissions.js         # Fine-grained module-level permissions
+│   ├── sanitize.js            # Input sanitization middleware
+│   └── security.js            # SQL injection detection middleware
 │
-├── db/
-│   └── pool.js                # PostgreSQL connection pool
+├── db/                        # Database layer (2 files)
+│   ├── pool.js                # PostgreSQL connection pool (singleton)
+│   └── queryBuilder.js        # Query builder utility
 │
-├── app.js                     # Express application setup
+├── app.js                     # Express application setup, route mounting
 └── server.js                  # Application entry point
 ```
 
@@ -269,6 +319,8 @@ backend/src/
 │  • CORS handling                                                │
 │  • JSON body parser                                             │
 │  • URL-encoded parser                                           │
+│  • SQL injection protection middleware                          │
+│  • Input sanitization middleware                                │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
@@ -283,8 +335,8 @@ backend/src/
 │  STAGE 3: Authentication Middleware (auth.js)                   │
 │  • Extract Bearer token from Authorization header               │
 │  • Verify JWT signature and expiration                          │
-│  • Attach decoded user info to req.user                         │
 │  • Check token blacklist                                        │
+│  • Attach decoded user info to req.user                         │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
@@ -389,7 +441,12 @@ backend/src/
 | **stock_movements** | `product_id`, `warehouse_id`, `performed_by` | `products`, `warehouses`, `users` |
 | **audit_logs** | `user_id` | `users` |
 | **discount_approvals** | `order_id`, `requested_by`, `approved_by` | `sales_orders`, `users` |
-| **product_requests** | `requested_by`, `approved_by` | `users` |
+| **internal_messages** | `sender_id`, `recipient_id` | `users` |
+| **internal_requests** | `requested_by`, `resolved_by` | `users` |
+| **notifications** | `user_id` | `users` |
+| **user_permissions** | `user_id` | `users` |
+| **permission_audit_log** | `changed_by` | `users` |
+| **role_default_permissions** | — | `user_roles` |
 
 ### Index Strategy for Performance
 
@@ -413,9 +470,6 @@ CREATE INDEX idx_stock_movements_timestamp ON stock_movements(created_at);
 
 -- Audit log indexes
 CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
-
--- Product request indexes
-CREATE INDEX idx_product_requests_status ON product_requests(status);
 ```
 
 ---
@@ -428,25 +482,27 @@ CREATE INDEX idx_product_requests_status ON product_requests(status);
 |:--------|:------------|:---------------|
 | **INV-01** | Stock quantities cannot go negative | CHECK constraint in database schema |
 | **INV-02** | Every stock change requires a movement record | Trigger enforced in controller |
-| **INV-03** | Low stock alert triggered when quantity ≤ reorder point | `getLowStock()` query method |
-| **INV-04** | Adjustments marked `requires_approval` need admin authorization | `adjustStock()` permission check |
+| **INV-03** | Low stock alert triggered when quantity ≤ reorder point | [`getLowStock()`](backend/src/models/Inventory.js:82) query method |
+| **INV-04** | Adjustments marked `requires_approval` need admin authorization | [`adjustStock()`](backend/src/controllers/inventoryController.js:205) permission check |
+| **INV-05** | Transfers require sufficient source stock | [`transferStock()`](backend/src/controllers/inventoryController.js:144) validation |
 
 ### Order Rules
 
 | Rule ID | Description | Implementation |
 |:--------|:------------|:---------------|
-| **ORD-01** | Sales orders require sufficient stock availability | `reserveStock()` validation |
-| **ORD-02** | Discounts greater than zero require approval | `requestDiscountApproval()` workflow |
+| **ORD-01** | Sales orders require sufficient stock availability | [`reserveStock()`](backend/src/models/SalesOrder.js:38) validation |
+| **ORD-02** | Discounts greater than zero require approval | [`requestDiscountApproval()`](backend/src/controllers/orderController.js:123) workflow |
 | **ORD-03** | Cancelled orders should restore stock | *Not yet implemented* |
-| **ORD-04** | Order numbers must be unique | `generateOrderNumber()` function |
+| **ORD-04** | Order numbers must be unique | [`generateOrderNumber()`](backend/src/models/SalesOrder.js:27) function |
 
 ### User Rules
 
 | Rule ID | Description | Implementation |
 |:--------|:------------|:---------------|
 | **USR-01** | Email addresses must be unique | UNIQUE constraint in schema |
-| **USR-02** | Passwords must be minimum 6 characters | `setPasswordHash()` validation |
-| **USR-03** | Inactive users cannot login | `isActive()` check in authentication |
+| **USR-02** | Passwords must be minimum 6 characters | [`setPasswordHash()`](backend/src/models/User.js:47) validation |
+| **USR-03** | Inactive users cannot login | [`isActive()`](backend/src/models/User.js:28) check in authentication |
+| **USR-04** | Protected accounts cannot be deleted by others | [`canDeleteUser()`](backend/src/middleware/permissions.js:83) check |
 
 ---
 
@@ -473,11 +529,11 @@ const generateToken = (userId, email, role) => {
             id: userId, 
             email, 
             role, 
-            iat: Date.now(), 
+            iat: Math.floor(Date.now() / 1000), 
             jti: crypto.randomBytes(16).toString('hex') 
         },
         JWT_SECRET,
-        { expiresIn: '24h', algorithm: 'HS256' }
+        { expiresIn: process.env.JWT_EXPIRE || '24h', algorithm: 'HS256' }
     );
 };
 ```
@@ -488,9 +544,7 @@ const generateToken = (userId, email, role) => {
 // middleware/auth.js
 const tokenBlacklist = new Map();
 
-const revokeToken = (token) => {
-    const decoded = jwt.decode(token);
-    const ttl = (decoded.exp - Date.now() / 1000) * 1000;
+const blacklistToken = (token, ttl) => {
     tokenBlacklist.set(token, Date.now() + ttl);
 };
 
@@ -511,6 +565,8 @@ await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 // ❌ WRONG - String concatenation (vulnerable - NEVER use)
 // await pool.query(`SELECT * FROM users WHERE email = '${email}'`);
 ```
+
+Additional protection via [`sqlInjectionProtection`](backend/src/middleware/security.js) middleware that detects common SQL injection patterns in request bodies and query parameters.
 
 ---
 
@@ -533,21 +589,6 @@ await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 {
     "success": false,
     "error": "Descriptive error message"
-}
-```
-
-### Paginated Response (Future Enhancement)
-
-```json
-{
-    "success": true,
-    "data": [...],
-    "pagination": {
-        "page": 1,
-        "limit": 20,
-        "total": 100,
-        "pages": 5
-    }
 }
 ```
 
@@ -586,11 +627,12 @@ await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
 | Metric | Count |
 |:-------|:------|
-| Total Models | 15 |
-| Total Controllers | 11 |
-| Total API Routes | 55 endpoints |
-| Database Tables | 15 |
-| ENUM Types | 4 (`user_role`, `order_status`, `payment_status`, `movement_type`) |
+| Total Models | 17 |
+| Total Controllers | 19 |
+| Total Route Files | 18 |
+| Total API Endpoints | 95 |
+| Database Tables | 27 |
+| Middleware Files | 4 |
 | Database Indexes | 12+ |
 | Triggers | 8 (updated_at timestamps) |
 

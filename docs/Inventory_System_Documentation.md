@@ -1,6 +1,6 @@
 # 📦 Inventory Management System — Complete Documentation
 
-> **Production-Ready Backend API** for managing products, inventory, orders, and reports across multiple warehouses.
+> **Production-Ready Backend API** for managing products, inventory, orders, and reports across multiple warehouses with role-based access control, internal messaging, and fine-grained permissions.
 
 ---
 
@@ -16,8 +16,8 @@
 | 6 | [Logic Flow Examples](#logic-flow-examples) | Visual workflow diagrams |
 | 7 | [Key Design Patterns](#key-design-patterns) | Patterns used in codebase |
 | 8 | [Data Flow & Relationships](#data-flow--relationships) | ERD & entity relationships |
-| 9 | [API Endpoints Reference](#api-endpoints-reference) | All 55 endpoints summarized |
-| 10 | [Database Tables](#database-tables) | 15 tables overview |
+| 9 | [API Endpoints Reference](#api-endpoints-reference) | All 95 endpoints summarized |
+| 10 | [Database Tables](#database-tables) | 27 tables overview |
 | 11 | [Troubleshooting](#troubleshooting) | Common issues & fixes |
 
 ---
@@ -34,7 +34,7 @@
        │                        │                        │
        ▼                        ▼                        ▼
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│    PDFKit       │     │   CSV Writer    │     │   Node.js 16+   │
+│   PDFKit        │     │   CSV Writer    │     │   Node.js 16+   │
 │ (PDF Reports)   │     │  (Data Export)  │     │  (Runtime)      │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
@@ -52,9 +52,10 @@
 | Principle | How It's Applied |
 |-----------|-----------------|
 | **Separation of Concerns** | Code organized into Models, Controllers, Routes, and Middleware |
-| **Encapsulation** | All inventory changes recorded through [`StockMovement`](../backend/src/models/StockMovement.js) model |
+| **Encapsulation** | All inventory changes recorded through [`StockMovement`](backend/src/models/StockMovement.js) model |
 | **Composition over Inheritance** | Orders compose OrderItems; Inventory references Products |
 | **Dependency Injection** | Database connection pool injected into all models |
+| **Base Model Pattern** | All models extend [`BaseModel`](backend/src/models/BaseModel.js) for consistent CRUD operations |
 
 ### ⚡ Core Business Rule
 
@@ -65,7 +66,7 @@
 | Benefit | Explanation |
 |---------|-------------|
 | ✅ Multi-Warehouse | One product exists in many warehouses with different quantities |
-| ✅ Full Audit Trail | Every stock change is logged via [`StockMovement`](../backend/src/models/StockMovement.js) |
+| ✅ Full Audit Trail | Every stock change is logged via [`StockMovement`](backend/src/models/StockMovement.js) |
 | ✅ Clear Ownership | Warehouse managers control inventory, not product catalog |
 
 ---
@@ -100,7 +101,7 @@ CREATE DATABASE inventory_db;
 
 ```bash
 cd backend
-node scripts/quick-reset.js
+node scripts/full-reset.js
 ```
 
 > ⚠️ **Warning:** The reset script drops and recreates all tables. All existing data will be lost.
@@ -157,6 +158,8 @@ npm start
 
 **Server runs at:** `http://localhost:3000`
 
+The frontend is served statically and accessible at the same URL.
+
 ---
 
 ### 🔑 Sample Login Credentials
@@ -203,7 +206,7 @@ npm run reset-password admin@ims.com admin123
 ║  │                     REST Endpoints                         │   ║
 ║  │  /api/auth    /api/users    /api/products                  │   ║
 ║  │  /api/inventory  /api/orders  /api/reports                 │   ║
-║  │  /api/export    /api/categories  /api/suppliers            │   ║
+║  │  /api/export  /api/messages  /api/notifications            │   ║
 ║  └───────────────────────────────────────────────────────────┘   ║
 ║                          │                                       ║
 ║                          ▼                                       ║
@@ -211,8 +214,9 @@ npm run reset-password admin@ims.com admin123
 ║                   MIDDLEWARE LAYER                                ║
 ║  ┌───────────────────────────────────────────────────────────┐   ║
 ║  │  • JWT Authentication         • Role-Based Access Control  │   ║
-║  │  • Token Blacklisting          • CORS                       │   ║
-║  │  • JSON Body Parser           • Error Handling              │   ║
+║  │  • Token Blacklisting          • Token Refresh             │   ║
+║  │  • Input Sanitization          • SQL Injection Protection  │   ║
+║  │  • Fine-Grained Permissions    • CORS                       │   ║
 ║  └───────────────────────────────────────────────────────────┘   ║
 ║                          │                                       ║
 ║                          ▼                                       ║
@@ -220,8 +224,8 @@ npm run reset-password admin@ims.com admin123
 ║                    DATABASE LAYER                                  ║
 ║  ┌───────────────────────────────────────────────────────────┐   ║
 ║  │                     PostgreSQL                              │   ║
-║  │  15 Tables: users, products, inventory, warehouses,        │   ║
-║  │  suppliers, categories, orders, movements, logs, etc.      │   ║
+║  │  27 Tables: users, products, inventory, warehouses,        │   ║
+║  │  messages, notifications, permissions, settings, etc.      │   ║
 ║  └───────────────────────────────────────────────────────────┘   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
@@ -230,60 +234,75 @@ npm run reset-password admin@ims.com admin123
 
 | Layer | Files | Responsibility |
 |:------|-------|----------------|
-| **Routes** | [`routes/*.js`](../backend/src/routes/) | Define API endpoints, attach middleware |
-| **Controllers** | [`controllers/*.js`](../backend/src/controllers/) | Handle HTTP requests/responses, orchestrate business logic |
-| **Models** | [`models/*.js`](../backend/src/models/) | Business logic, database queries, data validation |
-| **Middleware** | [`middleware/auth.js`](../backend/src/middleware/auth.js) | JWT verification, role authorization, token blacklisting |
-| **Database** | [`db/pool.js`](../backend/src/db/pool.js) | PostgreSQL connection pool (singleton) |
+| **Routes** | [`routes/*.js`](backend/src/routes/) | Define API endpoints, attach middleware |
+| **Controllers** | [`controllers/*.js`](backend/src/controllers/) | Handle HTTP requests/responses, orchestrate business logic |
+| **Models** | [`models/*.js`](backend/src/models/) | Business logic, database queries, data validation |
+| **Middleware** | [`middleware/auth.js`](backend/src/middleware/auth.js), [`permissions.js`](backend/src/middleware/permissions.js) | JWT verification, role authorization, permission checks |
+| **Database** | [`db/pool.js`](backend/src/db/pool.js) | PostgreSQL connection pool (singleton) |
 
 ---
 
 ## Class Structure
 
-### 📦 Model Classes (15 Models)
+### 📦 Model Classes (16 Models)
 
 | Model | File | Purpose |
 |:------|------|---------|
-| **User** | [`User.js`](../backend/src/models/User.js) | User accounts, authentication, RBAC |
-| **Product** | [`Product.js`](../backend/src/models/Product.js) | Product catalog metadata (NO stock) |
-| **Inventory** | [`Inventory.js`](../backend/src/models/Inventory.js) | Stock levels per warehouse |
-| **Category** | [`Category.js`](../backend/src/models/Category.js) | Hierarchical product categories |
-| **Supplier** | [`Supplier.js`](../backend/src/models/Supplier.js) | Supplier information & performance |
-| **Warehouse** | [`Warehouse.js`](../backend/src/models/Warehouse.js) | Warehouse locations & capacity |
-| **SalesOrder** | [`SalesOrder.js`](../backend/src/models/SalesOrder.js) | Customer sales orders |
-| **SupplyOrder** | [`SupplyOrder.js`](../backend/src/models/SupplyOrder.js) | Purchase orders from suppliers |
-| **StockMovement** | [`StockMovement.js`](../backend/src/models/StockMovement.js) | Audit trail for all stock changes |
-| **AuditLog** | [`AuditLog.js`](../backend/src/models/AuditLog.js) | Security & action logging |
-| **ProductLocation** | *(schema only)* | Physical storage details (aisle/shelf/layer) |
-| **DiscountApproval** | *(schema + controller)* | Discount approval workflow |
-| **ProductRequest** | *(schema only)* | Sales → Supply product requests |
-| **AdjustmentReason** | *(schema only)* | Stock adjustment reason codes |
-| **OrderItem** | *(embedded in Order models)* | Line items within orders |
+| **BaseModel** | [`BaseModel.js`](backend/src/models/BaseModel.js) | Base class with CRUD operations |
+| **User** | [`User.js`](backend/src/models/User.js) | User accounts, authentication, RBAC |
+| **Product** | [`Product.js`](backend/src/models/Product.js) | Product catalog metadata (NO stock) |
+| **Inventory** | [`Inventory.js`](backend/src/models/Inventory.js) | Stock levels per warehouse |
+| **Category** | [`Category.js`](backend/src/models/Category.js) | Hierarchical product categories |
+| **Supplier** | [`Supplier.js`](backend/src/models/Supplier.js) | Supplier information & performance |
+| **Warehouse** | [`Warehouse.js`](backend/src/models/Warehouse.js) | Warehouse locations & capacity |
+| **SalesOrder** | [`SalesOrder.js`](backend/src/models/SalesOrder.js) | Customer sales orders |
+| **SupplyOrder** | [`SupplyOrder.js`](backend/src/models/SupplyOrder.js) | Purchase orders from suppliers |
+| **StockMovement** | [`StockMovement.js`](backend/src/models/StockMovement.js) | Audit trail for all stock changes |
+| **AuditLog** | [`AuditLog.js`](backend/src/models/AuditLog.js) | Security & action logging |
+| **DeliveryType** | [`DeliveryType.js`](backend/src/models/DeliveryType.js) | Delivery type options |
+| **OrderStatus** | [`OrderStatus.js`](backend/src/models/OrderStatus.js) | Order status options |
+| **PaymentStatus** | [`PaymentStatus.js`](backend/src/models/PaymentStatus.js) | Payment status options |
+| **PaymentTerm** | [`PaymentTerm.js`](backend/src/models/PaymentTerm.js) | Payment term options |
+| **ShippingMethod** | [`ShippingMethod.js`](backend/src/models/ShippingMethod.js) | Shipping method options |
+| **UserRole** | [`UserRole.js`](backend/src/models/UserRole.js) | Role definitions |
 
-### 🎮 Controller Classes (11 Controllers)
+### 🎮 Controller Classes (19 Controllers)
 
 | Controller | File | Responsibility |
 |:-----------|------|----------------|
-| **authController** | [`authController.js`](../backend/src/controllers/authController.js) | Login, register, user profile |
-| **userController** | [`userController.js`](../backend/src/controllers/userController.js) | User CRUD operations |
-| **productController** | [`productController.js`](../backend/src/controllers/productController.js) | Product CRUD, bulk price updates |
-| **categoryController** | [`categoryController.js`](../backend/src/controllers/categoryController.js) | Category CRUD, hierarchy tree |
-| **supplierController** | [`supplierController.js`](../backend/src/controllers/supplierController.js) | Supplier CRUD |
-| **warehouseController** | [`warehouseController.js`](../backend/src/controllers/warehouseController.js) | Warehouse CRUD |
-| **inventoryController** | [`inventoryController.js`](../backend/src/controllers/inventoryController.js) | Stock receive/transfer/adjust, reorder suggestions |
-| **orderController** | [`orderController.js`](../backend/src/controllers/orderController.js) | Sales & supply orders, discount workflow |
-| **reportController** | [`reportController.js`](../backend/src/controllers/reportController.js) | Sales, inventory, supplier reports |
-| **exportController** | [`exportController.js`](../backend/src/controllers/exportController.js) | CSV data exports |
-| **warehouseController** | [`warehouseController.js`](../backend/src/controllers/warehouseController.js) | Warehouse management |
+| **authController** | [`authController.js`](backend/src/controllers/authController.js) | Login, register, user profile, token refresh |
+| **userController** | [`userController.js`](backend/src/controllers/userController.js) | User CRUD operations |
+| **productController** | [`productController.js`](backend/src/controllers/productController.js) | Product CRUD, bulk price updates |
+| **categoryController** | [`categoryController.js`](backend/src/controllers/categoryController.js) | Category CRUD, hierarchy tree |
+| **supplierController** | [`supplierController.js`](backend/src/controllers/supplierController.js) | Supplier CRUD |
+| **warehouseController** | [`warehouseController.js`](backend/src/controllers/warehouseController.js) | Warehouse CRUD |
+| **inventoryController** | [`inventoryController.js`](backend/src/controllers/inventoryController.js) | Stock receive/transfer/adjust, reorder suggestions, product location |
+| **orderController** | [`orderController.js`](backend/src/controllers/orderController.js) | Sales & supply orders, discount workflow |
+| **reportController** | [`reportController.js`](backend/src/controllers/reportController.js) | Sales, inventory, supplier reports |
+| **inventoryReportController** | [`inventoryReportController.js`](backend/src/controllers/inventoryReportController.js) | Inventory report with CSV export |
+| **exportController** | [`exportController.js`](backend/src/controllers/exportController.js) | CSV data exports |
+| **dropdownController** | [`dropdownController.js`](backend/src/controllers/dropdownController.js) | Dropdown master data |
+| **paymentTermController** | [`paymentTermController.js`](backend/src/controllers/paymentTermController.js) | Payment terms |
+| **permissionController** | [`permissionController.js`](backend/src/controllers/permissionController.js) | Fine-grained permissions management |
+| **settingsController** | [`settingsController.js`](backend/src/controllers/settingsController.js) | System settings |
+| **messageController** | [`messageController.js`](backend/src/controllers/messageController.js) | Internal messaging |
+| **requestController** | [`requestController.js`](backend/src/controllers/requestController.js) | Cross-role requests |
+| **notificationController** | [`notificationController.js`](backend/src/controllers/notificationController.js) | User notifications |
+| **auditLogController** | [`auditLogController.js`](backend/src/controllers/auditLogController.js) | Audit log retrieval |
 
 ### 🛡️ Middleware
 
 | Function | File | Purpose |
 |:---------|------|---------|
-| **authenticateToken** | [`auth.js`](../backend/src/middleware/auth.js) | Verify JWT, attach decoded user to request |
-| **authorize** | [`auth.js`](../backend/src/middleware/auth.js) | Role-based access control guard |
-| **optionalAuth** | [`auth.js`](../backend/src/middleware/auth.js) | Optional authentication for public+protected routes |
-| **revokeToken** | [`auth.js`](../backend/src/middleware/auth.js) | Token blacklisting on logout |
+| **authenticateToken** | [`auth.js`](backend/src/middleware/auth.js) | Verify JWT, attach decoded user to request |
+| **authorize** | [`auth.js`](backend/src/middleware/auth.js) | Role-based access control guard |
+| **optionalAuth** | [`auth.js`](backend/src/middleware/auth.js) | Optional authentication |
+| **revokeToken** | [`auth.js`](backend/src/middleware/auth.js) | Token blacklisting on logout |
+| **refreshToken** | [`auth.js`](backend/src/middleware/auth.js) | Generate new token from valid token |
+| **hasPermission** | [`permissions.js`](backend/src/middleware/permissions.js) | Check fine-grained module permissions |
+| **requirePermission** | [`permissions.js`](backend/src/middleware/permissions.js) | Middleware for permission checks |
+| **sanitizeRequestBody** | [`sanitize.js`](backend/src/middleware/sanitize.js) | Sanitize input strings |
+| **sqlInjectionProtection** | [`security.js`](backend/src/middleware/security.js) | Detect and block SQL injection |
 
 ---
 
@@ -313,6 +332,11 @@ npm run reset-password admin@ims.com admin123
 | View inventory reports | ✅ | ❌ | ✅ | ❌ |
 | View supplier reports | ✅ | ❌ | ❌ | ✅ |
 | Export data (CSV) | ✅ | ❌ | ❌ | ❌ |
+| Manage permissions | ✅ | ❌ | ❌ | ❌ |
+| System settings | ✅ | ❌ | ❌ | ❌ |
+| Send messages | ✅ | ✅ | ✅ | ✅ |
+| Create requests | ✅ | ✅ | ✅ | ✅ |
+| Approve requests | ✅ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -325,23 +349,22 @@ npm run reset-password admin@ims.com admin123
 │  Sales   │────►│   API Route  │────►│   Controller │────►│    Model      │
 │  User    │     │ /api/orders  │     │ orderCtrl    │     │ SalesOrder    │
 └──────────┘     └──────────────┘     └──────────────┘     └──────┬───────┘
-                                                                    │
-               ┌────────────────────────────────────────────────────┤
-               │                                                    ▼
-               │                                         ┌──────────────────┐
-               │                                         │  Validate &      │
-               │  ┌──────────────────┐  ┌───────────────►│  1. Check stock  │
-               │  │  Middleware      │  │                │  2. Deduct inv.  │
-               │  │  • Auth JWT      │  │                │  3. Record move  │
-               │  │  • Check role    │  │                │  4. Insert order │
-               │  └──────────────────┘  │                └────────┬─────────┘
-               │                        │                         │
-               │                        │                    ┌────▼────┐
-               │                        │                    │PostgreSQL│
-               └────────────────────────┴────────────────────┼─────────┤
-                                                             │ INSERT  │
-                                                             │ UPDATE  │
-                                                             └─────────┘
+                                                                     │
+                ┌────────────────────────────────────────────────────┤
+                │                                                    ▼
+                │                                         ┌──────────────────┐
+                │  ┌──────────────────┐  ┌───────────────►│  Validate &      │
+                │  │  Middleware      │  │                │  1. Check stock  │
+                │  │  • Auth JWT      │  │                │  2. Deduct inv.  │
+                │  │  • Check role    │  │                │  3. Record move  │
+                │  └──────────────────┘  │                │  4. Insert order │
+                │                        │                └────────┬─────────┘
+                │                        │                         │
+                │                 ┌──────▼──────┐              ┌────▼────┐
+                │                 │ Blacklisted?│              │PostgreSQL│
+                │                 │ if yes → 403│              │ INSERT  │
+                │                 └─────────────┘              └─────────┘
+                └─────────────────────────────────────────────────────────┘
 ```
 
 **Step-by-Step Breakdown:**
@@ -349,11 +372,11 @@ npm run reset-password admin@ims.com admin123
 | Step | Action | Component |
 |:----:|--------|-----------|
 | 1 | Client sends POST `/api/orders/sales` with order data | HTTP Client |
-| 2 | JWT token validated, user role checked | [`authenticateToken`](../backend/src/middleware/auth.js) |
-| 3 | Order items validated (product exists, sufficient stock) | [`orderController`](../backend/src/controllers/orderController.js) |
-| 4 | Inventory quantities deducted | [`Inventory`](../backend/src/models/Inventory.js) |
-| 5 | Stock movement recorded as `'sold'` | [`StockMovement`](../backend/src/models/StockMovement.js) |
-| 6 | Sales order persisted to database | [`SalesOrder`](../backend/src/models/SalesOrder.js) |
+| 2 | JWT token validated, user role checked | [`authenticateToken`](backend/src/middleware/auth.js) |
+| 3 | Order items validated (product exists, sufficient stock) | [`orderController`](backend/src/controllers/orderController.js) |
+| 4 | Inventory quantities deducted | [`Inventory`](backend/src/models/Inventory.js) |
+| 5 | Stock movement recorded as `'sold'` | [`StockMovement`](backend/src/models/StockMovement.js) |
+| 6 | Sales order persisted to database | [`SalesOrder`](backend/src/models/SalesOrder.js) |
 | 7 | Response returned with order details | HTTP Response |
 
 ---
@@ -372,14 +395,14 @@ npm run reset-password admin@ims.com admin123
 └──────┬───────┴──────┬───────┴──────┬───────┴───────────┬────────────┘
        │              │              │                   │
        └──────────────┴──────────────┴───────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────────┐
-              │  INSERT INTO stock_movements       │
-              │  (product_id, quantity_change,     │
-              │   movement_type, warehouse_id,     │
-              │   performed_by, reason)            │
-              └───────────────────────────────────┘
+                               │
+                               ▼
+               ┌───────────────────────────────────┐
+               │  INSERT INTO stock_movements       │
+               │  (product_id, quantity_change,     │
+               │   movement_type, warehouse_id,     │
+               │   performed_by, reason)            │
+               └───────────────────────────────────┘
 ```
 
 ---
@@ -391,28 +414,53 @@ npm run reset-password admin@ims.com admin123
 │ Client  │────►│ POST         │────►│ Validate     │────►│ Generate │
 │         │     │ /auth/login  │     │ credentials  │     │ JWT      │
 └─────────┘     └──────────────┘     └──────────────┘     └────┬─────┘
-                                                                   │
-              ┌────────────────────────────────────────────────────┤
-              │                                                    ▼
-              │                                          ┌─────────────────┐
-              │  ┌──────────────────┐  ┌────────────────►│ 1. Find user   │
-              │  │ Subsequent       │  │                 │    by email     │
-              │  │ Requests         │  │                 │ 2. Compare      │
-              │  │ Include:         │  │                 │    bcrypt hash  │
-              │  │ Authorization:   │  │                 │ 3. Sign JWT     │
-              │  │ Bearer <token>   │  │                 │ 4. Return token │
-              │  └──────────────────┘  │                 └────────┬────────┘
-              │                        │                          │
-              │                 ┌──────▼──────┐              ┌────▼────┐
-              │                 │ Blacklisted?│              │PostgreSQL│
-              │                 │ if yes → 403│              │ SELECT   │
-              │                 └─────────────┘              └─────────┘
-              └─────────────────────────────────────────────────────────┘
+                                                                    │
+               ┌────────────────────────────────────────────────────┤
+               │                                                    ▼
+               │                                          ┌─────────────────┐
+               │  ┌──────────────────┐  ┌────────────────►│ 1. Find user   │
+               │  │ Subsequent       │  │                 │    by email     │
+               │  │ Requests         │  │                 │ 2. Compare      │
+               │  │ Include:         │  │                 │    bcrypt hash  │
+               │  │ Authorization:   │  │                 │ 3. Sign JWT     │
+               │  │ Bearer <token>   │  │                 │ 4. Return token │
+               │  └──────────────────┘  │                 └────────┬────────┘
+               │                        │                          │
+               │                 ┌──────▼──────┐              ┌────▼────┐
+               │                 │ Blacklisted?│              │PostgreSQL│
+               │                 │ if yes → 403│              │ SELECT   │
+               │                 └─────────────┘              └─────────┘
+               └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 4️⃣ Auto-Reorder Suggestion Flow
+### 4️⃣ Token Refresh Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TOKEN REFRESH ALGORITHM                       │
+│                                                                  │
+│  1. Client sends POST /api/auth/refresh with valid/near-expiry  │
+│     token in Authorization header                                │
+│                                                                  │
+│  2. Server verifies token is eligible for refresh:              │
+│     • Within 1 hour of expiration OR                             │
+│     • Expired within last 5 minutes                              │
+│                                                                  │
+│  3. Server revokes old token (adds to blacklist)                │
+│                                                                  │
+│  4. Server generates new JWT with fresh 24h expiry              │
+│                                                                  │
+│  5. New token returned to client                                │
+│                                                                  │
+│  Note: Tokens expired more than 5 minutes require re-login      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 5️⃣ Auto-Reorder Suggestion Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -443,39 +491,62 @@ npm run reset-password admin@ims.com admin123
 
 ---
 
-### 5️⃣ Discount Approval Workflow
+### 6️⃣ Discount Approval Workflow
 
 ```
 ┌──────────┐     ┌──────────────────┐     ┌──────────────────┐
 │  Sales   │────►│ POST /orders/:id │────►│ Discount Request  │
 │  User    │     │ /discount-request│     │ Status: PENDING  │
 └──────────┘     └──────────────────┘     └────────┬─────────┘
+                                                     │
+                                                     ▼
+                                            ┌──────────────────┐
+                                            │   Admin Reviews   │
+                                            │                   │
+                                            │ PUT /orders/:id   │
+                                            │ /discount-approve │
+                                            └────────┬─────────┘
+                                                     │
+                                            ┌────────┴────────┐
+                                            │                 │
+                                            ▼                 ▼
+                                     ┌──────────────┐   ┌──────────────┐
+                                     │  APPROVE      │   │   REJECT      │
+                                     │ approve:true  │   │ approve:false │
+                                     └──────┬───────┘   └──────┬───────┘
+                                            │                  │
+                                            ▼                  ▼
+                                     ┌──────────────┐   ┌──────────────┐
+                                     │ Status:      │   │ Status:      │
+                                     │ APPROVED     │   │ REJECTED     │
+                                     │              │   │              │
+                                     │ Discount     │   │ Original     │
+                                     │ applied to   │   │ prices       │
+                                     │ order total  │   │ retained     │
+                                     └──────────────┘   └──────────────┘
+```
+
+---
+
+### 7️⃣ Internal Messaging Flow
+
+```
+┌──────────┐     ┌──────────────────┐     ┌──────────────────┐
+│  Sender  │────►│ POST /api/       │────►│ Message stored    │
+│  (Any    │     │ messages         │     │ in internal_     │
+│  Role)   │     │                  │     │ messages table   │
+└──────────┘     └──────────────────┘     └────────┬─────────┘
                                                     │
+                    Can send to:                    │
+                    • Specific user (recipient_id)  │
+                    • All users with specific role  │
                                                     ▼
                                            ┌──────────────────┐
-                                           │   Admin Reviews   │
-                                           │                   │
-                                           │ PUT /orders/:id   │
-                                           │ /discount-approve │
-                                           └────────┬─────────┘
-                                                    │
-                                           ┌────────┴────────┐
-                                           │                 │
-                                           ▼                 ▼
-                                    ┌──────────────┐   ┌──────────────┐
-                                    │  APPROVE      │   │   REJECT      │
-                                    │ approve:true  │   │ approve:false │
-                                    └──────┬───────┘   └──────┬───────┘
-                                           │                  │
-                                           ▼                  ▼
-                                    ┌──────────────┐   ┌──────────────┐
-                                    │ Status:      │   │ Status:      │
-                                    │ APPROVED     │   │ REJECTED     │
-                                    │              │   │              │
-                                    │ Discount     │   │ Original     │
-                                    │ applied to   │   │ prices       │
-                                    │ order total  │   │ retained     │
-                                    └──────────────┘   └──────────────┘
+                                           │  Recipient gets  │
+                                           │  notification    │
+                                           │  (unread count   │
+                                           │   incremented)   │
+                                           └──────────────────┘
 ```
 
 ---
@@ -516,7 +587,7 @@ const authenticateToken = async (req, res, next) => {
 
 ```javascript
 // models/User.js
-class User {
+class User extends BaseModel {
     static async findById(id) { /* ... */ }
     static async findByEmail(email) { /* ... */ }
     static async findAll(filters) { /* ... */ }
@@ -527,7 +598,7 @@ class User {
 
 | Aspect | Detail |
 |--------|--------|
-| **Where Used** | All model files in [`models/`](../backend/src/models/) |
+| **Where Used** | All model files in [`models/`](backend/src/models/) |
 | **What It Does** | Provides consistent CRUD interface for each entity |
 | **Benefit** | Controllers never write raw SQL — they call model methods |
 
@@ -541,7 +612,8 @@ class User {
 // middleware/auth.js
 const generateToken = (userId, email, role) => {
     return jwt.sign({ id: userId, email, role }, JWT_SECRET, {
-        expiresIn: '24h'
+        expiresIn: '24h',
+        algorithm: 'HS256'
     });
 };
 ```
@@ -579,7 +651,7 @@ router.get('/reports/sales',
 
 | Aspect | Detail |
 |--------|--------|
-| **Where Used** | Route definitions in [`routes/*.js`](../backend/src/routes/) |
+| **Where Used** | Route definitions in [`routes/*.js`](backend/src/routes/) |
 | **What It Does** | Higher-order function that returns role-specific middleware |
 | **Benefit** | Composable — chain multiple strategies easily |
 
@@ -598,9 +670,40 @@ module.exports = pool;                     // Same instance everywhere
 
 | Aspect | Detail |
 |--------|--------|
-| **Where Used** | [`db/pool.js`](../backend/src/db/pool.js) imported by all models |
+| **Where Used** | [`db/pool.js`](backend/src/db/pool.js) imported by all models |
 | **What It Does** | Maintains reusable connections to PostgreSQL |
 | **Benefit** | No connection overhead per request; efficient resource usage |
+
+---
+
+### 6. Base Model Pattern — Inherited CRUD Operations
+
+**Purpose:** Provide common CRUD operations to all models through inheritance.
+
+```javascript
+// models/BaseModel.js
+class BaseModel {
+    async save() { /* INSERT or UPDATE */ }
+    static async findById(id) { /* SELECT by id */ }
+    static async findAll(filters) { /* SELECT with WHERE */ }
+    static async deleteById(id) { /* DELETE by id */ }
+}
+
+// models/Product.js
+class Product extends BaseModel {
+    constructor(data) {
+        super('products', data);
+    }
+    _getInsertFields() { return ['name', 'sku', 'price', 'cost']; }
+    _getUpdateFields() { return ['name', 'sku', 'price', 'cost']; }
+}
+```
+
+| Aspect | Detail |
+|--------|--------|
+| **Where Used** | All models extend BaseModel |
+| **What It Does** | Provides default CRUD implementation |
+| **Benefit** | Reduces code duplication, ensures consistency |
 
 ---
 
@@ -678,7 +781,7 @@ VALUES (1, 1, 25),   -- 25 units in Warehouse #1
 
 ## API Endpoints Reference
 
-> **Total: 55 endpoints** | **Base URL:** `http://localhost:3000`
+> **Total: 95 endpoints** | **Base URL:** `http://localhost:3000`
 
 For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`](./API_Endpoints_Reference.md).
 
@@ -697,6 +800,7 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 | Method | Endpoint | Description |
 |:------:|----------|-------------|
 | GET | `/api/auth/me` | Get current authenticated user |
+| POST | `/api/auth/refresh` | Refresh JWT token |
 
 #### Users 👑 (Admin Only)
 
@@ -759,6 +863,7 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 | GET | `/api/inventory/low-stock` | Get low-stock items |
 | GET | `/api/inventory/movements` | Get stock movement history |
 | GET | `/api/inventory/reorder-suggestions` | Get auto-reorder suggestions |
+| GET | `/api/inventory/product/:id/warehouse/:id/location` | Get product location |
 | POST | `/api/inventory/receive` | Receive stock |
 | POST | `/api/inventory/transfer` | Transfer stock between warehouses |
 | POST | `/api/inventory/adjust` | Adjust stock quantity |
@@ -780,6 +885,7 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 | GET | `/api/orders/supply/:id` | Get supply order details |
 | POST | `/api/orders/supply` | Create supply order |
 | POST | `/api/orders/supply/:id/receive` | Receive supply order |
+| POST | `/api/orders/supply/:id/cancel` | Cancel supply order |
 
 #### Discount Approvals 💰
 
@@ -794,6 +900,7 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 |:------:|----------|--------|
 | GET | `/api/reports/sales` | 👑 Admin, 🛒 Sales |
 | GET | `/api/reports/inventory` | 👑 Admin, 🏭 Warehouse |
+| GET | `/api/reports/inventory/export` | 👑 Admin, 🏭 Warehouse |
 | GET | `/api/reports/suppliers` | 👑 Admin, 📦 Supply |
 
 #### Export 📤 (Admin Only)
@@ -804,29 +911,101 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 | GET | `/api/export/products` | Export products to CSV |
 | GET | `/api/export/inventory` | Export inventory to CSV |
 
+#### Dropdowns 🔽
+
+| Method | Endpoint | Description |
+|:------:|----------|-------------|
+| GET | `/api/dropdowns/all` | Get all dropdowns |
+| GET | `/api/dropdowns/payment-terms` | Payment terms |
+| GET | `/api/dropdowns/delivery-types` | Delivery types |
+| GET | `/api/dropdowns/order-statuses` | Order statuses |
+| GET | `/api/dropdowns/payment-statuses` | Payment statuses |
+| GET | `/api/dropdowns/user-roles` | User roles |
+| GET | `/api/dropdowns/shipping-methods` | Shipping methods |
+
+#### Messages 💬
+
+| Method | Endpoint | Description |
+|:------:|----------|-------------|
+| GET | `/api/messages` | Get messages |
+| POST | `/api/messages` | Send message |
+| GET | `/api/messages/unread` | Unread count |
+| PUT | `/api/messages/:id/read` | Mark as read |
+| GET | `/api/messages/conversation/:userId` | Get conversation |
+
+#### Requests 📝
+
+| Method | Endpoint | Description |
+|:------:|----------|-------------|
+| GET | `/api/requests` | Get all requests |
+| GET | `/api/requests/my` | Get my requests |
+| POST | `/api/requests` | Create request |
+| POST | `/api/requests/:id/approve` | Approve request 👑 |
+| POST | `/api/requests/:id/deny` | Deny request 👑 |
+
+#### Notifications 🔔
+
+| Method | Endpoint | Description |
+|:------:|----------|-------------|
+| GET | `/api/notifications` | Get notifications |
+| GET | `/api/notifications/unread/count` | Unread count |
+| PUT | `/api/notifications/:id/read` | Mark as read |
+| PUT | `/api/notifications/read/all` | Mark all as read |
+
+#### Permissions 🔐 (Admin Only)
+
+| Method | Endpoint | Description |
+|:------:|----------|-------------|
+| GET | `/api/permissions/users/:id/permissions` | Get user permissions |
+| PUT | `/api/permissions/users/:id/permissions` | Update permissions |
+| POST | `/api/permissions/users/:id/permissions/reset` | Reset to defaults |
+| GET | `/api/permissions/settings/role-defaults` | Get role defaults |
+| PUT | `/api/permissions/settings/role-defaults` | Update role defaults |
+| GET | `/api/permissions/audit/permissions` | Permission audit log |
+
+#### Settings ⚙️ (Admin Only)
+
+| Method | Endpoint | Description |
+|:------:|----------|-------------|
+| GET | `/api/settings/system` | Get all settings |
+| GET | `/api/settings/system/:key` | Get single setting |
+| PUT | `/api/settings/system` | Update settings |
+
 ---
 
 ## Database Tables
 
-> **Total: 15 tables** in PostgreSQL
+> **Total: 27 tables** in PostgreSQL
 
 | # | Table | Description | Key Fields |
 |:-:|-------|-------------|------------|
 | 1 | **users** | User accounts with roles | id, name, email, password_hash, role |
-| 2 | **categories** | Hierarchical product categories | id, name, parent_id, description |
-| 3 | **suppliers** | Supplier information | id, name, contact_person, rating |
-| 4 | **warehouses** | Warehouse locations | id, name, location, capacity |
-| 5 | **products** | Product catalog (NO stock) | id, name, sku, price, cost |
-| 6 | **inventory** | Stock levels per warehouse | id, product_id, warehouse_id, quantity |
-| 7 | **product_locations** | Physical storage details | id, product_id, warehouse_id, aisle, shelf |
-| 8 | **sales_orders** | Customer sales orders | id, order_number, customer_name, total_amount |
-| 9 | **supply_orders** | Purchase orders from suppliers | id, order_number, supplier_id, total_amount |
-| 10 | **order_items** | Order line items | id, order_id, product_id, quantity, unit_price |
-| 11 | **stock_movements** | Audit trail for stock changes | id, product_id, quantity_change, movement_type |
-| 12 | **discount_approvals** | Discount approval workflow | id, order_id, requested_discount, status |
-| 13 | **audit_logs** | User action security logging | id, user_id, action, timestamp |
-| 14 | **product_requests** | Sales → Supply product requests | id, product_name, requested_by, status |
-| 15 | **adjustment_reasons** | Stock adjustment reason codes | id, code, description, requires_approval |
+| 2 | **user_roles** | Role definitions | id, role_code, role_name, description |
+| 3 | **categories** | Hierarchical product categories | id, name, parent_id, description |
+| 4 | **suppliers** | Supplier information | id, name, contact_person, rating |
+| 5 | **warehouses** | Warehouse locations | id, name, location, capacity |
+| 6 | **products** | Product catalog (NO stock) | id, name, sku, price, cost |
+| 7 | **inventory** | Stock levels per warehouse | id, product_id, warehouse_id, quantity |
+| 8 | **product_locations** | Physical storage details | id, product_id, aisle, shelf, layer |
+| 9 | **sales_orders** | Customer sales orders | id, order_number, customer_name, total_amount |
+| 10 | **supply_orders** | Purchase orders from suppliers | id, po_number, supplier_id, total_amount |
+| 11 | **order_items** | Order line items | id, order_id, product_id, quantity |
+| 12 | **stock_movements** | Audit trail for stock changes | id, product_id, quantity_change, movement_type |
+| 13 | **discount_approvals** | Discount approval workflow | id, order_id, requested_discount, approved |
+| 14 | **audit_logs** | User action security logging | id, user_id, action, entity_type |
+| 15 | **adjustment_reasons** | Stock adjustment reason codes | id, reason_code, requires_approval |
+| 16 | **notifications** | User notifications | id, user_id, title, message, is_read |
+| 17 | **system_settings** | System configuration | id, setting_key, setting_value |
+| 18 | **internal_requests** | Cross-role requests | id, request_type, status, resolved_by |
+| 19 | **internal_messages** | Internal messaging | id, sender_id, recipient_id, subject |
+| 20 | **user_permissions** | Fine-grained permissions | id, user_id, module, permission |
+| 21 | **permission_audit_log** | Permission change history | id, changed_by, old_permission |
+| 22 | **role_default_permissions** | Default role permissions | id, role, module, permission |
+| 23 | **payment_terms** | Payment term options | id, term_code, days |
+| 24 | **delivery_types** | Delivery type options | id, type_code, requires_address |
+| 25 | **order_statuses** | Order status options | id, status_code, color |
+| 26 | **payment_statuses** | Payment status options | id, status_code, color |
+| 27 | **shipping_methods** | Shipping method options | id, method_code, base_cost |
 
 ---
 
@@ -834,13 +1013,15 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 
 | Benefit | Description |
 |:--------|-------------|
-| 🚀 **Production-Ready** | JWT authentication, bcrypt password hashing, token blacklisting |
-| 🔒 **Secure** | Role-based access control, input validation, parameterized queries (SQL injection protection) |
-| 📈 **Scalable** | Connection pooling, database index optimization |
-| 📋 **Auditable** | Complete stock movement history, comprehensive audit logs |
+| 🚀 **Production-Ready** | JWT authentication, bcrypt password hashing, token blacklisting and refresh |
+| 🔒 **Secure** | Role-based access control, fine-grained permissions, input validation, SQL injection protection |
+| 📈 **Scalable** | Connection pooling, database index optimization, singleton pattern |
+| 📋 **Auditable** | Complete stock movement history, comprehensive audit logs, permission change tracking |
 | 🔄 **Flexible** | Multi-warehouse support, hierarchical categories, configurable reorder points |
 | 📖 **Documented** | Complete API reference with curl test commands |
 | 🔄 **Recoverable** | Password reset scripts, credential display utility |
+| 💬 **Communicative** | Internal messaging system, cross-role requests, notifications |
+| ⚙️ **Configurable** | System settings management, dropdown master data |
 
 ---
 
@@ -848,14 +1029,15 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 
 | Issue | Error Message | Solution |
 |:------|:--------------|----------|
-| **Database connection failed** | `password authentication failed` | Check `DB_PASSWORD` in [`backend/.env`](../backend/.env) |
+| **Database connection failed** | `password authentication failed` | Check `DB_PASSWORD` in [`backend/.env`](backend/.env) |
 | **JWT_SECRET not set** | `JWT_SECRET environment variable is not set` | Add `JWT_SECRET` (min 32 chars) to `.env` |
 | **Port already in use** | `EADDRINUSE: address already in use :::3000` | Change `PORT` in `.env` or stop existing process |
 | **Module not found** | `Cannot find module 'xxx'` | Run `npm install` in `backend/` directory |
-| **Tables not found** | `relation "users" does not exist` | Run `node scripts/quick-reset.js` from `backend/` |
+| **Tables not found** | `relation "users" does not exist` | Run `node scripts/full-reset.js` from `backend/` |
 | **Forgot password** | Unable to login | Run `npm run reset-password <email> <newPassword>` |
-| **Token expired** | `jwt expired` | Login again to get fresh token (24h expiry) |
+| **Token expired** | `jwt expired` | Login again or use `/api/auth/refresh` (if within 5 min of expiry) |
 | **Access denied** | `Access denied` (403) | Verify user role has permission for endpoint |
+| **Token refresh failed** | `Token expired too long ago` | Token expired more than 5 minutes ago; must login again |
 
 ---
 
@@ -863,10 +1045,11 @@ For detailed curl examples for every endpoint, see [`API_Endpoints_Reference.md`
 
 | Document | Description |
 |----------|-------------|
-| [`API_Endpoints_Reference.md`](./API_Endpoints_Reference.md) | Detailed curl commands for all 55 endpoints |
-| [`Backend Setup Guide.md`](./Backend Setup Guide.md) | Step-by-step installation and configuration |
+| [`API_Endpoints_Reference.md`](./API_Endpoints_Reference.md) | Detailed curl commands for all 95 endpoints |
+| [`Backend Setup Guide.md`](./Backend%20Setup%20Guide.md) | Step-by-step installation and configuration |
+| [`System_Architecture_Summary.md`](./System_Architecture_Summary.md) | Architecture decisions and patterns |
 | [`UML_Diagrams.md`](./UML_Diagrams.md) | Mermaid class diagrams |
 
 ---
 
-*Last updated: April 2026*
+*Last updated: May 2026*
