@@ -19,8 +19,11 @@ const CONFIG = {
     // User storage key
     USER_KEY: 'ims_user',
     
+    // Theme storage key
+    THEME_KEY: 'ims_theme',
+    
     // App version
-    VERSION: '1.0.0',
+    VERSION: '2.0.0',
     
     // Pagination defaults
     ITEMS_PER_PAGE: 10,

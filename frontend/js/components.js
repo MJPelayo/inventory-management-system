@@ -86,11 +86,28 @@ class Header {
     
     render() {
         const user = auth.getCurrentUser();
+        let themeSelectorHtml = '';
+        
+        // Get theme selector HTML from themeManager if available
+        if (typeof themeManager !== 'undefined' && themeManager) {
+            themeSelectorHtml = themeManager.getThemeSelectorHTML();
+        } else {
+            // Fallback
+            themeSelectorHtml = `
+                <div class="theme-selector">
+                    <button class="theme-btn" onclick="if(window.themeManager) themeManager.toggleDropdown()">
+                        🎨 Theme ▼
+                    </button>
+                </div>
+            `;
+        }
+        
         this.container.innerHTML = `
             <div class="header-left">
-                <h1>Inventory Management System</h1>
+                <h1>INVENTORY MANAGEMENT SYSTEM</h1>
             </div>
             <div class="header-right">
+                ${themeSelectorHtml}
                 <div id="sessionStatus" class="session-status" style="display: none;">
                     <span class="session-dot"></span>
                     <span id="sessionTimer">Session active</span>
