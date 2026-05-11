@@ -122,48 +122,34 @@ async function loadInventory() {
         const user = auth.getCurrentUser();
         const warehouseId = user.warehouse_id || 1;
         
+        // ✅ FIX: Get inventory with complete product details
         const response = await apiCall(`/inventory/warehouse/${warehouseId}`);
-        allInventory = response.data || [];
+        let inventory = response.data || [];
         
         // Apply filters
-        let filteredInventory = [...allInventory];
-        
         const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
-        const categoryId = document.getElementById('categoryFilter')?.value;
         const stockStatus = document.getElementById('stockStatusFilter')?.value;
         
         if (searchTerm) {
-            filteredInventory = filteredInventory.filter(item => 
+            inventory = inventory.filter(item =>
                 (item.product_name && item.product_name.toLowerCase().includes(searchTerm)) ||
-                (item.sku && item.sku.toLowerCase().includes(searchTerm)) ||
-                (item.brand && item.brand.toLowerCase().includes(searchTerm))
-            );
-        }
-        
-        if (categoryId) {
-            // Need to filter by category - since inventory doesn't have category directly,
-            // we need to get product categories. For now, let's do client-side if we have category_name
-            filteredInventory = filteredInventory.filter(item => 
-                item.category_name && item.category_name.toLowerCase().includes(
-                    categories.find(c => c.id == categoryId)?.name.toLowerCase() || ''
-                )
+                (item.sku && item.sku.toLowerCase().includes(searchTerm))
             );
         }
         
         if (stockStatus === 'low') {
-            filteredInventory = filteredInventory.filter(item => item.quantity <= item.reorder_point && item.quantity > 0);
+            inventory = inventory.filter(item => item.quantity <= item.reorder_point && item.quantity > 0);
         } else if (stockStatus === 'out') {
-            filteredInventory = filteredInventory.filter(item => item.quantity === 0);
+            inventory = inventory.filter(item => item.quantity === 0);
         }
         
-        document.getElementById('inventoryCount').textContent = `${filteredInventory.length} items`;
+        document.getElementById('inventoryCount').textContent = `${inventory.length} items`;
         
-        if (filteredInventory.length === 0) {
+        if (inventory.length === 0) {
             container.innerHTML = '<div class="empty-state">No inventory items found</div>';
             return;
         }
         
-        // Build table with complete data
         container.innerHTML = `
             <table class="data-table">
                 <thead>
@@ -171,7 +157,6 @@ async function loadInventory() {
                         <th>Product</th>
                         <th>SKU</th>
                         <th>Brand</th>
-                        <th>Category</th>
                         <th>Quantity</th>
                         <th>Reorder Point</th>
                         <th>Status</th>
@@ -179,7 +164,7 @@ async function loadInventory() {
                     </tr>
                 </thead>
                 <tbody>
-                    ${filteredInventory.map(item => {
+                    ${inventory.map(item => {
                         let statusClass = '';
                         let statusText = '';
                         if (item.quantity === 0) {
@@ -201,12 +186,11 @@ async function loadInventory() {
                                 </td>
                                 <td><span class="sku">${escapeHtml(item.sku || '—')}</span></td>
                                 <td>${escapeHtml(item.brand || '—')}</td>
-                                <td>${escapeHtml(item.category_name || '—')}</td>
-                                <td class="quantity-cell ${item.quantity <= item.reorder_point ? 'warning' : ''}">${item.quantity}</td>
+                                <td class="${item.quantity <= item.reorder_point ? 'warning' : ''}">${item.quantity}</td>
                                 <td>${item.reorder_point || 0}</td>
                                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                                 <td class="actions-cell">
-                                    <button class="btn-icon" onclick="openAdjustStockModalForProduct(${item.product_id}, ${item.warehouse_id}, '${escapeHtml(item.product_name)}', ${item.quantity}, '${escapeHtml(item.sku)}')" title="Adjust Stock">✏️ Adjust</button>
+                                    <button class="btn-icon" onclick="openAdjustStockModalForProduct(${item.product_id}, ${item.warehouse_id}, '${escapeHtml(item.product_name || '')}', ${item.quantity}, '${escapeHtml(item.sku || '')}')">✏️ Adjust</button>
                                 </td>
                             </tr>
                         `;
