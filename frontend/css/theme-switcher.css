@@ -5,6 +5,7 @@
 
 .theme-selector {
     position: relative;
+    z-index: 9999;
 }
 
 .theme-btn {
@@ -45,9 +46,9 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 20px;
-    overflow: hidden;
+    overflow: visible !important;
     box-shadow: var(--shadow-xl);
-    z-index: 1200;
+    z-index: 10000;
     display: none;
 }
 
@@ -141,4 +142,27 @@
 
 .theme-option.active .theme-check {
     opacity: 1;
+}
+
+/* Ensure dropdown renders above everything */
+.theme-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 10000;
+    overflow: visible;
+}
+
+/* Ensure main content and panel don't clip dropdowns */
+.main-content,
+.panel-container,
+.app-body {
+    overflow: visible !important;
+}
+
+/* Header needs higher stacking context */
+.app-header,
+.header {
+    position: relative;
+    z-index: 100;
 }
