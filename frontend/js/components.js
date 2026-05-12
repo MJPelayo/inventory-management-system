@@ -86,30 +86,15 @@ class Header {
     
     render() {
         const user = auth.getCurrentUser();
-        let themeSelectorHtml = '';
-        
-        // Always use themeManager for consistent behavior
-        // theme.js ensures themeManager is initialized before this runs
-        if (typeof themeManager !== 'undefined' && themeManager) {
-            themeSelectorHtml = themeManager.getThemeSelectorHTML();
-        } else {
-            // Minimal fallback - will be replaced when themeManager initializes
-            themeSelectorHtml = `
-                <div class="theme-selector" id="themeSelector">
-                    <button type="button" class="theme-btn" id="themeBtn">
-                        🎨 Theme <span class="dropdown-arrow">▼</span>
-                    </button>
-                    <div class="theme-dropdown" id="themeDropdown" style="display: none;"></div>
-                </div>
-            `;
-        }
         
         this.container.innerHTML = `
             <div class="header-left">
                 <h1>INVENTORY MANAGEMENT SYSTEM</h1>
             </div>
             <div class="header-right">
-                ${themeSelectorHtml}
+                <!-- Theme Switcher Container -->
+                <div id="themeSwitcherContainer"></div>
+                
                 <div id="sessionStatus" class="session-status" style="display: none;">
                     <span class="session-dot"></span>
                     <span id="sessionTimer">Session active</span>
@@ -121,9 +106,9 @@ class Header {
             </div>
         `;
         
-        // Let ThemeManager handle its own event listeners
+        // Initialize theme manager rendering after header is in DOM
         if (typeof themeManager !== 'undefined' && themeManager) {
-            themeManager.setupThemeSelectorEvents();
+            themeManager.renderThemeSwitcher();
         }
         
         // Start session timer display
