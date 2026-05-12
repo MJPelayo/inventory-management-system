@@ -1,11 +1,11 @@
-/* frontend/css/theme-switcher.css */
+/* frontend/css/theme-switcher.css - REPLACE entire file */
+
 /* ======================================================== */
-/* ADVANCED THEME SWITCHER - Enterprise Dropdown */
+/* ADVANCED THEME SWITCHER - Portal to Body (No Clipping) */
 /* ======================================================== */
 
 .theme-selector {
     position: relative;
-    z-index: 9999;
 }
 
 .theme-btn {
@@ -22,6 +22,7 @@
     cursor: pointer;
     transition: var(--transition);
     box-shadow: var(--shadow-sm);
+    white-space: nowrap;
 }
 
 .theme-btn:hover {
@@ -38,23 +39,22 @@
     opacity: 0.7;
 }
 
-.theme-dropdown {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
-    width: 320px;
+/* ===== PORTAL DROPDOWN - Attached to body, no clipping ===== */
+#globalThemeDropdown {
+    position: fixed;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 20px;
-    overflow: visible !important;
+    width: 320px;
+    overflow: hidden;
     box-shadow: var(--shadow-xl);
-    z-index: 10000;
+    z-index: 99999;
     display: none;
 }
 
-.theme-dropdown.open {
+#globalThemeDropdown.open {
     display: block;
-    animation: dropdownFade 0.25s ease;
+    animation: dropdownFade 0.2s ease;
 }
 
 @keyframes dropdownFade {
@@ -91,7 +91,7 @@
     justify-content: space-between;
     gap: 12px;
     width: 100%;
-    padding: 16px 20px;
+    padding: 14px 20px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -142,27 +142,4 @@
 
 .theme-option.active .theme-check {
     opacity: 1;
-}
-
-/* Ensure dropdown renders above everything */
-.theme-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    z-index: 10000;
-    overflow: visible;
-}
-
-/* Ensure main content and panel don't clip dropdowns */
-.main-content,
-.panel-container,
-.app-body {
-    overflow: visible !important;
-}
-
-/* Header needs higher stacking context */
-.app-header,
-.header {
-    position: relative;
-    z-index: 100;
 }

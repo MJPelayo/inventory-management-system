@@ -10,9 +10,20 @@
     flex-direction: column;
 }
 
+/* Add wrapper for content */
+.app-wrapper {
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 .app-body {
     display: flex;
     flex: 1;
+    position: relative;
 }
 
 /* ===== HEADER - Professional Office Style ===== */
@@ -27,9 +38,19 @@
     justify-content: space-between;
     position: sticky;
     top: 0;
-    z-index: 50;
+    z-index: 100;
     backdrop-filter: blur(8px);
     background: rgba(var(--bg-header-rgb, 255, 255, 255), 0.95);
+}
+
+/* Add container inside header */
+.header-container {
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .header-left h1 {
@@ -85,6 +106,7 @@
     top: var(--header-height);
     height: calc(100vh - var(--header-height));
     overflow-y: auto;
+    flex-shrink: 0;
 }
 
 .sidebar-header {
@@ -186,37 +208,37 @@
 /* ===== MAIN CONTENT - UNIFIED PANEL CONTAINER ===== */
 .main-content {
     flex: 1;
-    padding: 0;
-    overflow: visible; /* Allow dropdowns to extend beyond container */
     overflow-y: auto;
     background: var(--bg-page);
     min-height: calc(100vh - var(--header-height));
     position: relative;
 }
 
-/* Unified Panel Container - wraps all dashboard content */
+/* Unified Panel Container - With better spacing */
 .panel-container {
     padding: 32px;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
     min-height: calc(100vh - var(--header-height));
     background: var(--bg-page);
-    overflow: visible; /* Critical for dropdown rendering */
+    overflow: visible;
     position: relative;
     z-index: 1;
+}
+
+@media (max-width: 1024px) {
+    .panel-container {
+        padding: 24px;
+    }
 }
 
 @media (max-width: 768px) {
     .panel-container {
         padding: 20px;
-        border: none;
     }
 }
 
 @media (max-width: 640px) {
     .panel-container {
         padding: 16px;
-        border: none;
     }
 }
 
@@ -248,7 +270,7 @@ select option,
 /* ===== DASHBOARD STATS CARDS ===== */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-bottom: 32px;
 }
@@ -261,6 +283,7 @@ select option,
     transition: var(--transition);
     position: relative;
     overflow: hidden;
+    min-width: 0; /* Prevents overflow */
 }
 
 .stat::before {
@@ -293,6 +316,7 @@ select option,
     color: var(--text-primary);
     line-height: 1.2;
     margin-bottom: 4px;
+    word-break: break-word;
 }
 
 .stat-sub {
@@ -714,6 +738,12 @@ select option,
 }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 1024px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -724,11 +754,8 @@ select option,
     .sidebar {
         width: 240px;
     }
-    .main-content {
+    .panel-container {
         padding: 20px;
-    }
-    .stats-grid {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -736,12 +763,14 @@ select option,
     .sidebar {
         display: none;
     }
-    .main-content {
-        max-width: 100%;
+    .panel-container {
         padding: 16px;
     }
     .app-body {
         flex-direction: column;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
     .filter-row {
         flex-direction: column;

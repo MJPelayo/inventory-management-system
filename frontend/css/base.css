@@ -287,3 +287,73 @@ body {
     background: var(--primary-light);
     color: var(--primary-dark);
 }
+
+/* ============================================ */
+/* GLOBAL CONTAINER - Centered with max-width */
+/* ============================================ */
+
+/* Main wrapper that centers everything */
+.app-wrapper {
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+}
+
+/* For the main content area */
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg-page);
+    min-height: calc(100vh - var(--header-height));
+    position: relative;
+}
+
+/* New: Global panel container with proper padding and max-width */
+.global-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    width: 100%;
+}
+
+/* Update existing panel-container to work with global container */
+.panel-container {
+    padding: 32px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-height: calc(100vh - var(--header-height));
+    background: var(--bg-page);
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .global-container {
+        max-width: 100%;
+        padding: 0 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .global-container {
+        padding: 0 16px;
+    }
+    
+    .panel-container {
+        padding: 20px;
+        border: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .global-container {
+        padding: 0 12px;
+    }
+    
+    .panel-container {
+        padding: 16px;
+    }
+}

@@ -88,20 +88,22 @@ class Header {
         const user = auth.getCurrentUser();
         
         this.container.innerHTML = `
-            <div class="header-left">
-                <h1>INVENTORY MANAGEMENT SYSTEM</h1>
-            </div>
-            <div class="header-right">
-                <!-- Theme Switcher Container -->
-                <div id="themeSwitcherContainer"></div>
-                
-                <div id="sessionStatus" class="session-status" style="display: none;">
-                    <span class="session-dot"></span>
-                    <span id="sessionTimer">Session active</span>
+            <div class="header-container">
+                <div class="header-left">
+                    <h1>INVENTORY MANAGEMENT SYSTEM</h1>
                 </div>
-                <div class="header-user">
-                    <span class="user-name">${user?.name || 'User'}</span>
-                    <span class="user-role">${user?.role || 'role'}</span>
+                <div class="header-right">
+                    <!-- Theme Switcher Container -->
+                    <div id="themeSwitcherContainer"></div>
+                    
+                    <div id="sessionStatus" class="session-status" style="display: none;">
+                        <span class="session-dot"></span>
+                        <span id="sessionTimer">Session active</span>
+                    </div>
+                    <div class="header-user">
+                        <span class="user-name">${user?.name || 'User'}</span>
+                        <span class="user-role">${user?.role || 'role'}</span>
+                    </div>
                 </div>
             </div>
         `;
