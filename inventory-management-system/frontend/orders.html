@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orders - Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0efe9;
+            --border: #e2e0d8; --border-strong: #c8c5bb;
+            --text: #1a1917; --text-2: #6b6860; --text-3: #9e9b94; --accent: #1a1917;
+            --green: #2d6a4f; --green-bg: #d8f3dc; --red: #9b2226; --red-bg: #ffe4e6;
+            --amber: #7d4e00; --amber-bg: #fff3cd; --blue: #1d3557; --blue-bg: #e3f2fd;
+            --radius: 10px; --radius-sm: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 2rem; position: fixed; top: 0; left: 0; bottom: 0; z-index: 10; }
+        .sidebar-logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.05em; padding: 0 0.5rem; }
+        .sidebar-logo span { color: var(--text-3); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-2); cursor: pointer; transition: all 0.15s; font-weight: 400; text-decoration: none; }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: var(--accent); color: #fff; font-weight: 500; }
+        .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+        .nav-item.active .nav-icon { opacity: 1; }
+        .main { margin-left: 220px; flex: 1; padding: 2rem 2.5rem; max-width: 1400px; }
+        .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
+        .page-title { font-size: 22px; font-weight: 600; }
+        .page-subtitle { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 2rem; }
+        .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; box-shadow: var(--shadow); }
+        .stat-label { font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+        .stat-value { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .stat-sub { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+        .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+        .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); width: 14px; height: 14px; }
+        .search-wrap input { padding-left: 34px; width: 100%; }
+        input[type="text"], input[type="number"], select {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text);
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%;
+        }
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,25,23,0.08); }
+        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9b94' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .btn:hover { background: var(--surface2); border-color: var(--border-strong); }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #333; border-color: #333; }
+        .btn-success { background: var(--green); color: #fff; border-color: var(--green); }
+        .btn-success:hover { background: #1d4a35; }
+        .btn-danger { color: var(--red); border-color: #ffc9cc; }
+        .btn-danger:hover { background: var(--red-bg); }
+        .btn-warning { background: var(--amber); color: #fff; border-color: var(--amber); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-group { display: flex; gap: 6px; }
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--surface2); }
+        th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tbody tr { transition: background 0.1s; }
+        tbody tr:hover { background: #fbfaf8; }
+        .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+        .badge-pending { background: var(--amber-bg); color: var(--amber); }
+        .badge-processing { background: var(--blue-bg); color: var(--blue); }
+        .badge-ready { background: var(--green-bg); color: var(--green); }
+        .badge-in_transit { background: var(--blue-bg); color: var(--blue); }
+        .badge-delivered { background: var(--green-bg); color: var(--green); }
+        .badge-cancelled { background: var(--red-bg); color: var(--red); }
+        .badge-paid { background: var(--green-bg); color: var(--green); }
+        .badge-failed { background: var(--red-bg); color: var(--red); }
+        .badge-refunded { background: var(--amber-bg); color: var(--amber); }
+        .mono { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-2); }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-3); font-size: 14px; }
+        .empty-icon { font-size: 32px; margin-bottom: 12px; }
+        .empty-title { font-weight: 500; color: var(--text-2); margin-bottom: 4px; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(2px); }
+        .overlay.open { display: flex; }
+        .modal { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-lg); width: 600px; max-width: 95vw; max-height: 90vh; overflow-y: auto; animation: modalIn 0.2s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; border-radius: 14px 14px 0 0; }
+        .modal-header h2 { font-size: 16px; font-weight: 600; }
+        .close-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: none; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-3); font-size: 18px; line-height: 1; transition: background 0.15s, color 0.15s; }
+        .close-btn:hover { background: var(--surface2); color: var(--text); }
+        .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 16px; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: var(--surface); border-radius: 0 0 14px 14px; }
+        .field { display: flex; flex-direction: column; gap: 5px; }
+        .field > label { font-size: 12px; font-weight: 500; color: var(--text-2); }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-error { background: var(--red-bg); color: var(--red); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; display: none; }
+        .form-success { background: var(--green-bg); color: var(--green); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; display: none; }
+        .divider { height: 1px; background: var(--border); }
+        .section-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+        .order-items-list { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+        .order-item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+        .order-item-row.header { font-weight: 600; color: var(--text-3); text-transform: uppercase; }
+        .order-item-row:last-child { border-bottom: none; }
+        .status-select { padding: 4px 8px; font-size: 12px; }
+        @media (max-width: 900px) { .sidebar { width: 180px; } .main { margin-left: 180px; padding: 1.5rem; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1rem; } .field-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-logo">inventory<span>.app</span></div>
+        <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    </aside>
+
+    <main class="main">
+        <div class="page-header">
+            <div>
+                <div class="page-title">Order Management</div>
+                <div class="page-subtitle">Create and track customer orders</div>
+            </div>
+            <button class="btn btn-primary" onclick="openNewOrderModal()" data-permission="order:create">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Order
+            </button>
+        </div>
+
+        <div class="stats-grid" id="stats"></div>
+
+        <div class="toolbar">
+            <div class="search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="order-search" placeholder="Search by order number or customer..." oninput="loadOrders()" />
+            </div>
+            <select id="filter-status" onchange="loadOrders()" style="width:160px;">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="ready">Ready</option>
+                <option value="in_transit">In Transit</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <select id="filter-payment" onchange="loadOrders()" style="width:160px;">
+                <option value="">All Payment</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+                <option value="refunded">Refunded</option>
+            </select>
+            <button class="btn btn-sm" onclick="loadOrders()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Refresh
+            </button>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-tbody"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- New Order Modal -->
+<div class="overlay" id="new-order-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Create New Order</h2>
+            <button class="close-btn" onclick="closeNewOrderModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <label>Customer Name *</label>
+                <input type="text" id="order-customer" placeholder="Enter customer name" />
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label>Email</label>
+                    <input type="text" id="order-email" placeholder="customer@email.com" />
+                </div>
+                <div class="field">
+                    <label>Phone</label>
+                    <input type="text" id="order-phone" placeholder="+1 (555) 123-4567" />
+                </div>
+            </div>
+            <div class="field">
+                <label>Shipping Address</label>
+                <input type="text" id="order-address" placeholder="Full shipping address" />
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label>Delivery Type</label>
+                    <select id="order-delivery">
+                        <option value="delivery">Delivery</option>
+                        <option value="pickup">Pickup</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Shipping Cost</label>
+                    <input type="number" id="order-shipping" min="0" step="0.01" value="0" />
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="section-label">Order Items</div>
+            <div id="order-items-container"></div>
+            <button class="btn btn-sm" onclick="addOrderItemRow()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Item
+            </button>
+            <div class="form-error" id="order-error"></div>
+            <div class="form-success" id="order-success"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeNewOrderModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitOrder()">Create Order</button>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="overlay" id="details-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="details-title">Order Details</h2>
+            <button class="close-btn" onclick="closeDetailsModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="details-body"></div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeDetailsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+    const API = 'http://localhost:3000/api';
+    let products = [], warehouses = [];
+    let orderItems = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+        
+        // Check permission
+        if (!Auth.hasPermission('order:read')) {
+            alert('You do not have permission to access orders.');
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        RBAC.renderNavigation('#sidebar-nav');
+        loadStats();
+        loadOrders();
+        loadProductsForDropdown();
+    });
+
+    async function loadStats() {
+        try {
+            const res = await Auth.fetch(API + '/orders/stats');
+            const data = await res.json();
+            if (data.success) {
+                const stats = data.data;
+                document.getElementById('stats').innerHTML = `
+                    <div class="stat">
+                        <div class="stat-label">Total Orders</div>
+                        <div class="stat-value">${stats.total_orders || 0}</div>
+                        <div class="stat-sub">all time</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-value" style="color:var(--amber)">${stats.pending || 0}</div>
+                        <div class="stat-sub">awaiting processing</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Processing</div>
+                        <div class="stat-value" style="color:var(--blue)">${stats.processing || 0}</div>
+                        <div class="stat-sub">being prepared</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Delivered</div>
+                        <div class="stat-value" style="color:var(--green)">${stats.delivered || 0}</div>
+                        <div class="stat-sub">completed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Revenue</div>
+                        <div class="stat-value">$${parseFloat(stats.total_revenue || 0).toFixed(2)}</div>
+                        <div class="stat-sub">total sales</div>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('Failed to load stats:', err);
+        }
+    }
+
+    async function loadOrders() {
+        const search = document.getElementById('order-search').value;
+        const status = document.getElementById('filter-status').value;
+        const payment = document.getElementById('filter-payment').value;
+        
+        let url = API + '/orders?limit=100&';
+        if (search) url += `search=${encodeURIComponent(search)}&`;
+        if (status) url += `status=${status}&`;
+        if (payment) url += `payment_status=${payment}&`;
+        
+        try {
+            const res = await Auth.fetch(url);
+            const data = await res.json();
+            renderOrders(data.data || []);
+        } catch (err) {
+            console.error('Failed to load orders:', err);
+            document.getElementById('orders-tbody').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-title">Failed to load orders</div><div class="mono">' + err.message + '</div></div></td></tr>';
+        }
+    }
+
+    function renderOrders(orders) {
+        const tbody = document.getElementById('orders-tbody');
+        if (!orders.length) {
+            tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No orders found</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = orders.map(order => {
+            const statusClass = 'badge-' + order.status;
+            const paymentClass = 'badge-' + order.payment_status;
+            const statusLabel = order.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const paymentLabel = order.payment_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            return `<tr>
+                <td><strong class="mono">${escHtml(order.order_number)}</strong></td>
+                <td>
+                    <div>${escHtml(order.customer_name)}</div>
+                    ${order.customer_email ? '<div class="mono" style="font-size:11px;color:var(--text-3)">' + escHtml(order.customer_email) + '</div>' : ''}
+                </td>
+                <td><span class="mono">${new Date(order.created_at).toLocaleDateString()}</span></td>
+                <td><strong>$${parseFloat(order.total_amount || 0).toFixed(2)}</strong></td>
+                <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                <td><span class="badge ${paymentClass}">${paymentLabel}</span></td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm" onclick="viewOrder('${order.id}')">View</button>
+                        ${Auth.hasPermission('order:update') ? `<button class="btn btn-sm" onclick="updateOrderStatus('${order.id}', '${order.status}')">Update</button>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function viewOrder(orderId) {
+        try {
+            const res = await Auth.fetch(API + '/orders/' + orderId);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+            
+            const order = data.data;
+            const statusOptions = ['pending', 'processing', 'ready', 'in_transit', 'delivered', 'cancelled'];
+            const paymentOptions = ['pending', 'paid', 'failed', 'refunded'];
+            
+            let itemsHtml = '';
+            if (order.items && order.items.length) {
+                itemsHtml = '<div class="order-items-list">' +
+                    '<div class="order-item-row header"><span>Product</span><span>Qty</span><span>Price</span><span>Total</span></div>' +
+                    order.items.map(item => {
+                        const itemTotal = item.unit_price * item.quantity * (1 - (item.discount || 0) / 100);
+                        return `<div class="order-item-row">
+                            <span>${escHtml(item.product_name || 'N/A')} ${item.product_sku ? '(' + escHtml(item.product_sku) + ')' : ''}</span>
+                            <span>${item.quantity}</span>
+                            <span>$${parseFloat(item.unit_price).toFixed(2)}</span>
+                            <span>$${itemTotal.toFixed(2)}</span>
+                        </div>`;
+                    }).join('') +
+                    '</div>';
+            }
+            
+            document.getElementById('details-title').textContent = 'Order ' + order.order_number;
+            document.getElementById('details-body').innerHTML = `
+                <div class="field-row">
+                    <div class="field">
+                        <label>Customer</label>
+                        <div>${escHtml(order.customer_name)}</div>
+                    </div>
+                    <div class="field">
+                        <label>Order Date</label>
+                        <div class="mono">${new Date(order.created_at).toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Email</label>
+                        <div>${order.customer_email ? escHtml(order.customer_email) : '—'}</div>
+                    </div>
+                    <div class="field">
+                        <label>Phone</label>
+                        <div>${order.customer_phone ? escHtml(order.customer_phone) : '—'}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Shipping Address</label>
+                    <div>${order.shipping_address ? escHtml(order.shipping_address) : '—'}</div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Delivery Type</label>
+                        <div>${order.delivery_type ? escHtml(order.delivery_type) : '—'}</div>
+                    </div>
+                    <div class="field">
+                        <label>Created By</label>
+                        <div>${order.created_by_name ? escHtml(order.created_by_name) : 'System'}</div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="section-label">Order Items</div>
+                ${itemsHtml || '<div style="color:var(--text-3);font-size:12px;">No items</div>'}
+                <div class="divider"></div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Subtotal</label>
+                        <div>$${parseFloat(order.subtotal || 0).toFixed(2)}</div>
+                    </div>
+                    <div class="field">
+                        <label>Tax (10%)</label>
+                        <div>$${parseFloat(order.tax || 0).toFixed(2)}</div>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Shipping</label>
+                        <div>$${parseFloat(order.shipping_cost || 0).toFixed(2)}</div>
+                    </div>
+                    <div class="field">
+                        <label><strong>Total</strong></label>
+                        <div><strong>$${parseFloat(order.total_amount || 0).toFixed(2)}</strong></div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                ${Auth.hasPermission('order:update') ? `
+                <div class="field-row">
+                    <div class="field">
+                        <label>Update Status</label>
+                        <select class="status-select" id="update-status-select">
+                            ${statusOptions.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s.replace('_', ' ').toUpperCase()}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Update Payment</label>
+                        <select class="status-select" id="update-payment-select">
+                            ${paymentOptions.map(p => `<option value="${p}" ${p === order.payment_status ? 'selected' : ''}>${p.toUpperCase()}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-sm" onclick="applyStatusUpdate('${order.id}')">Update Status</button>
+                    <button class="btn btn-primary btn-sm" onclick="applyPaymentUpdate('${order.id}')">Update Payment</button>
+                </div>
+                ` : ''}
+            `;
+            document.getElementById('details-overlay').classList.add('open');
+        } catch (err) {
+            alert('Failed to load order details: ' + err.message);
+        }
+    }
+
+    async function applyStatusUpdate(orderId) {
+        const newStatus = document.getElementById('update-status-select').value;
+        try {
+            const res = await Auth.fetch(API + '/orders/' + orderId + '/status', {
+                method: 'PATCH',
+                body: JSON.stringify({ status: newStatus })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Status updated successfully');
+                closeDetailsModal();
+                loadOrders();
+                loadStats();
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            alert('Failed to update status: ' + err.message);
+        }
+    }
+
+    async function applyPaymentUpdate(orderId) {
+        const newPayment = document.getElementById('update-payment-select').value;
+        try {
+            const res = await Auth.fetch(API + '/orders/' + orderId + '/payment', {
+                method: 'PATCH',
+                body: JSON.stringify({ payment_status: newPayment })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Payment status updated successfully');
+                closeDetailsModal();
+                loadOrders();
+                loadStats();
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            alert('Failed to update payment: ' + err.message);
+        }
+    }
+
+    function closeDetailsModal() {
+        document.getElementById('details-overlay').classList.remove('open');
+    }
+
+    // New Order Modal Functions
+    function openNewOrderModal() {
+        if (!Auth.hasPermission('order:create')) {
+            alert('You do not have permission to create orders.');
+            return;
+        }
+        document.getElementById('order-customer').value = '';
+        document.getElementById('order-email').value = '';
+        document.getElementById('order-phone').value = '';
+        document.getElementById('order-address').value = '';
+        document.getElementById('order-delivery').value = 'delivery';
+        document.getElementById('order-shipping').value = '0';
+        orderItems = [];
+        renderOrderItems();
+        addOrderItemRow();
+        document.getElementById('order-error').style.display = 'none';
+        document.getElementById('order-success').style.display = 'none';
+        document.getElementById('new-order-overlay').classList.add('open');
+    }
+
+    function closeNewOrderModal() {
+        document.getElementById('new-order-overlay').classList.remove('open');
+    }
+
+    async function loadProductsForDropdown() {
+        try {
+            const res = await Auth.fetch(API + '/products');
+            const data = await res.json();
+            products = data.data || [];
+        } catch (err) {
+            console.error('Failed to load products:', err);
+        }
+    }
+
+    function addOrderItemRow() {
+        const container = document.getElementById('order-items-container');
+        const rowId = 'item-' + Date.now();
+        const productOptions = '<option value="">Select product...</option>' + 
+            products.map(p => `<option value="${p.id}" data-price="${p.price}" data-name="${p.name}" data-sku="${p.sku}">${p.name} (${p.sku}) - $${p.price}</option>`).join('');
+        
+        const row = document.createElement('div');
+        row.className = 'field-row';
+        row.style.marginTop = '8px';
+        row.innerHTML = `
+            <select class="product-select" onchange="updateItemPrice(this)" style="grid-column: span 2;">
+                ${productOptions}
+            </select>
+            <input type="number" class="item-qty" min="1" value="1" placeholder="Qty" />
+            <input type="number" class="item-price" min="0" step="0.01" value="0" placeholder="Price" />
+            <input type="number" class="item-discount" min="0" max="100" value="0" placeholder="Disc %" />
+            <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">×</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function updateItemPrice(select) {
+        const option = select.options[select.selectedIndex];
+        const price = option.dataset.price || 0;
+        const row = select.parentElement;
+        row.querySelector('.item-price').value = price;
+    }
+
+    function renderOrderItems() {
+        // Items are rendered directly in the DOM
+    }
+
+    async function submitOrder() {
+        const customer = document.getElementById('order-customer').value.trim();
+        const email = document.getElementById('order-email').value.trim();
+        const phone = document.getElementById('order-phone').value.trim();
+        const address = document.getElementById('order-address').value.trim();
+        const delivery = document.getElementById('order-delivery').value;
+        const shipping = parseFloat(document.getElementById('order-shipping').value) || 0;
+        
+        const errorEl = document.getElementById('order-error');
+        errorEl.style.display = 'none';
+        
+        if (!customer) {
+            errorEl.textContent = 'Customer name is required.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        
+        // Collect items from DOM
+        const items = [];
+        document.querySelectorAll('#order-items-container .field-row').forEach(row => {
+            const select = row.querySelector('.product-select');
+            const qtyInput = row.querySelector('.item-qty');
+            const priceInput = row.querySelector('.item-price');
+            const discountInput = row.querySelector('.item-discount');
+            
+            if (select && select.value) {
+                const option = select.options[select.selectedIndex];
+                items.push({
+                    product_id: select.value,
+                    product_name: option.dataset.name,
+                    quantity: parseInt(qtyInput.value) || 0,
+                    unit_price: parseFloat(priceInput.value) || 0,
+                    discount: parseFloat(discountInput.value) || 0
+                });
+            }
+        });
+        
+        if (items.length === 0) {
+            errorEl.textContent = 'At least one item is required.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        
+        try {
+            const res = await Auth.fetch(API + '/orders', {
+                method: 'POST',
+                body: JSON.stringify({
+                    customer_name: customer,
+                    customer_email: email || null,
+                    customer_phone: phone || null,
+                    shipping_address: address || null,
+                    delivery_type: delivery,
+                    shipping_cost: shipping,
+                    items: items
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                document.getElementById('order-success').textContent = 'Order created successfully!';
+                document.getElementById('order-success').style.display = 'block';
+                setTimeout(() => {
+                    closeNewOrderModal();
+                    loadOrders();
+                    loadStats();
+                }, 1000);
+            } else {
+                throw new Error(data.error || 'Failed to create order');
+            }
+        } catch (err) {
+            errorEl.textContent = err.message || 'Failed to create order.';
+            errorEl.style.display = 'block';
+        }
+    }
+
+    function escHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
+    }
+</script>
+</body>
+</html>

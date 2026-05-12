@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory Management - Warehouse</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0efe9;
+            --border: #e2e0d8; --border-strong: #c8c5bb;
+            --text: #1a1917; --text-2: #6b6860; --text-3: #9e9b94; --accent: #1a1917;
+            --green: #2d6a4f; --green-bg: #d8f3dc; --red: #9b2226; --red-bg: #ffe4e6;
+            --amber: #7d4e00; --amber-bg: #fff3cd; --blue: #1d3557; --blue-bg: #e3f2fd;
+            --radius: 10px; --radius-sm: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 2rem; position: fixed; top: 0; left: 0; bottom: 0; z-index: 10; }
+        .sidebar-logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.05em; padding: 0 0.5rem; }
+        .sidebar-logo span { color: var(--text-3); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-2); cursor: pointer; transition: all 0.15s; font-weight: 400; text-decoration: none; }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: var(--accent); color: #fff; font-weight: 500; }
+        .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+        .nav-item.active .nav-icon { opacity: 1; }
+        .main { margin-left: 220px; flex: 1; padding: 2rem 2.5rem; max-width: 1400px; }
+        .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
+        .page-title { font-size: 22px; font-weight: 600; }
+        .page-subtitle { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; }
+        .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; box-shadow: var(--shadow); }
+        .stat-label { font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+        .stat-value { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .stat-sub { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+        .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+        .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); width: 14px; height: 14px; }
+        .search-wrap input { padding-left: 34px; width: 100%; }
+        input[type="text"], input[type="number"], select {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text);
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%;
+        }
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,25,23,0.08); }
+        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9b94' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .btn:hover { background: var(--surface2); border-color: var(--border-strong); }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #333; border-color: #333; }
+        .btn-success { background: var(--green); color: #fff; border-color: var(--green); }
+        .btn-success:hover { background: #1d4a35; }
+        .btn-danger { color: var(--red); border-color: #ffc9cc; }
+        .btn-danger:hover { background: var(--red-bg); }
+        .btn-warning { background: var(--amber); color: #fff; border-color: var(--amber); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-group { display: flex; gap: 6px; }
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--surface2); }
+        th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tbody tr { transition: background 0.1s; }
+        tbody tr:hover { background: #fbfaf8; }
+        .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+        .badge-in-stock { background: var(--green-bg); color: var(--green); }
+        .badge-low-stock { background: var(--amber-bg); color: var(--amber); }
+        .badge-out-of-stock { background: var(--red-bg); color: var(--red); }
+        .badge-overstocked { background: var(--blue-bg); color: var(--blue); }
+        .mono { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-2); }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-3); font-size: 14px; }
+        .empty-icon { font-size: 32px; margin-bottom: 12px; }
+        .empty-title { font-weight: 500; color: var(--text-2); margin-bottom: 4px; }
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; }
+        .tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--text-2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+        .tab:hover { color: var(--text); background: var(--surface2); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(2px); }
+        .overlay.open { display: flex; }
+        .modal { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-lg); width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; animation: modalIn 0.2s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; border-radius: 14px 14px 0 0; }
+        .modal-header h2 { font-size: 16px; font-weight: 600; }
+        .close-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: none; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-3); font-size: 18px; line-height: 1; transition: background 0.15s, color 0.15s; }
+        .close-btn:hover { background: var(--surface2); color: var(--text); }
+        .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 16px; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: var(--surface); border-radius: 0 0 14px 14px; }
+        .field { display: flex; flex-direction: column; gap: 5px; }
+        .field > label { font-size: 12px; font-weight: 500; color: var(--text-2); }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .form-error { background: var(--red-bg); color: var(--red); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; display: none; }
+        .form-success { background: var(--green-bg); color: var(--green); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; display: none; }
+        .divider { height: 1px; background: var(--border); }
+        .section-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+        .movement-type { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .movement-received { background: var(--green-bg); color: var(--green); }
+        .movement-sold { background: var(--red-bg); color: var(--red); }
+        .movement-transferred { background: var(--blue-bg); color: var(--blue); }
+        .movement-adjusted { background: var(--amber-bg); color: var(--amber); }
+        .movement-returned { background: var(--surface2); color: var(--text-2); }
+        @media (max-width: 900px) { .sidebar { width: 180px; } .main { margin-left: 180px; padding: 1.5rem; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1rem; } .field-row, .field-row-3 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-logo">inventory<span>.app</span></div>
+        <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    </aside>
+
+    <main class="main">
+        <div class="page-header">
+            <div>
+                <div class="page-title">Inventory Management</div>
+                <div class="page-subtitle">Track stock levels, movements, and warehouse locations</div>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="stats"></div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="inventory">Inventory</div>
+            <div class="tab" data-tab="receive">Receive Stock</div>
+            <div class="tab" data-tab="transfer">Transfer Stock</div>
+            <div class="tab" data-tab="adjust">Adjust Stock</div>
+            <div class="tab" data-tab="movements">Stock Movements</div>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div class="tab-content active" id="tab-inventory">
+            <div class="toolbar">
+                <div class="search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="inv-search" placeholder="Search product or SKU..." oninput="loadInventory()" />
+                </div>
+                <select id="inv-warehouse" onchange="loadInventory()" style="width:180px;">
+                    <option value="">All Warehouses</option>
+                </select>
+                <select id="inv-status" onchange="loadInventory()" style="width:160px;">
+                    <option value="">All Status</option>
+                    <option value="low_stock">Low Stock</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                    <option value="in_stock">In Stock</option>
+                    <option value="overstocked">Overstocked</option>
+                </select>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);">
+                    <input type="checkbox" id="inv-low-stock" onchange="loadInventory()" /> Low stock only
+                </label>
+                <button class="btn btn-sm" onclick="loadInventory()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    Refresh
+                </button>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th><th>SKU</th><th>Warehouse</th><th>Quantity</th>
+                            <th>Status</th><th>Reorder Point</th><th>Max Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Receive Stock Tab -->
+        <div class="tab-content" id="tab-receive">
+            <div class="table-card" style="max-width:600px;">
+                <div style="padding:1.5rem;">
+                    <div class="section-label" style="margin-bottom:1rem;">Receive Stock into Warehouse</div>
+                    <div class="field">
+                        <label>Product</label>
+                        <select id="recv-product"><option value="">Select product...</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Warehouse</label>
+                        <select id="recv-warehouse"><option value="">Select warehouse...</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Quantity</label>
+                        <input type="number" id="recv-quantity" min="1" placeholder="Enter quantity..." />
+                    </div>
+                    <div class="field">
+                        <label>Reason / Reference</label>
+                        <input type="text" id="recv-reference" placeholder="e.g. PO-2026-001" />
+                    </div>
+                    <div class="form-error" id="recv-error"></div>
+                    <div class="form-success" id="recv-success"></div>
+                    <button class="btn btn-success" onclick="receiveStock()" style="margin-top:1rem;width:100%;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Receive Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transfer Stock Tab -->
+        <div class="tab-content" id="tab-transfer">
+            <div class="table-card" style="max-width:600px;">
+                <div style="padding:1.5rem;">
+                    <div class="section-label" style="margin-bottom:1rem;">Transfer Stock Between Warehouses</div>
+                    <div class="field">
+                        <label>Product</label>
+                        <select id="xfer-product" onchange="updateAvailableStock()"><option value="">Select product...</option></select>
+                    </div>
+                    <div class="field">
+                        <label>From Warehouse</label>
+                        <select id="xfer-from" onchange="updateAvailableStock()"><option value="">Select source...</option></select>
+                    </div>
+                    
+                    <!-- Available Stock Indicator -->
+                    <div class="field" id="xfer-available-field" style="display:none;">
+                        <label>Available Stock</label>
+                        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <span id="xfer-available" style="font-size:14px;font-weight:600;color:var(--green);">0 units</span>
+                            <span style="color:var(--text-3);font-size:12px;">available in selected warehouse</span>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label>To Warehouse</label>
+                        <select id="xfer-to"><option value="">Select destination...</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Quantity</label>
+                        <input type="number" id="xfer-quantity" min="1" placeholder="Enter quantity..." oninput="validateTransferQuantity()" />
+                        <div id="xfer-qty-warning" style="display:none;margin-top:6px;font-size:12px;color:var(--red);">
+                            ⚠️ Quantity exceeds available stock
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Reason</label>
+                        <input type="text" id="xfer-reason" placeholder="Transfer reason..." />
+                    </div>
+                    <div class="form-error" id="xfer-error"></div>
+                    <div class="form-success" id="xfer-success"></div>
+                    <button class="btn btn-primary" id="xfer-submit-btn" onclick="transferStock()" style="margin-top:1rem;width:100%;" disabled>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        Select product and warehouse first
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjust Stock Tab -->
+        <div class="tab-content" id="tab-adjust">
+            <div class="table-card" style="max-width:600px;">
+                <div style="padding:1.5rem;">
+                    <div class="section-label" style="margin-bottom:1rem;">Adjust Stock (Correction)</div>
+                    <div class="field">
+                        <label>Product</label>
+                        <select id="adj-product"><option value="">Select product...</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Warehouse</label>
+                        <select id="adj-warehouse"><option value="">Select warehouse...</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Adjustment (+/-)</label>
+                        <input type="number" id="adj-quantity" placeholder="Positive to add, negative to remove..." />
+                    </div>
+                    <div class="field">
+                        <label>Reason (Required)</label>
+                        <input type="text" id="adj-reason" placeholder="e.g. Stock count correction, damaged goods..." />
+                    </div>
+                    <div class="form-error" id="adj-error"></div>
+                    <div class="form-success" id="adj-success"></div>
+                    <button class="btn btn-warning" onclick="adjustStock()" style="margin-top:1rem;width:100%;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Adjust Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Movements Tab -->
+        <div class="tab-content" id="tab-movements">
+            <div class="toolbar">
+                <select id="mov-warehouse" onchange="loadMovements()" style="width:180px;">
+                    <option value="">All Warehouses</option>
+                </select>
+                <select id="mov-type" onchange="loadMovements()" style="width:160px;">
+                    <option value="">All Types</option>
+                    <option value="received">Received</option>
+                    <option value="sold">Sold</option>
+                    <option value="transferred">Transferred</option>
+                    <option value="adjusted">Adjusted</option>
+                    <option value="returned">Returned</option>
+                </select>
+                <button class="btn btn-sm" onclick="loadMovements()">Refresh</button>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th><th>Product</th><th>Warehouse</th><th>Type</th>
+                            <th>Change</th><th>Reason</th><th>By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mov-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="auth.js"></script>
+<script>
+    const API = 'http://localhost:3000/api';
+    let products = [], warehouses = [], inventoryData = [];
+    let currentAvailableStock = 0;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+        RBAC.renderNavigation('#sidebar-nav');
+        
+        // Check warehouse role permissions
+        if (!Auth.hasPermission('inventory:read')) {
+            alert('You do not have permission to access inventory management.');
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        setupTabs();
+        loadDropdowns();
+        loadInventory();
+        loadMovements();
+    });
+
+    function setupTabs() {
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            });
+        });
+    }
+
+    async function loadDropdowns() {
+        try {
+            const [prodRes, whRes, invRes] = await Promise.all([
+                Auth.fetch(API + '/products'),
+                Auth.fetch(API + '/warehouses'),
+                Auth.fetch(API + '/stock/inventory')
+            ]);
+            const prodData = await prodRes.json();
+            const whData = await whRes.json();
+            const invData = await invRes.json();
+            
+            products = prodData.data || [];
+            warehouses = whData.data || [];
+            inventoryData = invData.data || [];
+
+            const prodOptions = products.map(p => `<option value="${p.id}">${p.name} (${p.sku})</option>`).join('');
+            const whOptions = warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+
+            ['recv-product', 'xfer-product', 'adj-product'].forEach(id => {
+                document.getElementById(id).innerHTML = '<option value="">Select product...</option>' + prodOptions;
+            });
+            ['recv-warehouse', 'adj-warehouse'].forEach(id => {
+                document.getElementById(id).innerHTML = '<option value="">Select warehouse...</option>' + whOptions;
+            });
+            document.getElementById('xfer-from').innerHTML = '<option value="">Select source...</option>' + whOptions;
+            document.getElementById('xfer-to').innerHTML = '<option value="">Select destination...</option>' + whOptions;
+            
+            const invWhSelect = document.getElementById('inv-warehouse');
+            invWhSelect.innerHTML = '<option value="">All Warehouses</option>' + whOptions;
+            
+            const movWhSelect = document.getElementById('mov-warehouse');
+            movWhSelect.innerHTML = '<option value="">All Warehouses</option>' + whOptions;
+        } catch (err) {
+            console.error('Failed to load dropdowns:', err);
+        }
+    }
+
+    // Update available stock display when product or source warehouse changes
+    function updateAvailableStock() {
+        const productId = document.getElementById('xfer-product').value;
+        const fromWhId = document.getElementById('xfer-from').value;
+        const availableField = document.getElementById('xfer-available-field');
+        const availableSpan = document.getElementById('xfer-available');
+        const submitBtn = document.getElementById('xfer-submit-btn');
+        
+        if (!productId || !fromWhId) {
+            availableField.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Select product and warehouse first';
+            currentAvailableStock = 0;
+            return;
+        }
+        
+        // Find matching inventory record
+        const invRecord = inventoryData.find(inv =>
+            inv.product_id == productId && inv.warehouse_id == fromWhId
+        );
+        
+        currentAvailableStock = invRecord ? parseInt(invRecord.quantity) : 0;
+        
+        availableField.style.display = 'flex';
+        
+        if (currentAvailableStock === 0) {
+            availableSpan.textContent = 'No stock available';
+            availableSpan.style.color = 'var(--red)';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'No stock available to transfer';
+        } else {
+            availableSpan.textContent = `${currentAvailableStock} units`;
+            availableSpan.style.color = 'var(--green)';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Transfer Stock';
+        }
+        
+        // Re-validate quantity if already entered
+        validateTransferQuantity();
+    }
+
+    // Validate transfer quantity against available stock
+    function validateTransferQuantity() {
+        const quantityInput = document.getElementById('xfer-quantity');
+        const warningEl = document.getElementById('xfer-qty-warning');
+        const submitBtn = document.getElementById('xfer-submit-btn');
+        const quantity = parseInt(quantityInput.value) || 0;
+        
+        if (quantity > currentAvailableStock) {
+            warningEl.style.display = 'block';
+            quantityInput.style.borderColor = 'var(--red)';
+            submitBtn.disabled = true;
+        } else if (quantity <= 0) {
+            warningEl.style.display = 'none';
+            quantityInput.style.borderColor = 'var(--border)';
+            submitBtn.disabled = true;
+        } else {
+            warningEl.style.display = 'none';
+            quantityInput.style.borderColor = 'var(--border)';
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function loadInventory() {
+        const search = document.getElementById('inv-search').value;
+        const warehouseId = document.getElementById('inv-warehouse').value;
+        const lowStock = document.getElementById('inv-low-stock').checked;
+        
+        let url = API + '/stock/inventory?';
+        if (search) url += `search=${encodeURIComponent(search)}&`;
+        if (warehouseId) url += `warehouse_id=${warehouseId}&`;
+        if (lowStock) url += 'low_stock=true&';
+        
+        try {
+            const res = await Auth.fetch(url);
+            const data = await res.json();
+            renderInventory(data.data || []);
+            renderStats(data.data || []);
+        } catch (err) {
+            console.error('Failed to load inventory:', err);
+        }
+    }
+
+    function renderInventory(items) {
+        const tbody = document.getElementById('inv-tbody');
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No inventory records found</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(item => {
+            const statusClass = {
+                'in_stock': 'badge-in-stock',
+                'low_stock': 'badge-low-stock',
+                'out_of_stock': 'badge-out-of-stock',
+                'overstocked': 'badge-overstocked'
+            }[item.stock_status] || '';
+            const statusLabel = item.stock_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            return `<tr>
+                <td><strong>${escHtml(item.product_name)}</strong></td>
+                <td><span class="mono">${escHtml(item.sku)}</span></td>
+                <td>${escHtml(item.warehouse_name)}</td>
+                <td><strong>${item.quantity}</strong></td>
+                <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                <td>${item.reorder_point}</td>
+                <td>${item.max_stock || '—'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderStats(items) {
+        const totalProducts = items.length;
+        const totalUnits = items.reduce((sum, i) => sum + parseInt(i.quantity), 0);
+        const lowStock = items.filter(i => i.stock_status === 'low_stock').length;
+        const outOfStock = items.filter(i => i.stock_status === 'out_of_stock').length;
+        
+        document.getElementById('stats').innerHTML = `
+            <div class="stat">
+                <div class="stat-label">Total Products</div>
+                <div class="stat-value">${totalProducts}</div>
+                <div class="stat-sub">across all warehouses</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Total Units</div>
+                <div class="stat-value">${totalUnits.toLocaleString()}</div>
+                <div class="stat-sub">in stock</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Low Stock</div>
+                <div class="stat-value" style="color:var(--amber)">${lowStock}</div>
+                <div class="stat-sub">need reordering</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Out of Stock</div>
+                <div class="stat-value" style="color:var(--red)">${outOfStock}</div>
+                <div class="stat-sub">unavailable</div>
+            </div>
+        `;
+    }
+
+    async function loadMovements() {
+        const warehouseId = document.getElementById('mov-warehouse').value;
+        const movementType = document.getElementById('mov-type').value;
+        
+        let url = API + '/stock/movements?limit=100&';
+        if (warehouseId) url += `warehouse_id=${warehouseId}&`;
+        if (movementType) url += `movement_type=${movementType}&`;
+        
+        try {
+            const res = await Auth.fetch(url);
+            const data = await res.json();
+            renderMovements(data.data || []);
+        } catch (err) {
+            console.error('Failed to load movements:', err);
+        }
+    }
+
+    function renderMovements(movements) {
+        const tbody = document.getElementById('mov-tbody');
+        if (!movements.length) {
+            tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No stock movements found</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = movements.map(m => {
+            const typeClass = 'movement-' + m.movement_type;
+            const changeDisplay = m.quantity_change > 0 ? `+${m.quantity_change}` : m.quantity_change;
+            const changeColor = m.quantity_change > 0 ? 'var(--green)' : m.quantity_change < 0 ? 'var(--red)' : 'var(--text-2)';
+            return `<tr>
+                <td><span class="mono">${new Date(m.created_at).toLocaleDateString()} ${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></td>
+                <td>${escHtml(m.product_name)}</td>
+                <td>${escHtml(m.warehouse_name)}</td>
+                <td><span class="movement-type ${typeClass}">${m.movement_type}</span></td>
+                <td style="color:${changeColor};font-weight:600;">${changeDisplay}</td>
+                <td>${m.reason ? escHtml(m.reason) : '<span style="color:var(--text-3)">—</span>'}</td>
+                <td>${m.performed_by_name ? escHtml(m.performed_by_name) : '<span style="color:var(--text-3)">System</span>'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function receiveStock() {
+        const productId = document.getElementById('recv-product').value;
+        const warehouseId = document.getElementById('recv-warehouse').value;
+        const quantity = parseInt(document.getElementById('recv-quantity').value);
+        const reference = document.getElementById('recv-reference').value;
+        const errorEl = document.getElementById('recv-error');
+        const successEl = document.getElementById('recv-success');
+        
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+        
+        if (!productId || !warehouseId || !quantity || quantity <= 0) {
+            errorEl.textContent = 'Please fill in all required fields.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        
+        try {
+            const user = Auth.getUser();
+            const res = await Auth.fetch(API + '/stock/receive', {
+                method: 'POST',
+                body: JSON.stringify({
+                    product_id: productId,
+                    warehouse_id: warehouseId,
+                    quantity: quantity,
+                    reason: 'Stock received',
+                    reference_number: reference || null,
+                    performed_by: user.id
+                })
+            });
+            const data = await res.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || 'Receive failed');
+            }
+            
+            successEl.textContent = data.message;
+            successEl.style.display = 'block';
+            document.getElementById('recv-quantity').value = '';
+            document.getElementById('recv-reference').value = '';
+            
+            // Refresh all data including dropdowns
+            await loadDropdowns();
+            loadInventory();
+            loadMovements();
+            
+            // Hide success message after 5 seconds
+            setTimeout(() => {
+                successEl.style.display = 'none';
+            }, 5000);
+        } catch (err) {
+            errorEl.textContent = err.message || 'Failed to receive stock. Please try again.';
+            errorEl.style.display = 'block';
+        }
+    }
+
+    async function transferStock() {
+        const productId = document.getElementById('xfer-product').value;
+        const fromWh = document.getElementById('xfer-from').value;
+        const toWh = document.getElementById('xfer-to').value;
+        const quantity = parseInt(document.getElementById('xfer-quantity').value);
+        const reason = document.getElementById('xfer-reason').value;
+        const errorEl = document.getElementById('xfer-error');
+        const successEl = document.getElementById('xfer-success');
+        const submitBtn = document.getElementById('xfer-submit-btn');
+        
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+        
+        // Validation checks
+        if (!productId || !fromWh || !toWh) {
+            errorEl.textContent = 'Please select product and warehouses.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!quantity || quantity <= 0) {
+            errorEl.textContent = 'Please enter a valid quantity greater than 0.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (fromWh === toWh) {
+            errorEl.textContent = 'Source and destination warehouses must be different.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (quantity > currentAvailableStock) {
+            errorEl.textContent = `Cannot transfer ${quantity} units. Only ${currentAvailableStock} units available in source warehouse.`;
+            errorEl.style.display = 'block';
+            return;
+        }
+        
+        // Disable button during transfer
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Transferring...';
+        
+        try {
+            const user = Auth.getUser();
+            const res = await Auth.fetch(API + '/stock/transfer', {
+                method: 'POST',
+                body: JSON.stringify({
+                    product_id: productId,
+                    from_warehouse_id: fromWh,
+                    to_warehouse_id: toWh,
+                    quantity: quantity,
+                    reason: reason || 'Stock transfer',
+                    performed_by: user.id
+                })
+            });
+            const data = await res.json();
+            
+            // Success
+            successEl.textContent = data.message || 'Transfer completed successfully!';
+            successEl.style.display = 'block';
+            
+            // Reset form
+            document.getElementById('xfer-quantity').value = '';
+            document.getElementById('xfer-reason').value = '';
+            document.getElementById('xfer-available-field').style.display = 'none';
+            
+            // Reload data
+            await loadDropdowns(); // Refresh inventory data
+            loadInventory();
+            loadMovements();
+            
+            setTimeout(() => {
+                successEl.style.display = 'none';
+            }, 5000);
+        } catch (err) {
+            errorEl.textContent = err.message || 'Transfer failed. Please try again.';
+            errorEl.style.display = 'block';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Transfer Stock';
+        }
+    }
+
+    async function adjustStock() {
+        const productId = document.getElementById('adj-product').value;
+        const warehouseId = document.getElementById('adj-warehouse').value;
+        const quantity = parseInt(document.getElementById('adj-quantity').value);
+        const reason = document.getElementById('adj-reason').value;
+        const errorEl = document.getElementById('adj-error');
+        const successEl = document.getElementById('adj-success');
+        
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+        
+        if (!productId || !warehouseId || !quantity || !reason) {
+            errorEl.textContent = 'Please fill in all required fields. Reason is mandatory.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        
+        try {
+            const user = Auth.getUser();
+            const res = await Auth.fetch(API + '/stock/adjust', {
+                method: 'POST',
+                body: JSON.stringify({
+                    product_id: productId,
+                    warehouse_id: warehouseId,
+                    quantity: quantity,
+                    reason: reason,
+                    performed_by: user.id
+                })
+            });
+            const data = await res.json();
+            successEl.textContent = data.message;
+            successEl.style.display = 'block';
+            document.getElementById('adj-quantity').value = '';
+            document.getElementById('adj-reason').value = '';
+            loadInventory();
+            loadMovements();
+        } catch (err) {
+            errorEl.textContent = err.message;
+            errorEl.style.display = 'block';
+        }
+    }
+
+    function escHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
+    }
+</script>
+</body>
+</html>

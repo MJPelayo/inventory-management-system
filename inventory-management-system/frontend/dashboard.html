@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0efe9;
+            --border: #e2e0d8; --border-strong: #c8c5bb;
+            --text: #1a1917; --text-2: #6b6860; --text-3: #9e9b94; --accent: #1a1917;
+            --green: #2d6a4f; --green-bg: #d8f3dc; --red: #9b2226; --red-bg: #ffe4e6;
+            --amber: #7d4e00; --amber-bg: #fff3cd; --blue: #1d3557; --blue-bg: #e3f2fd;
+            --radius: 10px; --radius-sm: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 2rem; position: fixed; top: 0; left: 0; bottom: 0; }
+        .sidebar-logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.05em; padding: 0 0.5rem; }
+        .sidebar-logo span { color: var(--text-3); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-2); cursor: pointer; transition: all 0.15s; font-weight: 400; text-decoration: none; }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: var(--accent); color: #fff; font-weight: 500; }
+        .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+        .nav-item.active .nav-icon { opacity: 1; }
+        .main { margin-left: 220px; flex: 1; padding: 2rem 2.5rem; max-width: 1200px; }
+        .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; }
+        .page-title { font-size: 22px; font-weight: 600; }
+        .page-subtitle { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+        .welcome-card { background: linear-gradient(135deg, var(--accent) 0%, #444 100%); border-radius: var(--radius); padding: 2rem; color: #fff; margin-bottom: 2rem; }
+        .welcome-card h1 { font-size: 24px; font-weight: 600; margin-bottom: 0.5rem; }
+        .welcome-card p { opacity: 0.8; font-size: 14px; }
+        .role-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; margin-top: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; box-shadow: var(--shadow); }
+        .stat-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+        .stat-icon.blue { background: var(--blue-bg); color: var(--blue); }
+        .stat-icon.green { background: var(--green-bg); color: var(--green); }
+        .stat-icon.amber { background: var(--amber-bg); color: var(--amber); }
+        .stat-icon.red { background: var(--red-bg); color: var(--red); }
+        .stat-label { font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+        .stat-value { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .stat-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+        .quick-actions { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; box-shadow: var(--shadow); margin-bottom: 2rem; }
+        .quick-actions-title { font-size: 14px; font-weight: 600; margin-bottom: 1rem; }
+        .quick-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .quick-action-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface2); cursor: pointer; transition: all 0.15s; text-decoration: none; color: var(--text); }
+        .quick-action-btn:hover { background: var(--border); transform: translateY(-2px); }
+        .quick-action-btn svg { width: 24px; height: 24px; color: var(--text-2); }
+        .quick-action-btn span { font-size: 12px; font-weight: 500; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; box-shadow: var(--shadow); }
+        .info-card-title { font-size: 14px; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .permission-list { list-style: none; font-size: 12px; color: var(--text-2); }
+        .permission-list li { padding: 4px 0; border-bottom: 1px dashed var(--border); }
+        .permission-list li:last-child { border-bottom: none; }
+        .permission-check { color: var(--green); margin-right: 6px; }
+        @media (max-width: 900px) { .sidebar { width: 180px; } .main { margin-left: 180px; padding: 1.5rem; } }
+        @media (max-width: 640px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1rem; } .info-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-logo">inventory<span>.app</span></div>
+        <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    </aside>
+
+    <main class="main">
+        <div class="page-header">
+            <div>
+                <div class="page-title">Dashboard</div>
+                <div class="page-subtitle">Overview of your inventory system</div>
+            </div>
+        </div>
+
+        <div class="welcome-card">
+            <h1 id="welcome-message">Welcome!</h1>
+            <p id="welcome-subtitle">Here's what's happening in your inventory today.</p>
+            <span class="role-badge" id="role-badge">Role</span>
+        </div>
+
+        <div class="stats-grid" id="stats-grid">
+            <!-- Stats will be rendered based on role -->
+        </div>
+
+        <div class="quick-actions" id="quick-actions">
+            <div class="quick-actions-title">Quick Actions</div>
+            <div class="quick-actions-grid" id="quick-actions-grid">
+                <!-- Quick actions rendered based on permissions -->
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-card-title">Your Permissions</div>
+                <ul class="permission-list" id="permission-list">
+                    <!-- Permissions listed here -->
+                </ul>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">System Info</div>
+                <div style="font-size: 12px; color: var(--text-2); line-height: 1.8;">
+                    <div><strong>API Base:</strong> http://localhost:3000/api</div>
+                    <div><strong>Session expires:</strong> 8 hours</div>
+                    <div><strong>Last login:</strong> <span id="last-login">-</span></div>
+                    <div><strong>User ID:</strong> <span id="user-id">-</span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="auth.js"></script>
+<script>
+    // Role-based dashboard content
+    const ROLE_DASHBOARDS = {
+        admin: {
+            title: 'Admin Dashboard',
+            subtitle: 'Full system access and management',
+            stats: [
+                { icon: 'users', label: 'User Management', value: 'Access', sub: 'Create, edit, delete users', color: 'blue' },
+                { icon: 'package', label: 'Products', value: 'Full', sub: 'All product operations', color: 'green' },
+                { icon: 'warehouse', label: 'Warehouses', value: 'Full', sub: 'All warehouse operations', color: 'amber' },
+                { icon: 'chart', label: 'Reports', value: 'All', sub: 'System-wide reports', color: 'red' }
+            ],
+            quickActions: [
+                { icon: 'users', label: 'Manage Users', href: 'users.html', permission: 'user:create' },
+                { icon: 'package', label: 'Add Product', href: '#', action: 'openProductModal', permission: 'product:create' },
+                { icon: 'warehouse', label: 'Add Warehouse', href: '#', permission: 'warehouse:create' },
+                { icon: 'file', label: 'View Reports', href: 'reports.html', permission: 'report:view_all' }
+            ]
+        },
+        sales: {
+            title: 'Sales Dashboard',
+            subtitle: 'Manage orders and customer relationships',
+            stats: [
+                { icon: 'cart', label: 'Orders', value: 'Manage', sub: 'Create and track orders', color: 'blue' },
+                { icon: 'package', label: 'Products', value: 'View', sub: 'Browse catalog', color: 'green' },
+                { icon: 'users', label: 'Customers', value: 'Manage', sub: 'Customer database', color: 'amber' },
+                { icon: 'chart', label: 'My Reports', value: 'View', sub: 'Sales performance', color: 'red' }
+            ],
+            quickActions: [
+                { icon: 'cart', label: 'New Order', href: 'orders.html', permission: 'order:create' },
+                { icon: 'package', label: 'Browse Products', href: 'Products.html', permission: 'product:read' },
+                { icon: 'users', label: 'Customers', href: 'customers.html', permission: 'customer:create' },
+                { icon: 'chart', label: 'My Reports', href: 'reports-sales.html', permission: 'report:view_own' }
+            ]
+        },
+        warehouse: {
+            title: 'Warehouse Dashboard',
+            subtitle: 'Manage inventory and stock movements',
+            stats: [
+                { icon: 'boxes', label: 'Inventory', value: 'Manage', sub: 'Stock levels & locations', color: 'blue' },
+                { icon: 'package', label: 'Products', value: 'View', sub: 'Product catalog', color: 'green' },
+                { icon: 'warehouse', label: 'Warehouses', value: 'Manage', sub: 'Warehouse operations', color: 'amber' },
+                { icon: 'exchange', label: 'Movements', value: 'Track', sub: 'Stock movements', color: 'red' }
+            ],
+            quickActions: [
+                { icon: 'boxes', label: 'View Inventory', href: 'inventory.html', permission: 'inventory:read' },
+                { icon: 'package', label: 'Products', href: 'Products.html', permission: 'product:read' },
+                { icon: 'warehouse', label: 'Warehouses', href: 'Warehouse.html', permission: 'warehouse:read' },
+                { icon: 'exchange', label: 'Stock Movement', href: 'stock-movements.html', permission: 'stock:receive' }
+            ]
+        },
+        supply: {
+            title: 'Supply Dashboard',
+            subtitle: 'Manage suppliers and purchase orders',
+            stats: [
+                { icon: 'truck', label: 'Suppliers', value: 'Manage', sub: 'Supplier relationships', color: 'blue' },
+                { icon: 'file', label: 'Purchase Orders', value: 'Create', sub: 'Order from suppliers', color: 'green' },
+                { icon: 'package', label: 'Products', value: 'View', sub: 'Product catalog', color: 'amber' },
+                { icon: 'chart', label: 'Supply Reports', value: 'View', sub: 'Procurement analytics', color: 'red' }
+            ],
+            quickActions: [
+                { icon: 'truck', label: 'Manage Suppliers', href: 'suppliers.html', permission: 'supplier:create' },
+                { icon: 'file', label: 'New Purchase Order', href: 'supply-orders.html', permission: 'supply:create' },
+                { icon: 'package', label: 'Products', href: 'Products.html', permission: 'product:read' },
+                { icon: 'chart', label: 'Supply Reports', href: 'reports-supply.html', permission: 'report:view_supply' }
+            ]
+        },
+        sales_manager: {
+            title: 'Sales Manager Dashboard',
+            subtitle: 'Manage supplier communications, discounts, and warehouse transactions',
+            stats: [
+                { icon: 'mail', label: 'Supplier Messages', value: 'Communicate', sub: 'Send inquiries & quotes', color: 'blue' },
+                { icon: 'tag', label: 'Product Discounts', value: 'Manage', sub: 'Create & manage promotions', color: 'green' },
+                { icon: 'exchange', label: 'Warehouse Transactions', value: 'View', sub: 'Monitor stock movements', color: 'amber' },
+                { icon: 'cart', label: 'Orders', value: 'Full Access', sub: 'Create & approve discounts', color: 'red' }
+            ],
+            quickActions: [
+                { icon: 'mail', label: 'Supplier Panel', href: 'sales-manager.html', permission: 'supplier:communicate' },
+                { icon: 'package', label: 'Browse Products', href: 'Products.html', permission: 'product:read' },
+                { icon: 'cart', label: 'Orders', href: 'orders.html', permission: 'order:create' },
+                { icon: 'users', label: 'Customers', href: 'customers.html', permission: 'customer:read' }
+            ]
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check authentication
+        if (!Auth.isAuthenticated()) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const user = Auth.getUser();
+        const role = user.role;
+        const dashboard = ROLE_DASHBOARDS[role] || ROLE_DASHBOARDS.sales;
+
+        // Render navigation
+        RBAC.renderNavigation('#sidebar-nav');
+
+        // Update welcome message
+        document.getElementById('welcome-message').textContent = `Welcome back, ${user.name}!`;
+        document.getElementById('welcome-subtitle').textContent = dashboard.subtitle;
+        document.getElementById('role-badge').textContent = role.charAt(0).toUpperCase() + role.slice(1) + ' Role';
+
+        // Render stats
+        const statsHtml = dashboard.stats.map(stat => `
+            <div class="stat-card">
+                <div class="stat-icon ${stat.color}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        ${getIconPath(stat.icon)}
+                    </svg>
+                </div>
+                <div class="stat-label">${stat.label}</div>
+                <div class="stat-value">${stat.value}</div>
+                <div class="stat-sub">${stat.sub}</div>
+            </div>
+        `).join('');
+        document.getElementById('stats-grid').innerHTML = statsHtml;
+
+        // Render quick actions based on permissions
+        const actionsHtml = dashboard.quickActions.map(action => {
+            if (action.permission && !Auth.hasPermission(action.permission)) {
+                return '';
+            }
+            return `
+                <a class="quick-action-btn" href="${action.href}" ${action.action ? 'onclick="' + action.action + '()"' : ''}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        ${getIconPath(action.icon)}
+                    </svg>
+                    <span>${action.label}</span>
+                </a>
+            `;
+        }).filter(Boolean).join('');
+        document.getElementById('quick-actions-grid').innerHTML = actionsHtml;
+
+        // Render permission list
+        const permissions = Auth.getAuthData()?.permissions || [];
+        const permissionGroups = {};
+        permissions.forEach(p => {
+            const [category] = p.split(':');
+            if (!permissionGroups[category]) permissionGroups[category] = [];
+            permissionGroups[category].push(p);
+        });
+
+        const permissionHtml = Object.entries(permissionGroups).map(([category, perms]) => `
+            <li><strong>${category.charAt(0).toUpperCase() + category.slice(1)}</strong>: ${perms.join(', ')}</li>
+        `).join('');
+        document.getElementById('permission-list').innerHTML = permissionHtml;
+
+        // User info
+        document.getElementById('last-login').textContent = user.last_login 
+            ? new Date(user.last_login).toLocaleString() 
+            : 'First login';
+        document.getElementById('user-id').textContent = user.id;
+    });
+
+    function getIconPath(name) {
+        const icons = {
+            users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+            package: '<path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+            warehouse: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+            chart: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+            cart: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+            boxes: '<path d="M2.97 12.92A2 2 0 0 0 2 14.61v3.64a2 2 0 0 0 .97 1.69l8 4.44a2 2 0 0 0 2.06 0l8-4.44a2 2 0 0 0 .97-1.69v-3.64a2 2 0 0 0-.97-1.69l-8-4.44a2 2 0 0 0-2.06 0l-8 4.44z"/>',
+            exchange: '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+            truck: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+            file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+            mail: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+            tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+            briefcase: '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'
+        };
+        return icons[name] || icons.package;
+    }
+</script>
+</body>
+</html>

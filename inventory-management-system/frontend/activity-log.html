@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activity Log - Inventory Management</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f7f6f3;
+            --surface: #ffffff;
+            --surface2: #f0efe9;
+            --border: #e2e0d8;
+            --border-strong: #c8c5bb;
+            --text: #1a1917;
+            --text-2: #6b6860;
+            --text-3: #9e9b94;
+            --accent: #1a1917;
+            --green: #2d6a4f;
+            --green-bg: #d8f3dc;
+            --red: #9b2226;
+            --red-bg: #ffe4e6;
+            --amber: #7d4e00;
+            --amber-bg: #fff3cd;
+            --blue: #1d3557;
+            --blue-bg: #e3f2fd;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        .sidebar-logo {
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            letter-spacing: 0.05em;
+            padding: 0 0.5rem;
+        }
+
+        .sidebar-logo span {
+            color: var(--text-3);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-2);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 400;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+
+        .nav-item.active .nav-icon {
+            opacity: 1;
+        }
+
+        .main {
+            margin-left: 220px;
+            flex: 1;
+            padding: 2rem 2.5rem;
+            max-width: 1400px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-3);
+            margin-top: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.1rem 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            color: var(--text-3);
+            margin-top: 3px;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+            max-width: 320px;
+        }
+
+        .search-wrap svg {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-3);
+            width: 14px;
+            height: 14px;
+        }
+
+        .search-wrap input {
+            padding-left: 34px;
+            width: 100%;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            width: 100%;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(26, 25, 23, 0.08);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9b94' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: var(--surface2);
+            border-color: var(--border-strong);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: #333;
+            border-color: #333;
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: #fff;
+            border-color: var(--green);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--surface2);
+        }
+
+        th {
+            padding: 10px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background 0.1s;
+        }
+
+        tbody tr:hover {
+            background: #fbfaf8;
+        }
+
+        .mono {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: var(--text-2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-3);
+            font-size: 14px;
+        }
+
+        .empty-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .empty-title {
+            font-weight: 500;
+            color: var(--text-2);
+            margin-bottom: 4px;
+        }
+
+        /* Action badges */
+        .action-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .action-create {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .action-update {
+            background: var(--blue-bg);
+            color: var(--blue);
+        }
+
+        .action-delete {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .action-transfer {
+            background: var(--amber-bg);
+            color: var(--amber);
+        }
+
+        .action-receive {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .action-adjust {
+            background: var(--amber-bg);
+            color: var(--amber);
+        }
+
+        .action-login {
+            background: var(--surface2);
+            color: var(--text-2);
+        }
+
+        .action-logout {
+            background: var(--surface2);
+            color: var(--text-2);
+        }
+
+        /* Entity type badges */
+        .entity-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 500;
+            background: var(--surface2);
+            color: var(--text-2);
+        }
+
+        /* Expandable details */
+        .expand-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            color: var(--text-3);
+            font-size: 12px;
+        }
+
+        .expand-btn:hover {
+            color: var(--accent);
+        }
+
+        .log-details {
+            display: none;
+            padding: 12px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .log-details.open {
+            display: block;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--text-3);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .old-value {
+            color: var(--red);
+            text-decoration: line-through;
+        }
+
+        .new-value {
+            color: var(--green);
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 180px;
+            }
+
+            .main {
+                margin-left: 180px;
+                padding: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo">inventory<span>.app</span></div>
+            <nav class="sidebar-nav" id="sidebar-nav"></nav>
+        </aside>
+
+        <main class="main">
+            <div class="page-header">
+                <div>
+                    <div class="page-title">Activity Log</div>
+                    <div class="page-subtitle">Track all warehouse and stock management actions</div>
+                </div>
+                <button class="btn btn-primary" onclick="loadAuditLogs()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10" />
+                        <polyline points="1 20 1 14 7 14" />
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+
+            <div class="stats-grid" id="stats"></div>
+
+            <div class="toolbar">
+                <div class="search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" id="search" placeholder="Search user, entity, or notes..."
+                        oninput="applyFilters()" />
+                </div>
+                <select id="filter-user" onchange="applyFilters()" style="width:160px;">
+                    <option value="">All Users</option>
+                </select>
+                <select id="filter-action" onchange="applyFilters()" style="width:140px;">
+                    <option value="">All Actions</option>
+                    <option value="create">Create</option>
+                    <option value="update">Update</option>
+                    <option value="delete">Delete</option>
+                    <option value="transfer">Transfer</option>
+                    <option value="receive">Receive</option>
+                    <option value="adjust">Adjust</option>
+                </select>
+                <select id="filter-entity" onchange="applyFilters()" style="width:140px;">
+                    <option value="">All Entities</option>
+                    <option value="warehouse">Warehouse</option>
+                    <option value="product">Product</option>
+                    <option value="inventory">Inventory</option>
+                    <option value="user">User</option>
+                </select>
+                <input type="date" id="filter-date" onchange="applyFilters()" style="width:150px;" />
+            </div>
+
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Details</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-tbody"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        const API = 'http://localhost:3000/api';
+        let allLogs = [];
+        let users = new Set();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!Auth.isAuthenticated()) { window.location.href = 'login.html'; return; }
+            RBAC.renderNavigation('#sidebar-nav');
+
+            // Check permissions
+            if (!Auth.hasPermission('warehouse:read') && !Auth.isAdmin()) {
+                alert('You do not have permission to view activity logs.');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            loadAuditLogs();
+            loadSummary();
+        });
+
+        async function loadAuditLogs() {
+            try {
+                const res = await Auth.fetch(API + '/audit/logs?limit=500');
+                const data = await res.json();
+                allLogs = data.data || [];
+
+                // Populate user filter
+                allLogs.forEach(log => {
+                    if (log.user_name) users.add(log.user_name);
+                });
+                const userFilter = document.getElementById('filter-user');
+                userFilter.innerHTML = '<option value="">All Users</option>' +
+                    Array.from(users).map(u => `<option value="${u}">${u}</option>`).join('');
+
+                applyFilters();
+            } catch (err) {
+                console.error('Failed to load audit logs:', err);
+                document.getElementById('log-tbody').innerHTML = `
+                <tr><td colspan="6"><div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-title">Failed to load activity logs</div>
+                    <div style="color:var(--text-3);font-size:13px;margin-top:4px">${err.message}</div>
+                </div></td></tr>`;
+            }
+        }
+
+        async function loadSummary() {
+            try {
+                const res = await Auth.fetch(API + '/audit/summary');
+                const data = await res.json();
+                renderStats(data.data);
+            } catch (err) {
+                console.error('Failed to load summary:', err);
+            }
+        }
+
+        function renderStats(summaryData) {
+            const s = summaryData.summary || {};
+            document.getElementById('stats').innerHTML = `
+            <div class="stat">
+                <div class="stat-label">Total Actions</div>
+                <div class="stat-value">${s.total_actions || 0}</div>
+                <div class="stat-sub">all time</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Active Users</div>
+                <div class="stat-value">${s.unique_users || 0}</div>
+                <div class="stat-sub">unique users</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Entity Types</div>
+                <div class="stat-value">${s.affected_entity_types || 0}</div>
+                <div class="stat-sub">affected</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Active Days</div>
+                <div class="stat-value">${s.active_days || 0}</div>
+                <div class="stat-sub">with activity</div>
+            </div>
+        `;
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const userFilter = document.getElementById('filter-user').value;
+            const actionFilter = document.getElementById('filter-action').value;
+            const entityFilter = document.getElementById('filter-entity').value;
+            const dateFilter = document.getElementById('filter-date').value;
+
+            const filtered = allLogs.filter(log => {
+                const matchSearch = !search ||
+                    (log.user_name && log.user_name.toLowerCase().includes(search)) ||
+                    (log.entity_name && log.entity_name.toLowerCase().includes(search)) ||
+                    (log.notes && log.notes.toLowerCase().includes(search));
+                const matchUser = !userFilter || log.user_name === userFilter;
+                const matchAction = !actionFilter || log.action === actionFilter;
+                const matchEntity = !entityFilter || log.entity_type === entityFilter;
+                const matchDate = !dateFilter || new Date(log.created_at).toISOString().split('T')[0] === dateFilter;
+                return matchSearch && matchUser && matchAction && matchEntity && matchDate;
+            });
+
+            renderLogs(filtered);
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('log-tbody');
+            if (!logs.length) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No activity logs found</div></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => {
+                const actionClass = 'action-' + log.action;
+                const timestamp = new Date(log.created_at).toLocaleString();
+                const hasDetails = log.old_values || log.new_values;
+
+                return `<tr>
+                <td><span class="mono" style="font-size:11px;">${timestamp}</span></td>
+                <td>
+                    <div style="font-weight:500;">${escHtml(log.user_name || 'System')}</div>
+                    ${log.performed_by_role ? `<span class="entity-badge">${log.performed_by_role}</span>` : ''}
+                </td>
+                <td><span class="action-badge ${actionClass}">${log.action}</span></td>
+                <td>
+                    <span class="entity-badge">${log.entity_type}</span>
+                    ${log.entity_name ? `<div style="margin-top:4px;font-weight:500;">${escHtml(log.entity_name)}</div>` : ''}
+                </td>
+                <td>
+                    ${hasDetails ? `<button class="expand-btn" onclick="toggleDetails(${log.id})">Show details ▼</button>` : '<span style="color:var(--text-3)">—</span>'}
+                    ${hasDetails ? `
+                        <div class="log-details" id="details-${log.id}">
+                            ${log.old_values ? `
+                                <div style="margin-bottom:8px;font-weight:500;color:var(--text-2);">Changes:</div>
+                                ${renderChanges(log.new_values)}
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </td>
+                <td style="color:var(--text-2);max-width:200px;">${escHtml(log.notes || '')}</td>
+            </tr>`;
+            }).join('');
+        }
+
+        function renderChanges(newValues) {
+            if (!newValues || !newValues.changes) return '';
+            const changes = newValues.changes;
+            return Object.entries(changes).map(([key, change]) => `
+            <div class="detail-row">
+                <span class="detail-label">${key}:</span>
+                <span>
+                    <span class="old-value">${change.old !== null ? change.old : '—'}</span>
+                    →
+                    <span class="new-value">${change.new !== null ? change.new : '—'}</span>
+                </span>
+            </div>
+        `).join('');
+        }
+
+        function toggleDetails(id) {
+            const details = document.getElementById(`details-${id}`);
+            const btn = event.target;
+            if (details.classList.contains('open')) {
+                details.classList.remove('open');
+                btn.textContent = 'Show details ▼';
+            } else {
+                details.classList.add('open');
+                btn.textContent = 'Hide details ▲';
+            }
+        }
+
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+        }
+    </script>
+</body>
+
+</html>

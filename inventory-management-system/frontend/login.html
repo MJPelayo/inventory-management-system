@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0efe9;
+            --border: #e2e0d8; --border-strong: #c8c5bb;
+            --text: #1a1917; --text-2: #6b6860; --text-3: #9e9b94; --accent: #1a1917;
+            --red: #9b2226; --red-bg: #ffe4e6;
+            --radius: 10px; --radius-sm: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+        }
+        body { 
+            font-family: 'DM Sans', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh; 
+            font-size: 14px; 
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+        }
+        .login-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem 2rem;
+        }
+        .logo {
+            font-family: 'DM Mono', monospace;
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text);
+            letter-spacing: 0.05em;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .logo span { color: var(--text-3); }
+        .subtitle {
+            text-align: center;
+            color: var(--text-3);
+            font-size: 13px;
+            margin-bottom: 2rem;
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 1.25rem;
+        }
+        .field label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-2);
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            width: 100%;
+        }
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(26,25,23,0.08);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #333;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: var(--red-bg);
+            color: var(--red);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-size: 13px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .demo-credentials {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .demo-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.75rem;
+        }
+        .demo-list {
+            font-size: 12px;
+            color: var(--text-2);
+        }
+        .demo-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .demo-item:last-child {
+            border-bottom: none;
+        }
+        .demo-role {
+            font-weight: 500;
+            color: var(--text);
+        }
+        .demo-email {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--text-3);
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo">inventory<span>.app</span></div>
+            <p class="subtitle">Sign in to your account</p>
+            
+            <div class="error-message" id="error-message"></div>
+            
+            <form id="login-form">
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="your@email.com"
+                        required
+                        autocomplete="email"
+                    />
+                </div>
+                
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    />
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="demo-credentials">
+                <div class="demo-title">Demo Credentials</div>
+                <div class="demo-list">
+                    <div class="demo-item">
+                        <span class="demo-role">Admin</span>
+                        <span class="demo-email">admin@ims.com / admin123</span>
+                    </div>
+                    <div class="demo-item">
+                        <span class="demo-role">Sales</span>
+                        <span class="demo-email">sales@ims.com / sales123</span>
+                    </div>
+                    <div class="demo-item">
+                        <span class="demo-role">Warehouse</span>
+                        <span class="demo-email">warehouse@ims.com / warehouse123</span>
+                    </div>
+                    <div class="demo-item">
+                        <span class="demo-role">Supply</span>
+                        <span class="demo-email">supply@ims.com / supply123</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="auth.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (Auth.isAuthenticated()) {
+            const user = Auth.getUser();
+            if (user) {
+                window.location.href = Auth.getDashboardForRole(user.role);
+            }
+        }
+        
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('error-message');
+            const loginBtn = document.getElementById('login-btn');
+            
+            // Clear previous errors
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="loading"></span>Signing in...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || data.error || 'Login failed');
+                }
+                
+                // Store auth data
+                Auth.login(data.data);
+                
+                // Redirect based on role
+                window.location.href = Auth.getDashboardForRole(data.data.user.role);
+                
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>
