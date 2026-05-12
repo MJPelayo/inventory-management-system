@@ -1,6 +1,6 @@
 /* frontend/css/theme-switcher.css */
 /* ======================================================== */
-/* THEME SELECTOR - Professional Dropdown */
+/* ADVANCED THEME SWITCHER - Enterprise Dropdown */
 /* ======================================================== */
 
 .theme-selector {
@@ -10,54 +10,89 @@
 .theme-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 14px;
-    background: var(--bg-tertiary);
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    font-family: var(--font-sans);
-    font-size: 0.8rem;
-    font-weight: 500;
+    border-radius: 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
     color: var(--text-primary);
     cursor: pointer;
     transition: var(--transition);
+    box-shadow: var(--shadow-sm);
 }
 
 .theme-btn:hover {
-    background: var(--bg-hover);
-    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.theme-current-icon {
+    font-size: 1rem;
 }
 
 .dropdown-arrow {
     font-size: 0.7rem;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
 .theme-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 10px);
     right: 0;
-    margin-top: 8px;
+    width: 320px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    min-width: 170px;
-    z-index: 1000;
+    border-radius: 20px;
     overflow: hidden;
+    box-shadow: var(--shadow-xl);
+    z-index: 1200;
+    display: none;
+}
+
+.theme-dropdown.open {
+    display: block;
+    animation: dropdownFade 0.25s ease;
+}
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.theme-dropdown-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.theme-dropdown-header h4 {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.theme-dropdown-header p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .theme-option {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 12px;
     width: 100%;
-    padding: 10px 16px;
+    padding: 16px 20px;
     background: transparent;
     border: none;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    color: var(--text-primary);
     cursor: pointer;
     transition: var(--transition);
     text-align: left;
@@ -69,11 +104,41 @@
 
 .theme-option.active {
     background: var(--primary-light);
-    color: var(--primary);
-    font-weight: 500;
 }
 
-.theme-option.active::before {
-    content: "✓ ";
-    font-weight: 600;
+.theme-left {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.theme-emoji {
+    font-size: 1.6rem;
+}
+
+.theme-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.theme-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.theme-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.theme-check {
+    font-size: 1rem;
+    color: var(--primary);
+    opacity: 0;
+}
+
+.theme-option.active .theme-check {
+    opacity: 1;
 }

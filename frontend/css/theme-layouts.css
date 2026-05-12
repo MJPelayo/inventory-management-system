@@ -1,0 +1,249 @@
+/* ========================================================
+   ENTERPRISE THEME LAYOUT SYSTEM
+   Dynamic Layout Personalities Per Theme
+   ======================================================== */
+
+/* ========================================================
+   CLASSIC THEME
+   Executive Enterprise
+   ======================================================== */
+
+[data-theme="classic"] .sidebar {
+    backdrop-filter: blur(10px);
+}
+
+[data-theme="classic"] .card {
+    border-radius: 14px;
+    border: 1px solid var(--border);
+}
+
+[data-theme="classic"] .stat {
+    border-left: 4px solid var(--primary);
+}
+
+[data-theme="classic"] .btn-primary {
+    letter-spacing: 0.02em;
+}
+
+/* ========================================================
+   CRIMSON THEME
+   Sales Command Center
+   ======================================================== */
+
+[data-theme="crimson"] .card {
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+}
+
+[data-theme="crimson"] .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(220,38,38,0.06), transparent);
+    pointer-events: none;
+}
+
+[data-theme="crimson"] .stat {
+    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    border: 1px solid rgba(220,38,38,0.15);
+}
+
+[data-theme="crimson"] .stat:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 30px rgba(220,38,38,0.15);
+}
+
+[data-theme="crimson"] .btn-primary {
+    box-shadow: 0 10px 20px rgba(220,38,38,0.25);
+}
+
+[data-theme="crimson"] .btn-primary:hover {
+    box-shadow: 0 15px 25px rgba(220,38,38,0.35);
+}
+
+[data-theme="crimson"] .sidebar {
+    border-right: 2px solid rgba(220,38,38,0.15);
+}
+
+[data-theme="crimson"] .nav-item.active {
+    background: linear-gradient(135deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04));
+}
+
+/* ========================================================
+   OCEAN THEME
+   Analytics Intelligence
+   ======================================================== */
+
+[data-theme="ocean"] .card {
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 22px;
+}
+
+[data-theme="ocean"] .stat {
+    background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(219,234,254,0.7));
+    border-radius: 24px;
+}
+
+[data-theme="ocean"] .stat:hover {
+    transform: translateY(-3px);
+}
+
+[data-theme="ocean"] .sidebar {
+    backdrop-filter: blur(16px);
+}
+
+[data-theme="ocean"] .btn-primary {
+    border-radius: 9999px;
+}
+
+[data-theme="ocean"] .data-table tbody tr:hover {
+    background: rgba(59,130,246,0.05);
+}
+
+/* ========================================================
+   FOREST THEME
+   Warehouse Operations
+   ======================================================== */
+
+[data-theme="forest"] body {
+    letter-spacing: 0.01em;
+}
+
+[data-theme="forest"] .sidebar {
+    border-right: 2px solid rgba(16,185,129,0.2);
+}
+
+[data-theme="forest"] .card {
+    border-radius: 10px;
+}
+
+[data-theme="forest"] .stat {
+    border-left: 5px solid var(--primary);
+}
+
+[data-theme="forest"] .data-table th {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+}
+
+[data-theme="forest"] .badge {
+    font-family: var(--font-mono);
+}
+
+[data-theme="forest"] .btn-primary {
+    border-radius: 10px;
+}
+
+[data-theme="forest"] .nav-item {
+    font-family: var(--font-mono);
+}
+
+/* ========================================================
+   NIGHT THEME
+   Monitoring Center
+   ======================================================== */
+
+[data-theme="night"] .card {
+    border: 1px solid rgba(96,165,250,0.15);
+    background: linear-gradient(135deg, rgba(30,41,59,0.98), rgba(15,23,42,0.95));
+    border-radius: 18px;
+}
+
+[data-theme="night"] .stat {
+    border: 1px solid rgba(96,165,250,0.18);
+}
+
+[data-theme="night"] .stat:hover {
+    box-shadow: 0 0 25px rgba(96,165,250,0.12);
+}
+
+[data-theme="night"] .btn-primary {
+    box-shadow: 0 0 15px rgba(96,165,250,0.25);
+}
+
+[data-theme="night"] .btn-primary:hover {
+    box-shadow: 0 0 25px rgba(96,165,250,0.45);
+}
+
+[data-theme="night"] .nav-item.active {
+    box-shadow: inset 0 0 20px rgba(96,165,250,0.1);
+}
+
+[data-theme="night"] .data-table tbody tr:hover {
+    background: rgba(96,165,250,0.06);
+}
+
+[data-theme="night"] .header {
+    border-bottom: 1px solid rgba(96,165,250,0.12);
+}
+
+/* ========================================================
+   THEME WIDGETS
+   ======================================================== */
+
+.theme-header-widget {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-header-widget::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    background: radial-gradient(circle at top right, white, transparent 60%);
+}
+
+.theme-widget-content {
+    position: relative;
+    z-index: 2;
+}
+
+.theme-widget-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.theme-widget-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.theme-widget-icon {
+    font-size: 3rem;
+    opacity: 0.85;
+    position: relative;
+    z-index: 2;
+}
+
+[data-theme="classic"] .theme-header-widget {
+    background: linear-gradient(135deg, #475569, #334155);
+}
+
+[data-theme="crimson"] .theme-header-widget {
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+}
+
+[data-theme="ocean"] .theme-header-widget {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+[data-theme="forest"] .theme-header-widget {
+    background: linear-gradient(135deg, #10b981, #047857);
+}
+
+[data-theme="night"] .theme-header-widget {
+    background: linear-gradient(135deg, #1e3a8a, #0f172a);
+}
