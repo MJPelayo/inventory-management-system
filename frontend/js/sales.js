@@ -38,13 +38,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     new Header('appHeader');
     new Sidebar('sidebar', 'dashboard');
     
-    // Initialize chat system with delay to ensure ChatSystem class is loaded
-    setTimeout(() => {
-        if (typeof ChatSystem !== 'undefined' && !window.chatSystem) {
-            window.chatSystem = new ChatSystem();
-            console.log('✅ Chat system initialized for Sales');
-        }
-    }, 1000);
+    // Initialize chat system after auth is confirmed
+    if (auth.isLoggedIn() && typeof initChatSystem === 'function') {
+        initChatSystem();
+    }
     
     // Load cart from localStorage
     loadCartFromStorage();

@@ -438,33 +438,25 @@ function showToast(message, type = 'info') {
 }
 
 // Initialize chat system (only once, after auth is ready)
+// Chat system should be initialized by each panel's main JS file
+// Do NOT auto-initialize here - panels handle their own initialization
 let chatSystem = null;
 
 function initChatSystem() {
-    if (chatSystem) return; // Already initialized
+    if (chatSystem) return chatSystem; // Already initialized
     
     if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
         chatSystem = new ChatSystem();
         window.chatSystem = chatSystem; // Make available globally
         console.log('✅ Chat system initialized');
+        return chatSystem;
     }
+    
+    console.warn('⚠️ Cannot initialize chat: user not logged in or auth not loaded');
+    return null;
 }
 
-// Wait for auth to be ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initChatSystem, 500);
-    });
-} else {
-    setTimeout(initChatSystem, 500);
-}
+// Export to global scope
+window.initChatSystem = initChatSystem;
 
-// Also try to initialize when auth is available (for pages that load auth asynchronously)
-if (window.auth) {
-    const checkInterval = setInterval(() => {
-        if (auth.isLoggedIn() && !chatSystem) {
-            initChatSystem();
-            clearInterval(checkInterval);
-        }
-    }, 100);
-}
+console.log('✅ Chat module loaded - call initChatSystem() from your panel JS');

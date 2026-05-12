@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="../../css/theme-switcher.css">
     <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
@@ -20,32 +22,34 @@
             <!-- Sidebar -->
             <aside id="sidebar"></aside>
             
-            <!-- Main Content -->
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <!-- Theme Header Widget -->
-                <div class="theme-header-widget" id="themeHeaderWidget"></div>
-                
-                <div class="page-header">
-                    <div>
-                        <h1 class="page-title">Admin Dashboard</h1>
-                        <p class="page-subtitle">System overview and key metrics</p>
-                    </div>
-                </div>
-                
-                <!-- KPI Cards -->
-                <div class="stats-grid" id="kpiGrid">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-                
-                <!-- Recent Activity -->
-                <div class="recent-activity">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Recent Activity</h3>
-                            <a href="reports.html" class="link">View all →</a>
+                <div class="panel-container">
+                    <!-- Theme Header Widget -->
+                    <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Admin Dashboard</h1>
+                            <p class="page-subtitle">System overview and key metrics</p>
                         </div>
-                        <div class="card-body" id="recentActivity">
-                            <div class="loading">Loading recent activity...</div>
+                    </div>
+                    
+                    <!-- KPI Cards -->
+                    <div class="stats-grid" id="kpiGrid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="recent-activity">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Recent Activity</h3>
+                                <a href="reports.html" class="link">View all →</a>
+                            </div>
+                            <div class="card-body" id="recentActivity">
+                                <div class="loading">Loading recent activity...</div>
+                            </div>
                         </div>
                     </div>
                 </div>

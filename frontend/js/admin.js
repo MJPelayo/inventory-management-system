@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     new Sidebar('sidebar', 'dashboard');
     
     // Initialize chat system after auth is confirmed
-    if (auth.isLoggedIn() && typeof ChatSystem !== 'undefined') {
-        window.chatSystem = new ChatSystem();
+    if (auth.isLoggedIn() && typeof initChatSystem === 'function') {
+        initChatSystem();
     }
     
     // Load dashboard data

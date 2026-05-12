@@ -183,11 +183,66 @@
     background: var(--danger-bg);
 }
 
-/* ===== MAIN CONTENT ===== */
+/* ===== MAIN CONTENT - UNIFIED PANEL CONTAINER ===== */
 .main-content {
     flex: 1;
-    padding: 32px;
+    padding: 0;
+    overflow: visible; /* Allow dropdowns to extend beyond container */
     overflow-y: auto;
+    background: var(--bg-page);
+    min-height: calc(100vh - var(--header-height));
+    position: relative;
+}
+
+/* Unified Panel Container - wraps all dashboard content */
+.panel-container {
+    padding: 32px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-height: calc(100vh - var(--header-height));
+    background: var(--bg-page);
+    overflow: visible; /* Critical for dropdown rendering */
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .panel-container {
+        padding: 20px;
+        border: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .panel-container {
+        padding: 16px;
+        border: none;
+    }
+}
+
+/* Ensure dropdowns render above all content */
+select:focus,
+select option,
+.filter-group select,
+.recipient-select,
+#categoryFilter,
+#deliveryType,
+#requestType,
+#requestTarget,
+#chatRecipient {
+    z-index: 9999 !important;
+    position: relative;
+}
+
+/* Fix for native select dropdowns being clipped */
+.filter-group {
+    position: relative;
+    z-index: 100;
+}
+
+.filter-group select {
+    position: relative;
+    z-index: 101;
 }
 
 /* ===== DASHBOARD STATS CARDS ===== */

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
     <link rel="stylesheet" href="../../css/warehouse.css">
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
@@ -21,86 +22,88 @@
             <!-- Sidebar will be injected here -->
             <aside id="sidebar"></aside>
             
-            <!-- Main Content -->
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <!-- Theme Header Widget -->
-                <div class="theme-header-widget" id="themeHeaderWidget"></div>
-                
-                <!-- Dashboard Header -->
-                <div class="dashboard-header">
-                    <div>
-                        <div class="greeting" id="userGreeting">Good day!</div>
-                        <p class="page-subtitle">Manage warehouse operations, stock levels, and order fulfillment</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-secondary" onclick="refreshDashboard()">
-                            <span>🔄</span> Refresh
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Stats Grid -->
-                <div class="stats-grid" id="statsGrid">
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Total Products</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Total Units</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Inventory Value</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Low Stock Alerts</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                </div>
-                
-                <!-- Two Column Layout -->
-                <div class="dashboard-two-column">
-                    <!-- Left Column: Low Stock Alerts -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>⚠️ Low Stock Alerts</h3>
-                            <a href="inventory.html" class="link">View all →</a>
+                <div class="panel-container">
+                    <!-- Theme Header Widget -->
+                    <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                    <!-- Dashboard Header -->
+                    <div class="dashboard-header">
+                        <div>
+                            <div class="greeting" id="userGreeting">Good day!</div>
+                            <p class="page-subtitle">Manage warehouse operations, stock levels, and order fulfillment</p>
                         </div>
-                        <div class="card-body">
-                            <div id="lowStockList" class="low-stock-list">
-                                <div class="loading">Loading alerts...</div>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary" onclick="refreshDashboard()">
+                                <span>🔄</span> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Total Products</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Total Units</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Inventory Value</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Low Stock Alerts</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Two Column Layout -->
+                    <div class="dashboard-two-column">
+                        <!-- Left Column: Low Stock Alerts -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>⚠️ Low Stock Alerts</h3>
+                                <a href="inventory.html" class="link">View all →</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="lowStockList" class="low-stock-list">
+                                    <div class="loading">Loading alerts...</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column: Recent Activity -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>📋 Recent Stock Movements</h3>
+                                <a href="inventory.html" class="link">View all →</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="recentMovements" class="recent-movements">
+                                    <div class="loading">Loading movements...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Right Column: Recent Activity -->
-                    <div class="card">
+                    <!-- Pending Orders Section -->
+                    <div class="card pending-orders-card">
                         <div class="card-header">
-                            <h3>📋 Recent Stock Movements</h3>
-                            <a href="inventory.html" class="link">View all →</a>
+                            <h3>📦 Pending Orders to Fulfill</h3>
+                            <a href="picklists.html" class="link">Generate Pick Lists →</a>
                         </div>
                         <div class="card-body">
-                            <div id="recentMovements" class="recent-movements">
-                                <div class="loading">Loading movements...</div>
+                            <div id="pendingOrdersList">
+                                <div class="loading">Loading pending orders...</div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Pending Orders Section -->
-                <div class="card pending-orders-card">
-                    <div class="card-header">
-                        <h3>📦 Pending Orders to Fulfill</h3>
-                        <a href="picklists.html" class="link">Generate Pick Lists →</a>
-                    </div>
-                    <div class="card-body">
-                        <div id="pendingOrdersList">
-                            <div class="loading">Loading pending orders...</div>
                         </div>
                     </div>
                 </div>
@@ -114,7 +117,6 @@
     <script src="../../js/config.js"></script>
     <script src="../../js/theme.js"></script>
     <script src="../../js/auth.js"></script>
-    <script src="../../js/components.js"></script>
     <script src="../../js/components.js"></script>
     <script src="../../js/chat.js"></script>
     <script src="../../js/warehouse.js"></script>

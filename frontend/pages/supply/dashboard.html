@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
     <link rel="stylesheet" href="../../css/supply.css">
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
@@ -19,84 +20,87 @@
         <div class="app-body">
             <aside id="sidebar"></aside>
             
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <!-- Theme Header Widget -->
-                <div class="theme-header-widget" id="themeHeaderWidget"></div>
-                
-                <div class="dashboard-header">
-                    <div>
-                        <div class="greeting" id="userGreeting">Good day!</div>
-                        <p class="page-subtitle">Manage purchase orders, suppliers, and inventory reordering</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-secondary" onclick="refreshDashboard()">
-                            <span>🔄</span> Refresh
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Stats Grid -->
-                <div class="stats-grid" id="statsGrid">
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Budget Remaining</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Pending POs</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Active Suppliers</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                    <div class="stat stat-loading">
-                        <div class="stat-label">Auto-Reorder Alerts</div>
-                        <div class="stat-value">—</div>
-                        <div class="stat-sub">Loading...</div>
-                    </div>
-                </div>
-                
-                <!-- Two Column Layout -->
-                <div class="dashboard-two-column">
-                    <!-- Left Column: Auto-Reorder Suggestions -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>🔄 Auto-Reorder Suggestions</h3>
-                            <a href="reorder.html" class="link">View all →</a>
+                <div class="panel-container">
+                    <!-- Theme Header Widget -->
+                    <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                    <div class="dashboard-header">
+                        <div>
+                            <div class="greeting" id="userGreeting">Good day!</div>
+                            <p class="page-subtitle">Manage purchase orders, suppliers, and inventory reordering</p>
                         </div>
-                        <div class="card-body">
-                            <div id="reorderSuggestions" class="reorder-list">
-                                <div class="loading">Loading suggestions...</div>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary" onclick="refreshDashboard()">
+                                <span>🔄</span> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Budget Remaining</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Pending POs</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Active Suppliers</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                        <div class="stat stat-loading">
+                            <div class="stat-label">Auto-Reorder Alerts</div>
+                            <div class="stat-value">—</div>
+                            <div class="stat-sub">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Two Column Layout -->
+                    <div class="dashboard-two-column">
+                        <!-- Left Column: Auto-Reorder Suggestions -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>🔄 Auto-Reorder Suggestions</h3>
+                                <a href="reorder.html" class="link">View all →</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="reorderSuggestions" class="reorder-list">
+                                    <div class="loading">Loading suggestions...</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column: Recent Purchase Orders -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>📄 Recent Purchase Orders</h3>
+                                <a href="purchase-orders.html" class="link">View all →</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="recentPOs" class="recent-pos">
+                                    <div class="loading">Loading POs...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Right Column: Recent Purchase Orders -->
-                    <div class="card">
+                    <!-- Budget Utilization Card -->
+                    <div class="card budget-card">
                         <div class="card-header">
-                            <h3>📄 Recent Purchase Orders</h3>
-                            <a href="purchase-orders.html" class="link">View all →</a>
+                            <h3>💰 Budget Utilization</h3>
+                            <span class="badge" id="budgetPeriod">This Month</span>
                         </div>
                         <div class="card-body">
-                            <div id="recentPOs" class="recent-pos">
-                                <div class="loading">Loading POs...</div>
+                            <div id="budgetUtilization" class="budget-container">
+                                <div class="loading">Loading budget data...</div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Budget Utilization Card -->
-                <div class="card budget-card">
-                    <div class="card-header">
-                        <h3>💰 Budget Utilization</h3>
-                        <span class="badge" id="budgetPeriod">This Month</span>
-                    </div>
-                    <div class="card-body">
-                        <div id="budgetUtilization" class="budget-container">
-                            <div class="loading">Loading budget data...</div>
                         </div>
                     </div>
                 </div>
@@ -109,7 +113,6 @@
     <script src="../../js/config.js"></script>
     <script src="../../js/theme.js"></script>
     <script src="../../js/auth.js"></script>
-    <script src="../../js/components.js"></script>
     <script src="../../js/components.js"></script>
     <script src="../../js/chat.js"></script>
     <script src="../../js/supply.js"></script>

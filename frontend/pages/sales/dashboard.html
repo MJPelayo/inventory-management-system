@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../../css/main.css">
     <link rel="stylesheet" href="../../css/sales.css">
     <link rel="stylesheet" href="../../css/sales-dashboard.css">
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
@@ -22,80 +23,82 @@
             <!-- Sidebar will be injected here -->
             <aside id="sidebar"></aside>
             
-            <!-- Main Content -->
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <!-- Theme Header Widget -->
-                <div class="theme-header-widget" id="themeHeaderWidget"></div>
-                
-                <!-- Dashboard Header -->
-                <div class="dashboard-header">
-                    <div>
-                        <div class="greeting" id="userGreeting">Good day!</div>
-                        <small>Browse products and create customer orders</small>
-                    </div>
-                </div>
-                
-                <!-- Sales Layout -->
-                <div class="sales-layout">
-                    <!-- Products Section -->
-                    <div class="products-section">
-                        <!-- Filter Bar -->
-                        <div class="filter-bar">
-                            <div class="filter-row">
-                                <div class="filter-group">
-                                    <label>🔍 Search</label>
-                                    <input type="text" id="searchInput" placeholder="Product name or SKU...">
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <label>📁 Category</label>
-                                    <select id="categoryFilter">
-                                        <option value="">All Categories</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <label>💰 Price Range</label>
-                                    <div class="price-range">
-                                        <input type="number" id="minPrice" placeholder="Min $" step="10">
-                                        <input type="number" id="maxPrice" placeholder="Max $" step="10">
-                                    </div>
-                                </div>
-                                
-                                <div class="filter-actions">
-                                    <button class="btn btn-primary btn-sm" id="applyFilters">Apply</button>
-                                    <button class="btn btn-secondary btn-sm" id="resetFilters">Reset</button>
-                                </div>
-                            </div>
+                <div class="panel-container">
+                    <!-- Theme Header Widget -->
+                    <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                    <!-- Dashboard Header -->
+                    <div class="dashboard-header">
+                        <div>
+                            <div class="greeting" id="userGreeting">Good day!</div>
+                            <small>Browse products and create customer orders</small>
                         </div>
-                        
-                        <!-- Products Grid -->
-                        <div id="productsGrid" class="products-grid">
-                            <div class="loading-state">Loading products...</div>
-                        </div>
-                        
-                        <!-- Pagination -->
-                        <div id="pagination" class="pagination"></div>
                     </div>
                     
-                    <!-- Cart Sidebar -->
-                    <div id="cartSidebar" class="cart-sidebar">
-                        <div class="cart-header">
-                            <h3>🛒 Shopping Cart</h3>
-                            <span class="cart-count" id="cartCount">0</span>
-                        </div>
-                        
-                        <div id="cartItems" class="cart-items">
-                            <div class="empty-cart">Your cart is empty</div>
-                        </div>
-                        
-                        <div class="cart-footer">
-                            <div class="cart-total">
-                                <span>Total:</span>
-                                <span id="cartTotal">$0.00</span>
+                    <!-- Sales Layout -->
+                    <div class="sales-layout">
+                        <!-- Products Section -->
+                        <div class="products-section">
+                            <!-- Filter Bar -->
+                            <div class="filter-bar">
+                                <div class="filter-row">
+                                    <div class="filter-group">
+                                        <label>🔍 Search</label>
+                                        <input type="text" id="searchInput" placeholder="Product name or SKU...">
+                                    </div>
+                                    
+                                    <div class="filter-group">
+                                        <label>📁 Category</label>
+                                        <select id="categoryFilter">
+                                            <option value="">All Categories</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="filter-group">
+                                        <label>💰 Price Range</label>
+                                        <div class="price-range">
+                                            <input type="number" id="minPrice" placeholder="Min $" step="10">
+                                            <input type="number" id="maxPrice" placeholder="Max $" step="10">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="filter-actions">
+                                        <button class="btn btn-primary btn-sm" id="applyFilters">Apply</button>
+                                        <button class="btn btn-secondary btn-sm" id="resetFilters">Reset</button>
+                                    </div>
+                                </div>
                             </div>
-                            <button class="btn-checkout" onclick="openCheckoutModal()">Proceed to Checkout</button>
-                            <button class="btn-clear-cart" onclick="clearCart()">Clear Cart</button>
+                            
+                            <!-- Products Grid -->
+                            <div id="productsGrid" class="products-grid">
+                                <div class="loading-state">Loading products...</div>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <div id="pagination" class="pagination"></div>
+                        </div>
+                        
+                        <!-- Cart Sidebar -->
+                        <div id="cartSidebar" class="cart-sidebar">
+                            <div class="cart-header">
+                                <h3>🛒 Shopping Cart</h3>
+                                <span class="cart-count" id="cartCount">0</span>
+                            </div>
+                            
+                            <div id="cartItems" class="cart-items">
+                                <div class="empty-cart">Your cart is empty</div>
+                            </div>
+                            
+                            <div class="cart-footer">
+                                <div class="cart-total">
+                                    <span>Total:</span>
+                                    <span id="cartTotal">$0.00</span>
+                                </div>
+                                <button class="btn-checkout" onclick="openCheckoutModal()">Proceed to Checkout</button>
+                                <button class="btn-clear-cart" onclick="clearCart()">Clear Cart</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -190,10 +193,9 @@
     <!-- JavaScript Dependencies -->
     <script src="../../js/config.js"></script>
     <script src="../../js/theme.js"></script>
-    <script src="../../js/components.js"></script>
     <script src="../../js/auth.js"></script>
-    <script src="../../js/dropdownLoader.js"></script>
     <script src="../../js/components.js"></script>
+    <script src="../../js/dropdownLoader.js"></script>
     <script src="../../js/chat.js"></script>
     <script src="../../js/sales.js"></script>
     <script src="../../js/sales-checkout.js"></script>
