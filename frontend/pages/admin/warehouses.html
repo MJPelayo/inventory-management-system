@@ -47,6 +47,24 @@
                     </p>
                 </div>
                 
+                <!-- Multi-Warehouse Stock Overview -->
+                <div class="card warehouse-overview-card">
+                    <div class="card-header">
+                        <h3>🏭 Multi-Warehouse Stock Overview</h3>
+                        <div class="overview-actions">
+                            <select id="overviewProductFilter" class="filter-select">
+                                <option value="">All Products</option>
+                            </select>
+                            <button class="btn btn-sm btn-secondary" onclick="loadWarehouseOverview()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="warehouseOverviewTable" class="table-container">
+                            <div class="loading">Loading warehouse stock overview...</div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Warehouses Card -->
                 <div class="card">
                     <div class="card-header">
@@ -136,6 +154,22 @@
                 <button class="btn" onclick="closeWarehouseModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveWarehouse()">Save Warehouse</button>
             </div>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- WAREHOUSE DETAIL SIDE PANEL -->
+    <!-- ============================================ -->
+    <div class="detail-panel" id="detailPanel">
+        <div class="detail-panel-header">
+            <div>
+                <h2 id="detailTitle">Warehouse Name</h2>
+                <p id="detailLocation">Location</p>
+            </div>
+            <button class="close-detail" onclick="closeDetailPanel()">&times;</button>
+        </div>
+        <div class="detail-panel-body" id="detailBody">
+            <div class="loading-state">Select a warehouse to view details</div>
         </div>
     </div>
     

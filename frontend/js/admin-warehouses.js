@@ -7,6 +7,7 @@ let warehousesTable = null;
 let currentWarehouseId = null;
 let allWarehouses = [];
 let detailPanelOpen = false;
+let allWarehouseInventory = [];
 
 // ============================================
 // PAGE INITIALIZATION
@@ -29,7 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     new Sidebar('sidebar', 'warehouses');
     
     await loadWarehouses();
+    await loadWarehouseOverview();
     setupEventListeners();
+    setupOverviewFilter();
     
     // Close side panel on escape key
     document.addEventListener('keydown', (e) => {
@@ -545,6 +548,175 @@ function showToast(message, type = 'info') {
 }
 
 // ============================================
+// WAREHOUSE STOCK OVERVIEW FUNCTIONS
+// ============================================
+
+/**
+ * Load Warehouse Stock Overview (All Warehouses)
+ */
+async function loadWarehouseOverview(productId) {
+    const container = document.getElementById('warehouseOverviewTable');
+    if (!container) return;
+    
+    try {
+        container.innerHTML = '<div class="loading">Loading warehouse stock overview...</div>';
+        
+        // Load warehouses if not already loaded
+        if (allWarehouses.length === 0) {
+            const response = await apiCall('/warehouses');
+            allWarehouses = response.data || [];
+        }
+        
+        let apiUrl = '/inventory/all-warehouses';
+        if (productId) {
+            apiUrl += '?product_id=' + encodeURIComponent(productId);
+        }
+        
+        const response = await apiCall(apiUrl);
+        allWarehouseInventory = response.data || [];
+        
+        // Populate product filter dropdown
+        populateOverviewProductFilter();
+        
+        renderWarehouseOverview(allWarehouseInventory);
+        
+    } catch (error) {
+        console.error('Failed to load warehouse overview:', error);
+        container.innerHTML = '<div class="empty-state">Failed to load warehouse stock overview</div>';
+    }
+}
+
+/**
+ * Populate Product Filter for Overview
+ */
+function populateOverviewProductFilter() {
+    const filterSelect = document.getElementById('overviewProductFilter');
+    if (!filterSelect) return;
+    
+    // Get unique products from inventory data
+    const uniqueProducts = new Map();
+    allWarehouseInventory.forEach(item => {
+        if (!uniqueProducts.has(item.product_id)) {
+            uniqueProducts.set(item.product_id, {
+                id: item.product_id,
+                name: item.product_name,
+                sku: item.sku
+            });
+        }
+    });
+    
+    const currentValue = filterSelect.value;
+    filterSelect.innerHTML = '<option value="">All Products</option>' +
+        Array.from(uniqueProducts.values())
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + ' (' + escapeHtml(p.sku) + ')</option>').join('');
+    
+    // Restore selection if it was valid
+    if (currentValue && uniqueProducts.has(parseInt(currentValue))) {
+        filterSelect.value = currentValue;
+    }
+}
+
+/**
+ * Render Warehouse Overview Table
+ */
+function renderWarehouseOverview(inventoryData) {
+    const container = document.getElementById('warehouseOverviewTable');
+    if (!container) return;
+    
+    if (!inventoryData || inventoryData.length === 0) {
+        container.innerHTML = '<div class="empty-state">No inventory data found across warehouses</div>';
+        return;
+    }
+    
+    // Group by product to create pivot table with warehouses as columns
+    const warehouseMap = new Map();
+    allWarehouses.forEach(w => warehouseMap.set(w.id, w.name));
+    
+    // Build a summary grouped by product
+    const productMap = new Map();
+    inventoryData.forEach(item => {
+        const key = item.product_id;
+        if (!productMap.has(key)) {
+            productMap.set(key, {
+                product_id: item.product_id,
+                product_name: item.product_name,
+                sku: item.sku,
+                brand: item.brand,
+                category: item.category_name,
+                warehouses: {},
+                total: 0
+            });
+        }
+        const product = productMap.get(key);
+        product.warehouses[item.warehouse_id] = {
+            quantity: item.quantity,
+            warehouse_name: item.warehouse_name,
+            reorder_point: item.reorder_point
+        };
+        product.total += item.quantity;
+    });
+    
+    // Generate HTML table with warehouses as columns
+    const warehouseIds = Array.from(new Set(inventoryData.map(i => i.warehouse_id))).sort();
+    
+    let headerHtml = '<div class="warehouse-overview-scroll"><table class="warehouse-overview-table"><thead><tr>';
+    headerHtml += '<th class="sticky-col">Product</th>';
+    headerHtml += '<th>SKU</th>';
+    headerHtml += '<th>Brand</th>';
+    warehouseIds.forEach(wId => {
+        headerHtml += '<th class="warehouse-col">' + escapeHtml(warehouseMap.get(wId) || 'WH-' + wId) + '</th>';
+    });
+    headerHtml += '<th class="total-col">Total</th>';
+    headerHtml += '</tr></thead><tbody>';
+    
+    let bodyHtml = '';
+    Array.from(productMap.values()).forEach(product => {
+        bodyHtml += '<tr>';
+        bodyHtml += '<td class="sticky-col"><strong>' + escapeHtml(product.product_name) + '</strong></td>';
+        bodyHtml += '<td><span class="sku">' + escapeHtml(product.sku) + '</span></td>';
+        bodyHtml += '<td>' + escapeHtml(product.brand || '—') + '</td>';
+        
+        warehouseIds.forEach(wId => {
+            const whData = product.warehouses[wId];
+            const qty = whData ? whData.quantity : 0;
+            const isLow = whData && qty <= whData.reorder_point && qty > 0;
+            const isOut = qty === 0;
+            let cellClass = '';
+            if (isOut) cellClass = 'qty-out';
+            else if (isLow) cellClass = 'qty-low';
+            
+            bodyHtml += '<td class="warehouse-col ' + cellClass + '">' + qty + '</td>';
+        });
+        
+        bodyHtml += '<td class="total-col"><strong>' + product.total + '</strong></td>';
+        bodyHtml += '</tr>';
+    });
+    
+    let footerHtml = '</tbody></table></div>';
+    
+    container.innerHTML = headerHtml + bodyHtml + footerHtml;
+}
+
+/**
+ * Setup Overview Product Filter
+ */
+function setupOverviewFilter() {
+    const filterSelect = document.getElementById('overviewProductFilter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', () => {
+            const productId = filterSelect.value;
+            if (productId) {
+                const filtered = allWarehouseInventory.filter(i => i.product_id == productId);
+                renderWarehouseOverview(filtered);
+            } else {
+                renderWarehouseOverview(allWarehouseInventory);
+            }
+        });
+    }
+}
+
+// ============================================
 // EXPORT GLOBALS
 // ============================================
 window.openWarehouseModal = openWarehouseModal;
@@ -554,5 +726,6 @@ window.deleteWarehouse = deleteWarehouse;
 window.openDetailPanel = openDetailPanel;
 window.closeDetailPanel = closeDetailPanel;
 window.resetFilters = resetFilters;
+window.loadWarehouseOverview = loadWarehouseOverview;
 
 console.log('✅ Admin Warehouses module loaded');

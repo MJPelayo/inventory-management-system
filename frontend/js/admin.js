@@ -1,6 +1,5 @@
 // frontend/js/admin.js
 
-
 // Check authentication and role
 document.addEventListener('DOMContentLoaded', async () => {
     // Verify user is logged in and is admin
@@ -27,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load dashboard data
     await loadDashboardData();
     await loadRecentActivity();
-    
 });
 
 /**
@@ -150,3 +148,21 @@ async function loadRecentActivity() {
         container.innerHTML = '<div class="empty-state">Failed to load activity</div>';
     }
 }
+
+// Utility function for escaping HTML
+function escapeHtml(str) {
+    if (!str) return '';
+    var amp = String.fromCharCode(38) + 'amp;';
+    var lt = String.fromCharCode(60) + 'lt;';
+    var gt = String.fromCharCode(62) + 'gt;';
+    var quot = String.fromCharCode(34) + 'quot;';
+    var apos = String.fromCharCode(39) + '#39;';
+    return String(str)
+        .replace(/&/g, amp)
+        .replace(/</g, lt)
+        .replace(/>/g, gt)
+        .replace(/"/g, quot)
+        .replace(/'/g, apos);
+}
+
+// Export to global scope
