@@ -6,8 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Management - Supply</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Base CSS (required for theme system) -->
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/theme-switcher.css">
+    <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
+    <!-- Page-specific CSS -->
     <link rel="stylesheet" href="../../css/supply.css">
+    <!-- Chat CSS -->
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
@@ -17,7 +24,12 @@
             <aside id="sidebar"></aside>
             
             <main class="main-content">
-                <div class="page-header">
+                <div class="global-container">
+                    <div class="panel-container">
+                        <!-- Theme Header Widget -->
+                        <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                        <div class="page-header">
                     <div>
                         <h1 class="page-title">Supplier Management</h1>
                         <p class="page-subtitle">Manage vendor relationships, track performance, and view supplier analytics</p>
@@ -83,6 +95,9 @@
                         </div>
                     </div>
                 </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -107,6 +122,7 @@
     <div id="toast" class="toast"></div>
     
     <script src="../../js/config.js"></script>
+    <script src="../../js/theme.js"></script>
     <script src="../../js/auth.js"></script>
     <script src="../../js/components.js"></script>
     <script src="../../js/chat.js"></script>

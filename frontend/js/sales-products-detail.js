@@ -1,17 +1,32 @@
 // Sales Product Detail Page JavaScript
 
+// ============================================
+// PAGE INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication and role
+    if (!auth.isLoggedIn()) {
+        window.location.href = '/index.html';
+        return;
+    }
+    
+    if (!auth.hasRole(['sales', 'admin'])) {
+        alert('Access denied. Sales privileges required.');
+        auth.logout();
+        return;
+    }
+    
+    // Initialize header and sidebar
+    new Header('appHeader');
+    new Sidebar('sidebar', 'dashboard');
+    
+    // Load product
+    loadProduct();
+});
+
 // Get product ID from URL
 const urlParams = new URLSearchParams(window.location.search);
 const productId = urlParams.get('id');
-
-// Update header with user info
-const user = auth.getCurrentUser();
-if (user) {
-    document.getElementById('userName').textContent = user.name || 'Sales User';
-    document.getElementById('userRole').textContent = user.role || 'sales';
-    document.getElementById('sidebarName').textContent = user.name || 'Sales Associate';
-    document.getElementById('sidebarRole').textContent = user.role || 'sales';
-}
 
 let currentProduct = null;
 let quantity = 1;
@@ -28,6 +43,7 @@ function escapeHtml(str) {
 
 function showToast(message, type) {
     const toast = document.getElementById('toast');
+    if (!toast) return;
     toast.textContent = message;
     toast.className = `toast toast-${type} show`;
     setTimeout(() => toast.classList.remove('show'), 3000);
@@ -35,7 +51,8 @@ function showToast(message, type) {
 
 function changeQuantity(delta) {
     quantity = Math.max(1, Math.min(99, quantity + delta));
-    document.getElementById('qtyValue').value = quantity;
+    const qtyInput = document.getElementById('qtyValue');
+    if (qtyInput) qtyInput.value = quantity;
 }
 
 async function addToCart() {
@@ -74,8 +91,12 @@ async function addToCart() {
 }
 
 async function loadProduct() {
+    const contentContainer = document.getElementById('productContent');
+    
     if (!productId) {
-        document.getElementById('productContent').innerHTML = '<div class="error-state">Product ID not provided</div>';
+        if (contentContainer) {
+            contentContainer.innerHTML = '<div class="error-state">Product ID not provided</div>';
+        }
         return;
     }
     
@@ -115,87 +136,78 @@ async function loadProduct() {
             warehouseHtml = '<div class="warehouse-item">No inventory records found</div>';
         }
         
-        document.getElementById('productContent').innerHTML = `
-            <div class="product-header">
-                <div class="product-title">
-                    <h1>${escapeHtml(currentProduct.name)}</h1>
-                    <div class="product-sku">SKU: ${escapeHtml(currentProduct.sku)}</div>
+        if (contentContainer) {
+            contentContainer.innerHTML = `
+                <div class="product-header">
+                    <div class="product-title">
+                        <h1>${escapeHtml(currentProduct.name)}</h1>
+                        <div class="product-sku">SKU: ${escapeHtml(currentProduct.sku)}</div>
+                    </div>
+                    <div class="product-price-large">
+                        <div class="price">$${parseFloat(currentProduct.price).toFixed(2)}</div>
+                        <div class="cost">Cost: $${parseFloat(currentProduct.cost).toFixed(2)}</div>
+                    </div>
                 </div>
-                <div class="product-price-large">
-                    <div class="price">$${parseFloat(currentProduct.price).toFixed(2)}</div>
-                    <div class="cost">Cost: $${parseFloat(currentProduct.cost).toFixed(2)}</div>
+                
+                <div class="product-info">
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <label>Brand</label>
+                            <div class="value">${escapeHtml(currentProduct.brand || '—')}</div>
+                        </div>
+                        <div class="info-card">
+                            <label>Category</label>
+                            <div class="value">${escapeHtml(currentProduct.category_name || '—')}</div>
+                        </div>
+                        <div class="info-card">
+                            <label>Supplier</label>
+                            <div class="value">${escapeHtml(currentProduct.supplier_name || '—')}</div>
+                        </div>
+                        <div class="info-card">
+                            <label>Stock Status</label>
+                            <div class="value"><span class="stock-status ${stockClass}">${stockText}</span></div>
+                        </div>
+                    </div>
+                    ${currentProduct.description ? `<p style="color: var(--text-secondary); line-height: 1.6;">${escapeHtml(currentProduct.description)}</p>` : ''}
                 </div>
-            </div>
+                
+                <div class="inventory-section">
+                    <h3>📦 Inventory by Warehouse</h3>
+                    <div class="warehouse-list">
+                        ${warehouseHtml}
+                    </div>
+                </div>
+                
+                <div class="add-to-cart-section">
+                    <div class="quantity-selector">
+                        <label>Quantity:</label>
+                        <div class="qty-control">
+                            <button class="qty-btn" onclick="changeQuantity(-1)">-</button>
+                            <input type="number" id="qtyValue" class="qty-input" value="1" min="1" max="99">
+                            <button class="qty-btn" onclick="changeQuantity(1)">+</button>
+                        </div>
+                    </div>
+                    <button class="btn-add-large" onclick="addToCart()">🛒 Add to Cart</button>
+                </div>
+            `;
             
-            <div class="product-info">
-                <div class="info-grid">
-                    <div class="info-card">
-                        <label>Brand</label>
-                        <div class="value">${escapeHtml(currentProduct.brand || '—')}</div>
-                    </div>
-                    <div class="info-card">
-                        <label>Category</label>
-                        <div class="value">${escapeHtml(currentProduct.category_name || '—')}</div>
-                    </div>
-                    <div class="info-card">
-                        <label>Supplier</label>
-                        <div class="value">${escapeHtml(currentProduct.supplier_name || '—')}</div>
-                    </div>
-                    <div class="info-card">
-                        <label>Stock Status</label>
-                        <div class="value"><span class="stock-status ${stockClass}">${stockText}</span></div>
-                    </div>
-                </div>
-                ${currentProduct.description ? `<p style="color: var(--text-2); line-height: 1.6;">${escapeHtml(currentProduct.description)}</p>` : ''}
-            </div>
-            
-            <div class="inventory-section">
-                <h3>📦 Inventory by Warehouse</h3>
-                <div class="warehouse-list">
-                    ${warehouseHtml}
-                </div>
-            </div>
-            
-            <div class="add-to-cart-section">
-                <div class="quantity-selector">
-                    <label>Quantity:</label>
-                    <div class="qty-control">
-                        <button class="qty-btn" onclick="changeQuantity(-1)">-</button>
-                        <input type="number" id="qtyValue" class="qty-input" value="1" min="1" max="99" onchange="quantity = parseInt(this.value) || 1">
-                        <button class="qty-btn" onclick="changeQuantity(1)">+</button>
-                    </div>
-                </div>
-                <button class="btn-add-large" onclick="addToCart()">🛒 Add to Cart</button>
-            </div>
-        `;
-        
-        // Set up quantity input listener
-        const qtyInput = document.getElementById('qtyValue');
-        if (qtyInput) {
-            qtyInput.addEventListener('change', function() {
-                quantity = Math.max(1, Math.min(99, parseInt(this.value) || 1));
-                this.value = quantity;
-            });
+            // Set up quantity input listener
+            const qtyInput = document.getElementById('qtyValue');
+            if (qtyInput) {
+                qtyInput.addEventListener('change', function() {
+                    quantity = Math.max(1, Math.min(99, parseInt(this.value) || 1));
+                    this.value = quantity;
+                });
+            }
         }
         
     } catch (error) {
         console.error('Failed to load product:', error);
-        document.getElementById('productContent').innerHTML = '<div class="error-state">Failed to load product details. Please try again.</div>';
+        if (contentContainer) {
+            contentContainer.innerHTML = '<div class="error-state">Failed to load product details. Please try again.</div>';
+        }
     }
 }
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&';
-        if (m === '<') return '<';
-        if (m === '>') return '>';
-        return m;
-    });
-}
-
-// Load product on page load
-loadProduct();
 
 // Export functions
 window.changeQuantity = changeQuantity;

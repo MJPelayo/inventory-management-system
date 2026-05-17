@@ -75,11 +75,16 @@ app.use('/api/audit-logs', require('./routes/auditLogRoutes'));
 // NEW ROUTES (Permissions, Settings, Messages, Requests, Notifications)
 // ============================================
 
-// Permission routes
+// Permission routes (mounted at /api/permissions for role-defaults and audit)
 app.use('/api/permissions', require('./routes/permissionRoutes'));
 
-// Permission audit log alias (for frontend compatibility)
+// User permissions routes (mounted at /api/users/:id/permissions for frontend compatibility)
 const permissionController = require('./controllers/permissionController');
+app.get('/api/users/:id/permissions', authenticateToken, authorize('admin'), permissionController.getUserPermissions);
+app.put('/api/users/:id/permissions', authenticateToken, authorize('admin'), permissionController.updateUserPermissions);
+app.post('/api/users/:id/permissions/reset', authenticateToken, authorize('admin'), permissionController.resetUserPermissions);
+
+// Permission audit log alias (for frontend compatibility)
 app.get('/api/audit/permissions', authenticateToken, authorize('admin'), permissionController.getPermissionAuditLog);
 
 // Settings routes

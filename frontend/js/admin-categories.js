@@ -90,28 +90,29 @@ function buildTreeHTML(categories, level = 0) {
         return '';
     }
     
-    let html = '<ul class="category-tree">';
+    let html = '<ul class="category-tree" style="list-style: none; padding-left: 0;">';
     
     for (const cat of categories) {
         const hasChildren = cat.children && cat.children.length > 0;
-        const indent = level * 20;
+        // Indent based on depth
+        const indent = level * 24;
         
         html += `
-            <li class="category-node" data-id="${cat.id}" style="margin-left: ${indent}px;">
-                <div class="category-item">
-                    <div class="category-info">
-                        <span class="category-expand ${hasChildren ? 'has-children' : ''}" onclick="toggleCategoryChildren(${cat.id})">
+            <li class="category-node" data-id="${cat.id}" style="margin-left: ${indent}px; list-style: none;">
+                <div class="category-item" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                    <div class="category-info" style="display: flex; align-items: center; gap: 8px;">
+                        <span class="category-expand ${hasChildren ? 'has-children' : ''}" onclick="toggleCategoryChildren(${cat.id})" style="cursor: pointer; width: 20px;">
                             ${hasChildren ? '▼' : '•'}
                         </span>
-                        <span class="category-name">${escapeHtml(cat.name)}</span>
-                        ${cat.description ? `<span class="category-desc">- ${escapeHtml(cat.description)}</span>` : ''}
+                        <span class="category-name" style="font-weight: 500;">${escapeHtml(cat.name)}</span>
+                        ${cat.description ? `<span class="category-desc" style="color: var(--text-muted); font-size: 0.75rem;">- ${escapeHtml(cat.description)}</span>` : ''}
                     </div>
-                    <div class="category-actions">
-                        <button class="btn-icon" onclick="editCategory(${cat.id})" title="Edit">✏️</button>
-                        <button class="btn-icon" onclick="deleteCategory(${cat.id})" title="Delete">🗑️</button>
+                    <div class="category-actions" style="display: flex; gap: 4px;">
+                        <button class="btn-icon" onclick="editCategory(${cat.id})" title="Edit" style="background: none; border: none; cursor: pointer;">✏️</button>
+                        <button class="btn-icon" onclick="deleteCategory(${cat.id})" title="Delete" style="background: none; border: none; cursor: pointer;">🗑️</button>
                     </div>
                 </div>
-                ${hasChildren ? `<div id="children-${cat.id}" class="category-children">${buildTreeHTML(cat.children, level + 1)}</div>` : ''}
+                ${hasChildren ? `<div id="children-${cat.id}" class="category-children" style="margin-top: 4px;">${buildTreeHTML(cat.children, level + 1)}</div>` : ''}
             </li>
         `;
     }
@@ -145,21 +146,27 @@ function populateParentDropdowns(categories) {
     const parentSelect = document.getElementById('categoryParent');
     if (!parentSelect) return;
     
-    // Build hierarchical options
+    // Build hierarchical options with unlimited depth
     const buildOptions = (cats, prefix = '', level = 0) => {
         let html = '';
         for (const cat of cats) {
-            if (!cat.parent_id) {
-                html += `<option value="${cat.id}">${prefix}${escapeHtml(cat.name)}</option>`;
-                // Add children recursively
-                const children = cats.filter(c => c.parent_id === cat.id);
-                html += buildOptions(children, prefix + '  └ ', level + 1);
+            // Show categories that can be parents (any category)
+            const indent = '—'.repeat(level) + (level > 0 ? ' ' : '');
+            const displayName = level > 0 ? `${indent} ${cat.name}` : cat.name;
+            html += `<option value="${cat.id}">${escapeHtml(displayName)}</option>`;
+            // Recursively add children (no depth limit)
+            const children = categories.filter(c => c.parent_id === cat.id);
+            if (children.length > 0) {
+                html += buildOptions(children, prefix, level + 1);
             }
         }
         return html;
     };
     
-    const options = buildOptions(categories);
+    // Get root categories (no parent)
+    const rootCategories = categories.filter(c => !c.parent_id);
+    const options = buildOptions(rootCategories);
+    
     parentSelect.innerHTML = '<option value="">None (Root Category)</option>' + options;
 }
 

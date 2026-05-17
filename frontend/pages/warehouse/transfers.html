@@ -6,18 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Transfers - Warehouse</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/theme-switcher.css">
+    <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
     <link rel="stylesheet" href="../../css/warehouse.css">
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
+        <!-- Header will be injected here -->
         <header id="appHeader"></header>
         
         <div class="app-body">
+            <!-- Sidebar will be injected here -->
             <aside id="sidebar"></aside>
             
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <div class="page-header">
+                <div class="global-container">
+                    <div class="panel-container">
+                        <!-- Theme Header Widget -->
+                        <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                        <div class="page-header">
                     <div>
                         <h1 class="page-title">Stock Transfers</h1>
                         <p class="page-subtitle">Move stock between warehouses or change product locations</p>
@@ -45,9 +57,11 @@
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    </div>
+                   </div>
+               </div>
+           </main>
+       </div>
+   </div>
     
     <!-- Transfer Modal -->
     <div id="transferModal" class="modal">
@@ -128,6 +142,7 @@
     <div id="toast" class="toast"></div>
     
     <script src="../../js/config.js"></script>
+    <script src="../../js/theme.js"></script>
     <script src="../../js/auth.js"></script>
     <script src="../../js/components.js"></script>
     <script src="../../js/chat.js"></script>

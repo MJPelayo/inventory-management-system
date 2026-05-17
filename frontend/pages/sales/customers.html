@@ -6,66 +6,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Management - Sales | Inventory Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Base CSS (required for theme system) -->
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/theme-switcher.css">
+    <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
+    <!-- Page-specific CSS -->
+    <link rel="stylesheet" href="../../css/sales.css">
     <link rel="stylesheet" href="../../css/sales-customers.css">
+    <!-- Chat CSS -->
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
-        <header class="app-header">
-            <div class="header-left">
-                <h1>inventory.app</h1>
-            </div>
-            <div class="header-right">
-                <div class="header-user">
-                    <span class="user-name" id="userName">Loading...</span>
-                    <span class="user-role" id="userRole">sales</span>
-                </div>
-            </div>
-        </header>
+        <!-- Header will be injected here -->
+        <header id="appHeader"></header>
         
         <div class="app-body">
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <div class="logo">inventory<span>.app</span></div>
-                    <div class="user-badge">
-                        <span class="user-role" id="sidebarRole">sales</span>
-                        <span class="user-name" id="sidebarName">Sales Associate</span>
-                    </div>
-                </div>
-                <nav class="sidebar-nav">
-                    <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-                    <a href="orders.html" class="nav-item">📋 Orders</a>
-                    <a href="customers.html" class="nav-item active">👥 Customers</a>
-                </nav>
-                <div class="sidebar-footer">
-                    <button class="logout-btn" onclick="auth.logout()">🚪 Logout</button>
-                </div>
-            </aside>
+            <!-- Sidebar will be injected here -->
+            <aside id="sidebar"></aside>
             
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <div class="page-header">
-                    <div>
-                        <h1 class="page-title">Customer Management</h1>
-                        <p class="page-subtitle">View customer history and purchase patterns</p>
-                    </div>
-                </div>
-                
-                <div class="filter-bar">
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label>🔍 Search Customer</label>
-                            <input type="text" id="searchInput" placeholder="Name, email, or phone...">
+                <div class="global-container">
+                    <div class="panel-container">
+                        <!-- Theme Header Widget -->
+                        <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                        <!-- Page Header -->
+                        <div class="page-header">
+                            <div>
+                                <h1 class="page-title">Customer Management</h1>
+                                <p class="page-subtitle">View customer history and purchase patterns</p>
+                            </div>
                         </div>
-                        <div class="filter-actions">
-                            <button class="btn btn-primary btn-sm" id="applyFilter">Search</button>
-                            <button class="btn btn-secondary btn-sm" id="resetFilter">Reset</button>
+                        
+                        <!-- Filter Bar -->
+                        <div class="filter-bar">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label>🔍 Search Customer</label>
+                                    <input type="text" id="searchInput" placeholder="Name, email, or phone...">
+                                </div>
+                                <div class="filter-actions">
+                                    <button class="btn btn-primary btn-sm" id="applyFilter">Search</button>
+                                    <button class="btn btn-secondary btn-sm" id="resetFilter">Reset</button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="customers-table-container">
-                    <div id="customersTableContainer">
-                        <div class="loading-state">Loading customers...</div>
+                        
+                        <div class="customers-table-container">
+                            <div id="customersTableContainer">
+                                <div class="loading-state">Loading customers...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -90,6 +84,7 @@
     </div>
     
     <script src="../../js/config.js"></script>
+    <script src="../../js/theme.js"></script>
     <script src="../../js/auth.js"></script>
     <script src="../../js/components.js"></script>
     <script src="../../js/chat.js"></script>

@@ -122,14 +122,22 @@ async function loadInventory() {
         const user = auth.getCurrentUser();
         const warehouseId = user.warehouse_id || 1;
         
-        // ✅ FIX: Get inventory with complete product details
-        const response = await apiCall(`/inventory/warehouse/${warehouseId}`);
-        let inventory = response.data || [];
-        
-        // Apply filters
+        // Get filter values
+        const categoryId = document.getElementById('categoryFilter')?.value || '';
         const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
         const stockStatus = document.getElementById('stockStatusFilter')?.value;
         
+        // Build API URL with category filter as query parameter
+        let apiUrl = `/inventory/warehouse/${warehouseId}`;
+        if (categoryId) {
+            apiUrl += `?category_id=${encodeURIComponent(categoryId)}`;
+        }
+        
+        // ✅ FIX: Get inventory with complete product details
+        const response = await apiCall(apiUrl);
+        let inventory = response.data || [];
+        
+        // Apply search filter
         if (searchTerm) {
             inventory = inventory.filter(item =>
                 (item.product_name && item.product_name.toLowerCase().includes(searchTerm)) ||
@@ -137,10 +145,13 @@ async function loadInventory() {
             );
         }
         
+        // Apply stock status filter
         if (stockStatus === 'low') {
             inventory = inventory.filter(item => item.quantity <= item.reorder_point && item.quantity > 0);
         } else if (stockStatus === 'out') {
             inventory = inventory.filter(item => item.quantity === 0);
+        } else if (stockStatus === 'in') {
+            inventory = inventory.filter(item => item.quantity > item.reorder_point);
         }
         
         document.getElementById('inventoryCount').textContent = `${inventory.length} items`;

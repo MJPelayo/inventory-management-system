@@ -1,13 +1,28 @@
 // Sales Cart Page JavaScript
 
-// Update header with user info
-const user = auth.getCurrentUser();
-if (user) {
-    document.getElementById('userName').textContent = user.name || 'Sales User';
-    document.getElementById('userRole').textContent = user.role || 'sales';
-    document.getElementById('sidebarName').textContent = user.name || 'Sales Associate';
-    document.getElementById('sidebarRole').textContent = user.role || 'sales';
-}
+// ============================================
+// PAGE INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication and role
+    if (!auth.isLoggedIn()) {
+        window.location.href = '/index.html';
+        return;
+    }
+    
+    if (!auth.hasRole(['sales', 'admin'])) {
+        alert('Access denied. Sales privileges required.');
+        auth.logout();
+        return;
+    }
+    
+    // Initialize header and sidebar
+    new Header('appHeader');
+    new Sidebar('sidebar', 'cart');
+    
+    // Load cart
+    loadCart();
+});
 
 let cart = [];
 let customers = [];
@@ -25,6 +40,7 @@ function escapeHtml(str) {
 
 function showToast(message, type) {
     const toast = document.getElementById('toast');
+    if (!toast) return;
     toast.textContent = message;
     toast.className = `toast toast-${type} show`;
     setTimeout(() => toast.classList.remove('show'), 3000);
@@ -194,6 +210,8 @@ async function loadCustomersForSelect() {
         customers = Array.from(customerMap.values());
         
         const select = document.getElementById('customerSelect');
+        if (!select) return;
+        
         let html = '<option value="">New Customer - Enter below</option>';
         for (const customer of customers) {
             html += `<option value="${escapeHtml(customer.name)}" data-email="${escapeHtml(customer.email || '')}" data-phone="${escapeHtml(customer.phone || '')}">
@@ -249,7 +267,10 @@ function toggleDeliveryAddress() {
 }
 
 function closeCheckoutModal() {
-    document.getElementById('checkoutModal').style.display = 'none';
+    const modal = document.getElementById('checkoutModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 async function submitCartOrder() {
@@ -342,9 +363,6 @@ async function submitCartOrder() {
         showToast(error.message || 'Failed to create order', 'error');
     }
 }
-
-// Load cart on page load
-loadCart();
 
 // Export functions
 window.updateCartItemQuantity = updateCartItemQuantity;

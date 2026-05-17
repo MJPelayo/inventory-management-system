@@ -1,13 +1,31 @@
 // Sales Customers Page JavaScript
 
-// Update header with user info
-const user = auth.getCurrentUser();
-if (user) {
-    document.getElementById('userName').textContent = user.name || 'Sales User';
-    document.getElementById('userRole').textContent = user.role || 'sales';
-    document.getElementById('sidebarName').textContent = user.name || 'Sales Associate';
-    document.getElementById('sidebarRole').textContent = user.role || 'sales';
-}
+// ============================================
+// PAGE INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check authentication and role
+    if (!auth.isLoggedIn()) {
+        window.location.href = '/index.html';
+        return;
+    }
+    
+    if (!auth.hasRole(['sales', 'admin'])) {
+        alert('Access denied. Sales privileges required.');
+        auth.logout();
+        return;
+    }
+    
+    // Initialize header and sidebar
+    new Header('appHeader');
+    new Sidebar('sidebar', 'customers');
+    
+    // Load customers
+    await loadCustomers();
+    
+    // Setup event listeners
+    setupEventListeners();
+});
 
 let allCustomers = [];
 let selectedCustomer = null;
@@ -55,7 +73,7 @@ async function loadCustomers() {
             } else {
                 const existing = customerMap.get(order.customer_name);
                 existing.total_orders++;
-                existing.total_spent += order.total_amount;
+                existing.total_spent += parseFloat(order.total_amount) || 0;
                 existing.orders.push(order);
                 // Update last order date if newer
                 if (new Date(order.created_at) > new Date(existing.last_order_date)) {
@@ -104,7 +122,7 @@ async function loadCustomers() {
                                 ${customer.phone ? `<div>📞 ${escapeHtml(customer.phone)}</div>` : ''}
                             </td>
                             <td><span class="order-count">${customer.total_orders}</span></td>
-                            <td style="font-weight: 600; color: var(--accent);">$${customer.total_spent.toFixed(2)}</td>
+                            <td style="font-weight: 600; color: var(--primary);">$${customer.total_spent.toFixed(2)}</td>
                             <td>${formatDate(customer.last_order_date)}</td>
                         </tr>
                     `).join('')}
@@ -126,6 +144,8 @@ async function viewCustomerDetails(customerName) {
     const modal = document.getElementById('customerModal');
     const content = document.getElementById('customerDetailContent');
     const modalTitle = document.getElementById('modalCustomerName');
+    
+    if (!modal || !content || !modalTitle) return;
     
     modalTitle.textContent = customer.name;
     
@@ -169,7 +189,10 @@ async function viewCustomerDetails(customerName) {
 }
 
 function closeCustomerModal() {
-    document.getElementById('customerModal').style.display = 'none';
+    const modal = document.getElementById('customerModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
     selectedCustomer = null;
 }
 
@@ -190,21 +213,28 @@ function applyFilter() {
 }
 
 function resetFilter() {
-    document.getElementById('searchInput').value = '';
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
     loadCustomers();
 }
 
-// Setup event listeners
-document.getElementById('applyFilter')?.addEventListener('click', applyFilter);
-document.getElementById('resetFilter')?.addEventListener('click', resetFilter);
-document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') applyFilter();
-});
-
-// Load customers on page load
-loadCustomers();
+function setupEventListeners() {
+    const applyBtn = document.getElementById('applyFilter');
+    const resetBtn = document.getElementById('resetFilter');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (applyBtn) applyBtn.addEventListener('click', applyFilter);
+    if (resetBtn) resetBtn.addEventListener('click', resetFilter);
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') applyFilter();
+        });
+    }
+}
 
 // Export functions
 window.viewCustomerDetails = viewCustomerDetails;
 window.closeCustomerModal = closeCustomerModal;
 window.createNewOrder = createNewOrder;
+window.applyFilter = applyFilter;
+window.resetFilter = resetFilter;

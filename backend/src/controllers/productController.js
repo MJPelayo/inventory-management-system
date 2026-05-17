@@ -4,8 +4,8 @@ const { Inventory } = require('../models/Inventory');
 const pool = require('../db/pool');
 
 async function getAllSubcategoryIds(categoryId, pool) {
-    const subcategories = [];
-    const queue = [categoryId];
+    const subcategories = [parseInt(categoryId)];
+    const queue = [parseInt(categoryId)];
     
     while (queue.length > 0) {
         const currentId = queue.shift();
@@ -37,10 +37,13 @@ const productController = {
             const params = [];
             let paramCount = 1;
             
-            // ✅ All filters use parameterized queries
+            // ✅ FIX: Include all subcategories when filtering by category
             if (category_id) {
-                query += ` AND p.category_id = $${paramCount++}`;
-                params.push(parseInt(category_id));
+                const categoryIds = await getAllSubcategoryIds(category_id, pool);
+                const placeholders = categoryIds.map((_, i) => `$${paramCount + i}`).join(',');
+                query += ` AND p.category_id IN (${placeholders})`;
+                params.push(...categoryIds);
+                paramCount += categoryIds.length;
             }
             
             if (supplier_id) {

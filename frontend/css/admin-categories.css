@@ -102,6 +102,23 @@
 
 .category-children {
     margin-left: 20px;
+    border-left: 2px dashed var(--border-light);
+    padding-left: 16px;
+}
+
+/* Depth-based styling */
+.category-node[data-depth="1"] .category-name {
+    font-weight: 500;
+}
+
+.category-node[data-depth="2"] .category-name {
+    font-weight: normal;
+    font-size: 0.875rem;
+}
+
+.category-node[data-depth="3"] .category-name {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
 }
 
 .btn-icon {

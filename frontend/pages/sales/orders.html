@@ -6,9 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Orders - Inventory Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Base CSS (required for theme system) -->
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/theme-switcher.css">
+    <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
+    <!-- Page-specific CSS -->
     <link rel="stylesheet" href="../../css/sales.css">
     <link rel="stylesheet" href="../../css/sales-orders.css">
+    <!-- Chat CSS -->
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
@@ -19,66 +26,73 @@
             <!-- Sidebar will be injected here -->
             <aside id="sidebar"></aside>
             
-            <!-- Main Content -->
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <!-- Page Header -->
-                <div class="orders-header">
-                    <div>
-                        <h1 class="page-title">Sales Orders</h1>
-                        <p class="page-subtitle">View and track customer orders</p>
+                <div class="global-container">
+                    <div class="panel-container">
+                        <!-- Theme Header Widget -->
+                        <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                        <!-- Page Header -->
+                        <div class="orders-header">
+                            <div>
+                                <h1 class="page-title">Sales Orders</h1>
+                                <p class="page-subtitle">View and track customer orders</p>
+                            </div>
+                            <a href="dashboard.html" class="btn btn-primary">
+                                <span>+</span> New Order
+                            </a>
+                        </div>
+                        
+                        <!-- Filter Bar -->
+                        <div class="filter-bar">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label>Order Status</label>
+                                    <select id="statusFilter">
+                                        <option value="">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="ready">Ready</option>
+                                        <option value="in_transit">In Transit</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label>Customer Name</label>
+                                    <input type="text" id="customerFilter" placeholder="Search by customer...">
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label>Date Range</label>
+                                    <input type="date" id="startDateFilter">
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label>to</label>
+                                    <input type="date" id="endDateFilter">
+                                </div>
+                                
+                                <div class="filter-actions">
+                                    <button class="btn btn-primary btn-sm" id="applyFilters">Apply</button>
+                                    <button class="btn btn-secondary btn-sm" id="resetFilters">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Orders Table -->
+                        <div class="orders-table-container">
+                            <div id="ordersTableContainer">
+                                <div class="loading-state">Loading orders...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div id="pagination" class="pagination"></div>
                     </div>
-                    <a href="dashboard.html" class="btn btn-primary">
-                        <span>+</span> New Order
-                    </a>
                 </div>
-                
-                <!-- Filter Bar -->
-                <div class="filter-bar">
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label>Order Status</label>
-                            <select id="statusFilter">
-                                <option value="">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="ready">Ready</option>
-                                <option value="in_transit">In Transit</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                        
-                        <div class="filter-group">
-                            <label>Customer Name</label>
-                            <input type="text" id="customerFilter" placeholder="Search by customer...">
-                        </div>
-                        
-                        <div class="filter-group">
-                            <label>Date Range</label>
-                            <input type="date" id="startDateFilter">
-                        </div>
-                        
-                        <div class="filter-group">
-                            <label>to</label>
-                            <input type="date" id="endDateFilter">
-                        </div>
-                        
-                        <div class="filter-actions">
-                            <button class="btn btn-primary btn-sm" id="applyFilters">Apply</button>
-                            <button class="btn btn-secondary btn-sm" id="resetFilters">Reset</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Orders Table -->
-                <div class="orders-table-container">
-                    <div id="ordersTableContainer">
-                        <div class="loading-state">Loading orders...</div>
-                    </div>
-                </div>
-                
-                <!-- Pagination -->
-                <div id="pagination" class="pagination"></div>
             </main>
         </div>
     </div>
@@ -104,6 +118,7 @@
     
     <!-- JavaScript Dependencies -->
     <script src="../../js/config.js"></script>
+    <script src="../../js/theme.js"></script>
     <script src="../../js/auth.js"></script>
     <script src="../../js/components.js"></script>
     <script src="../../js/chat.js"></script>

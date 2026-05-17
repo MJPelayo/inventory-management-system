@@ -6,79 +6,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart - Sales | Inventory Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Base CSS (required for theme system) -->
     <link rel="stylesheet" href="../../css/base.css">
     <link rel="stylesheet" href="../../css/theme-switcher.css">
+    <link rel="stylesheet" href="../../css/theme-layouts.css">
     <link rel="stylesheet" href="../../css/main.css">
+    <!-- Page-specific CSS -->
+    <link rel="stylesheet" href="../../css/sales.css">
     <link rel="stylesheet" href="../../css/sales-cart.css">
+    <!-- Chat CSS -->
+    <link rel="stylesheet" href="../../css/chat.css">
 </head>
 <body>
     <div class="app">
-        <header class="app-header">
-            <div class="header-left">
-                <h1>inventory.app</h1>
-            </div>
-            <div class="header-right">
-                <div class="header-user">
-                    <span class="user-name" id="userName">Loading...</span>
-                    <span class="user-role" id="userRole">sales</span>
-                </div>
-            </div>
-        </header>
+        <!-- Header will be injected here -->
+        <header id="appHeader"></header>
         
         <div class="app-body">
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <div class="logo">inventory<span>.app</span></div>
-                    <div class="user-badge">
-                        <span class="user-role" id="sidebarRole">sales</span>
-                        <span class="user-name" id="sidebarName">Sales Associate</span>
-                    </div>
-                </div>
-                <nav class="sidebar-nav">
-                    <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-                    <a href="cart.html" class="nav-item active">🛒 Cart</a>
-                    <a href="orders.html" class="nav-item">📋 Orders</a>
-                    <a href="customers.html" class="nav-item">👥 Customers</a>
-                </nav>
-                <div class="sidebar-footer">
-                    <button class="logout-btn" onclick="auth.logout()">🚪 Logout</button>
-                </div>
-            </aside>
+            <!-- Sidebar will be injected here -->
+            <aside id="sidebar"></aside>
             
+            <!-- Main Content with Unified Panel Container -->
             <main class="main-content">
-                <a href="dashboard.html" class="back-link">← Continue Shopping</a>
-                
-                <div class="page-header">
-                    <div>
-                        <h1 class="page-title">Shopping Cart</h1>
-                        <p class="page-subtitle">Review and checkout your items</p>
-                    </div>
-                </div>
-                
-                <div class="cart-layout">
-                    <div class="cart-items-section">
-                        <div class="cart-items-container">
-                            <div id="cartItemsContainer"></div>
-                        </div>
-                    </div>
+                <div class="global-container">
+                    <div class="panel-container">
+                        <!-- Theme Header Widget -->
+                        <div class="theme-header-widget" id="themeHeaderWidget"></div>
                     
-                    <div class="cart-summary-section">
-                        <div class="summary-card">
-                            <div class="summary-title">Order Summary</div>
-                            <div class="summary-row">
-                                <span>Subtotal:</span>
-                                <span id="summarySubtotal">$0.00</span>
+                        <a href="dashboard.html" class="back-link">← Continue Shopping</a>
+                        
+                        <div class="page-header">
+                            <div>
+                                <h1 class="page-title">Shopping Cart</h1>
+                                <p class="page-subtitle">Review and checkout your items</p>
                             </div>
-                            <div class="summary-row discount-row" id="discountRow" style="display: none;">
-                                <span>Discount:</span>
-                                <span id="summaryDiscount">-$0.00</span>
+                        </div>
+                        
+                        <div class="cart-layout">
+                            <div class="cart-items-section">
+                                <div class="cart-items-container">
+                                    <div id="cartItemsContainer"></div>
+                                </div>
                             </div>
-                            <div class="summary-row total">
-                                <span>Total:</span>
-                                <span id="summaryTotal">$0.00</span>
+                            
+                            <div class="cart-summary-section">
+                                <div class="summary-card">
+                                    <div class="summary-title">Order Summary</div>
+                                    <div class="summary-row">
+                                        <span>Subtotal:</span>
+                                        <span id="summarySubtotal">$0.00</span>
+                                    </div>
+                                    <div class="summary-row discount-row" id="discountRow" style="display: none;">
+                                        <span>Discount:</span>
+                                        <span id="summaryDiscount">-$0.00</span>
+                                    </div>
+                                    <div class="summary-row total">
+                                        <span>Total:</span>
+                                        <span id="summaryTotal">$0.00</span>
+                                    </div>
+                                    <button class="btn-checkout" onclick="proceedToCheckout()">Proceed to Checkout</button>
+                                    <button class="btn-clear" onclick="clearCartItems()">Clear Cart</button>
+                                </div>
                             </div>
-                            <button class="btn-checkout" onclick="proceedToCheckout()">Proceed to Checkout</button>
-                            <button class="btn-clear" onclick="clearCartItems()">Clear Cart</button>
                         </div>
                     </div>
                 </div>

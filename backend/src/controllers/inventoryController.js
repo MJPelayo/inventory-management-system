@@ -3,13 +3,31 @@ const { Inventory } = require('../models/Inventory');
 const { StockMovement } = require('../models/StockMovement');
 const pool = require('../db/pool');
 
+async function getAllSubcategoryIds(categoryId, pool) {
+    const subcategories = [parseInt(categoryId)];
+    const queue = [parseInt(categoryId)];
+    
+    while (queue.length > 0) {
+        const currentId = queue.shift();
+        const result = await pool.query(
+            'SELECT id FROM categories WHERE parent_id = $1',
+            [currentId]
+        );
+        for (const row of result.rows) {
+            subcategories.push(row.id);
+            queue.push(row.id);
+        }
+    }
+    return subcategories;
+}
+
 const inventoryController = {
     async getWarehouseInventory(req, res) {
         try {
             const warehouseId = parseInt(req.params.warehouseId);
+            const { category_id } = req.query;
             
-            // Get inventory with full product details
-            const query = `
+            let query = `
                 SELECT
                     i.id,
                     i.product_id,
@@ -24,6 +42,7 @@ const inventoryController = {
                     p.brand,
                     p.description,
                     c.name as category_name,
+                    c.id as category_id,
                     s.name as supplier_name,
                     p.is_active as product_active
                 FROM inventory i
@@ -31,10 +50,23 @@ const inventoryController = {
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
                 WHERE i.warehouse_id = $1
-                ORDER BY p.name
             `;
             
-            const result = await pool.query(query, [warehouseId]);
+            const params = [warehouseId];
+            let paramCount = 2;
+            
+            // ✅ FIX: Include all subcategories when filtering by category
+            if (category_id) {
+                const categoryIds = await getAllSubcategoryIds(category_id, pool);
+                const placeholders = categoryIds.map((_, i) => `$${paramCount + i}`).join(',');
+                query += ` AND p.category_id IN (${placeholders})`;
+                params.push(...categoryIds);
+                paramCount += categoryIds.length;
+            }
+            
+            query += ` ORDER BY p.name`;
+            
+            const result = await pool.query(query, params);
             
             res.status(200).json({
                 success: true,
