@@ -39,6 +39,24 @@
                     </button>
                 </div>
                 
+                <!-- Warehouse Stock Overview Section -->
+                <div class="card warehouse-overview-card">
+                    <div class="card-header">
+                        <h3>🏭 Warehouse Stock Overview</h3>
+                        <div class="overview-actions">
+                            <select id="overviewProductFilter" class="filter-select">
+                                <option value="">All Products</option>
+                            </select>
+                            <button class="btn btn-sm btn-secondary" onclick="loadWarehouseOverview()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="warehouseOverviewTable" class="table-container">
+                            <div class="loading">Loading warehouse stock overview...</div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Transfer Type Tabs -->
                 <div class="transfer-tabs">
                     <button class="tab-btn active" data-type="inter-warehouse">🏭 Inter-Warehouse</button>

@@ -405,6 +405,59 @@ const inventoryController = {
         }
     },
 
+    /**
+     * Get inventory across ALL warehouses for a given product (or all products)
+     * Useful for transfer planning - shows where stock exists before transferring
+     */
+    async getAllWarehouseInventory(req, res) {
+        try {
+            const { product_id } = req.query;
+            
+            let query = `
+                SELECT
+                    i.id,
+                    i.product_id,
+                    i.warehouse_id,
+                    i.quantity,
+                    i.reorder_point,
+                    i.max_stock,
+                    p.name as product_name,
+                    p.sku,
+                    p.brand,
+                    c.name as category_name,
+                    c.id as category_id,
+                    w.name as warehouse_name,
+                    w.location as warehouse_location
+                FROM inventory i
+                JOIN products p ON i.product_id = p.id
+                JOIN warehouses w ON i.warehouse_id = w.id
+                LEFT JOIN categories c ON p.category_id = c.id
+            `;
+            
+            const params = [];
+            let paramCount = 1;
+            
+            if (product_id) {
+                query += ` WHERE i.product_id = $${paramCount}`;
+                params.push(parseInt(product_id));
+                paramCount++;
+            }
+            
+            query += ` ORDER BY p.name, w.name`;
+            
+            const result = await pool.query(query, params);
+            
+            res.status(200).json({
+                success: true,
+                data: result.rows,
+                count: result.rows.length
+            });
+        } catch (error) {
+            console.error('Failed to get all warehouse inventory:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
     async getProductLocation(req, res) {
         try {
             const productId = parseInt(req.params.productId);

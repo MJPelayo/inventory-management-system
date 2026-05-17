@@ -13,6 +13,7 @@ let allWarehouses = [];
 let allProducts = [];
 let transferHistory = [];
 let currentTransferType = 'inter-warehouse';
+let allWarehouseInventory = [];
 
 // ============================================
 // PAGE INITIALIZATION
@@ -40,9 +41,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadWarehouses();
     await loadProducts();
     await loadTransferHistory();
+    await loadWarehouseOverview();
     
     // Setup tab switching
     setupTabs();
+    
+    // Setup product filter for overview
+    setupOverviewFilter();
 });
 
 // ============================================
@@ -90,6 +95,169 @@ async function loadProducts() {
     } catch (error) {
         console.error('Failed to load products:', error);
         showToast('Failed to load products', 'error');
+    }
+}
+
+// ============================================
+// LOAD WAREHOUSE STOCK OVERVIEW (All Warehouses)
+// ============================================
+async function loadWarehouseOverview(productId) {
+    const container = document.getElementById('warehouseOverviewTable');
+    if (!container) return;
+    
+    try {
+        container.innerHTML = '<div class="loading">Loading warehouse stock overview...</div>';
+        
+        let apiUrl = '/inventory/all-warehouses';
+        if (productId) {
+            apiUrl += `?product_id=${encodeURIComponent(productId)}`;
+        }
+        
+        const response = await apiCall(apiUrl);
+        allWarehouseInventory = response.data || [];
+        
+        // Populate product filter dropdown
+        populateOverviewProductFilter();
+        
+        renderWarehouseOverview(allWarehouseInventory);
+        
+    } catch (error) {
+        console.error('Failed to load warehouse overview:', error);
+        container.innerHTML = '<div class="empty-state">Failed to load warehouse stock overview</div>';
+    }
+}
+
+// ============================================
+// POPULATE PRODUCT FILTER FOR OVERVIEW
+// ============================================
+function populateOverviewProductFilter() {
+    const filterSelect = document.getElementById('overviewProductFilter');
+    if (!filterSelect) return;
+    
+    // Get unique products from inventory data
+    const uniqueProducts = new Map();
+    allWarehouseInventory.forEach(item => {
+        if (!uniqueProducts.has(item.product_id)) {
+            uniqueProducts.set(item.product_id, {
+                id: item.product_id,
+                name: item.product_name,
+                sku: item.sku
+            });
+        }
+    });
+    
+    const currentValue = filterSelect.value;
+    filterSelect.innerHTML = '<option value="">All Products</option>' +
+        Array.from(uniqueProducts.values())
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.sku)})</option>`).join('');
+    
+    // Restore selection if it was valid
+    if (currentValue && uniqueProducts.has(parseInt(currentValue))) {
+        filterSelect.value = currentValue;
+    }
+}
+
+// ============================================
+// RENDER WAREHOUSE OVERVIEW TABLE
+// ============================================
+function renderWarehouseOverview(inventoryData) {
+    const container = document.getElementById('warehouseOverviewTable');
+    if (!container) return;
+    
+    if (!inventoryData || inventoryData.length === 0) {
+        container.innerHTML = '<div class="empty-state">No inventory data found across warehouses</div>';
+        return;
+    }
+    
+    // Group by product to create pivot table with warehouses as columns
+    const warehouseMap = new Map();
+    allWarehouses.forEach(w => warehouseMap.set(w.id, w.name));
+    
+    // Build a summary grouped by product
+    const productMap = new Map();
+    inventoryData.forEach(item => {
+        const key = item.product_id;
+        if (!productMap.has(key)) {
+            productMap.set(key, {
+                product_id: item.product_id,
+                product_name: item.product_name,
+                sku: item.sku,
+                brand: item.brand,
+                category: item.category_name,
+                warehouses: {},
+                total: 0
+            });
+        }
+        const product = productMap.get(key);
+        product.warehouses[item.warehouse_id] = {
+            quantity: item.quantity,
+            warehouse_name: item.warehouse_name,
+            reorder_point: item.reorder_point
+        };
+        product.total += item.quantity;
+    });
+    
+    // Generate HTML table with warehouses as columns
+    const warehouseIds = Array.from(new Set(inventoryData.map(i => i.warehouse_id))).sort();
+    
+    container.innerHTML = `
+        <div class="warehouse-overview-scroll">
+            <table class="warehouse-overview-table">
+                <thead>
+                    <tr>
+                        <th class="sticky-col">Product</th>
+                        <th>SKU</th>
+                        <th>Brand</th>
+                        ${warehouseIds.map(wId => `
+                            <th class="warehouse-col">${escapeHtml(warehouseMap.get(wId) || 'WH-' + wId)}</th>
+                        `).join('')}
+                        <th class="total-col">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Array.from(productMap.values()).map(product => `
+                        <tr>
+                            <td class="sticky-col">
+                                <strong>${escapeHtml(product.product_name)}</strong>
+                            </td>
+                            <td><span class="sku">${escapeHtml(product.sku)}</span></td>
+                            <td>${escapeHtml(product.brand || '—')}</td>
+                            ${warehouseIds.map(wId => {
+                                const whData = product.warehouses[wId];
+                                const qty = whData ? whData.quantity : 0;
+                                const isLow = whData && qty <= whData.reorder_point && qty > 0;
+                                const isOut = qty === 0;
+                                let cellClass = '';
+                                if (isOut) cellClass = 'qty-out';
+                                else if (isLow) cellClass = 'qty-low';
+                                
+                                return `<td class="warehouse-col ${cellClass}">${qty}</td>`;
+                            }).join('')}
+                            <td class="total-col"><strong>${product.total}</strong></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// ============================================
+// SETUP OVERVIEW PRODUCT FILTER
+// ============================================
+function setupOverviewFilter() {
+    const filterSelect = document.getElementById('overviewProductFilter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', () => {
+            const productId = filterSelect.value;
+            if (productId) {
+                const filtered = allWarehouseInventory.filter(i => i.product_id == productId);
+                renderWarehouseOverview(filtered);
+            } else {
+                renderWarehouseOverview(allWarehouseInventory);
+            }
+        });
     }
 }
 
@@ -459,5 +627,6 @@ function showToast(message, type = 'info') {
 window.openTransferModal = openTransferModal;
 window.closeTransferModal = closeTransferModal;
 window.submitTransfer = submitTransfer;
+window.loadWarehouseOverview = loadWarehouseOverview;
 
 console.log('✅ Warehouse Transfers module loaded');
