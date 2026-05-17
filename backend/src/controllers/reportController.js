@@ -110,10 +110,14 @@ const reportController = {
     /**
      * Generate Inventory Report
      * GET /api/reports/inventory
+     *
+     * Query params:
+     * - warehouse_id: optional filter
+     * - format: 'json' or 'pdf'
      */
     async getInventoryReport(req, res) {
         try {
-            const { warehouse_id } = req.query;
+            const { warehouse_id, format = 'json' } = req.query;
             
             let query = `
                 SELECT 
@@ -167,14 +171,21 @@ const reportController = {
                 potential_profit: result.rows.reduce((sum, r) => sum + (parseFloat(r.total_value) - parseFloat(r.total_cost)), 0)
             };
             
+            const reportData = {
+                warehouse_summary: result.rows,
+                low_stock_items: lowStock.rows,
+                totals,
+                generated_at: new Date().toISOString()
+            };
+            
+            // Handle PDF export
+            if (format === 'pdf') {
+                return await reportController._exportInventoryPDF(reportData, res);
+            }
+            
             res.status(200).json({
                 success: true,
-                data: {
-                    warehouse_summary: result.rows,
-                    low_stock_items: lowStock.rows,
-                    totals,
-                    generated_at: new Date().toISOString()
-                }
+                data: reportData
             });
         } catch (error) {
             console.error('Inventory report error:', error);
@@ -185,9 +196,13 @@ const reportController = {
     /**
      * Generate Supplier Report
      * GET /api/reports/suppliers
+     *
+     * Query params:
+     * - format: 'json' or 'pdf'
      */
     async getSupplierReport(req, res) {
         try {
+            const { format = 'json' } = req.query;
             const query = `
                 SELECT
                     s.id,
@@ -206,13 +221,20 @@ const reportController = {
             
             const result = await pool.query(query);
             
+            const reportData = {
+                suppliers: result.rows,
+                total_suppliers: result.rows.length,
+                generated_at: new Date().toISOString()
+            };
+            
+            // Handle PDF export
+            if (format === 'pdf') {
+                return await reportController._exportSupplierPDF(reportData, res);
+            }
+            
             res.status(200).json({
                 success: true,
-                data: {
-                    suppliers: result.rows,
-                    total_suppliers: result.rows.length,
-                    generated_at: new Date().toISOString()
-                }
+                data: reportData
             });
         } catch (error) {
             console.error('Supplier report error:', error);
@@ -271,6 +293,147 @@ const reportController = {
             doc.text(`   Revenue: $${parseFloat(product.total_revenue).toFixed(2)}`, { indent: 20 });
             doc.moveDown(0.3);
         });
+        
+        doc.end();
+    },
+    
+    /**
+     * Private method: Export inventory report as PDF
+     */
+    async _exportInventoryPDF(data, res) {
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const filename = `inventory-report-${Date.now()}.pdf`;
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        
+        doc.pipe(res);
+        
+        // Header
+        doc.fontSize(24)
+           .font('Helvetica-Bold')
+           .text('Inventory Report', { align: 'center' });
+        doc.moveDown();
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+        doc.moveDown();
+        
+        // Summary Section
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('Summary', { underline: true });
+        doc.moveDown(0.5);
+        
+        const totals = data.totals || {};
+        doc.fontSize(11)
+           .font('Helvetica')
+           .text(`Total Inventory Value: $${(totals.total_inventory_value || 0).toFixed(2)}`)
+           .text(`Total Inventory Cost: $${(totals.total_inventory_cost || 0).toFixed(2)}`)
+           .text(`Total Units: ${(totals.total_units || 0).toLocaleString()}`)
+           .text(`Potential Profit: $${(totals.potential_profit || 0).toFixed(2)}`);
+        doc.moveDown();
+        
+        // Warehouse Summary Section
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('Warehouse Breakdown', { underline: true });
+        doc.moveDown(0.5);
+        
+        if (data.warehouse_summary && data.warehouse_summary.length > 0) {
+            data.warehouse_summary.forEach((wh, index) => {
+                doc.fontSize(10)
+                   .font('Helvetica-Bold')
+                   .text(`${index + 1}. ${wh.warehouse_name}`);
+                doc.fontSize(10)
+                   .font('Helvetica')
+                   .text(`   Products: ${wh.unique_products} | Units: ${(wh.total_units || 0).toLocaleString()} | Value: $${parseFloat(wh.total_value || 0).toFixed(2)}`, { indent: 20 });
+                doc.moveDown(0.3);
+            });
+        } else {
+            doc.fontSize(10).font('Helvetica').text('No warehouse data available', { indent: 20 });
+            doc.moveDown(0.5);
+        }
+        
+        // Low Stock Alerts Section
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('Low Stock Alerts', { underline: true });
+        doc.moveDown(0.5);
+        
+        if (data.low_stock_items && data.low_stock_items.length > 0) {
+            data.low_stock_items.forEach((item, index) => {
+                doc.fontSize(10)
+                   .font('Helvetica')
+                   .text(`${index + 1}. ${item.name} (${item.sku})`);
+                doc.text(`   Warehouse: ${item.warehouse} | Current: ${item.quantity} | Reorder Point: ${item.reorder_point}`, { indent: 20 });
+                doc.moveDown(0.3);
+            });
+        } else {
+            doc.fontSize(10).font('Helvetica').text('No low stock items', { indent: 20 });
+            doc.moveDown(0.5);
+        }
+        
+        doc.end();
+    },
+    
+    /**
+     * Private method: Export supplier report as PDF
+     */
+    async _exportSupplierPDF(data, res) {
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const filename = `supplier-report-${Date.now()}.pdf`;
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        
+        doc.pipe(res);
+        
+        // Header
+        doc.fontSize(24)
+           .font('Helvetica-Bold')
+           .text('Supplier Report', { align: 'center' });
+        doc.moveDown();
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+        doc.moveDown();
+        
+        // Summary Section
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('Summary', { underline: true });
+        doc.moveDown(0.5);
+        
+        doc.fontSize(11)
+           .font('Helvetica')
+           .text(`Total Suppliers: ${data.total_suppliers || 0}`);
+        doc.moveDown();
+        
+        // Supplier List Section
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('Suppliers', { underline: true });
+        doc.moveDown(0.5);
+        
+        if (data.suppliers && data.suppliers.length > 0) {
+            data.suppliers.forEach((supplier, index) => {
+                doc.fontSize(10)
+                   .font('Helvetica-Bold')
+                   .text(`${index + 1}. ${supplier.name}`);
+                doc.fontSize(10)
+                   .font('Helvetica')
+                   .text(`   Contact: ${supplier.contact_person || 'N/A'}`, { indent: 20 })
+                   .text(`   Phone: ${supplier.phone || 'N/A'} | Email: ${supplier.email || 'N/A'}`, { indent: 20 })
+                   .text(`   Lead Time: ${supplier.lead_time_days || 0} days | Products: ${supplier.products_supplied || 0}`, { indent: 20 });
+                doc.moveDown(0.5);
+            });
+        } else {
+            doc.fontSize(10).font('Helvetica').text('No supplier data available');
+            doc.moveDown(0.5);
+        }
         
         doc.end();
     }
