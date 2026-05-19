@@ -78,14 +78,23 @@ function validatePagination(limit, offset, maxLimit = 100) {
 /**
  * Middleware to sanitize all string inputs in request body
  */
+function isNumericString(value) {
+    // Accept: "123", "12.34", "0.00", "-5" (if ever sent)
+    // Reject: "12abc", "1,000", "".
+    return typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value.trim());
+}
+
 function sanitizeRequestBody(req, res, next) {
     if (req.body && typeof req.body === 'object') {
         for (const [key, value] of Object.entries(req.body)) {
             if (typeof value === 'string') {
                 // Don't sanitize passwords
-                if (key !== 'password' && key !== 'password_hash') {
-                    req.body[key] = sanitizeString(value);
-                }
+                if (key === 'password' || key === 'password_hash') continue;
+
+                // Preserve numeric strings so DB arithmetic works correctly
+                if (isNumericString(value)) continue;
+
+                req.body[key] = sanitizeString(value);
             }
         }
     }

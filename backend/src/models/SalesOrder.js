@@ -12,12 +12,12 @@ class SalesOrder {
         this.delivery_type = data.delivery_type || 'delivery';
         this.status = data.status || 'pending';
         this.payment_status = data.payment_status || 'pending';
-        this.subtotal = data.subtotal || 0;
-        this.discount_amount = data.discount_amount || 0;
+        this.subtotal = Number(data.subtotal) || 0;
+        this.discount_amount = Number(data.discount_amount) || 0;
         this.discount_approved_by = data.discount_approved_by || null;
-        this.tax = data.tax || 0;
-        this.shipping_cost = data.shipping_cost || 0;
-        this.total_amount = data.total_amount || 0;
+        this.tax = Number(data.tax) || 0;
+        this.shipping_cost = Number(data.shipping_cost) || 0;
+        this.total_amount = Number(data.total_amount) || 0;
         this.created_by = data.created_by || null;
         this.items = data.items || [];
         this.created_at = data.created_at || null;
@@ -29,10 +29,19 @@ class SalesOrder {
     }
 
     calculateTotal() {
-        this.subtotal = this.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-        const discountAmount = this.subtotal * (this.discount_amount / 100);
-        this.tax = (this.subtotal - discountAmount) * 0.1; // 10% tax
-        this.total_amount = this.subtotal - discountAmount + this.tax + this.shipping_cost;
+        // Ensure all values are numbers before calculation
+        const subtotalNum = parseFloat(this.items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0), 0)) || 0;
+        const discountPercent = parseFloat(this.discount_amount) || 0;
+        const discountAmount = subtotalNum * (discountPercent / 100);
+        const taxNum = parseFloat(this.tax) || 0;
+        const shippingNum = parseFloat(this.shipping_cost) || 0;
+        
+        this.subtotal = subtotalNum;
+        this.discount_amount = discountPercent;
+        this.tax = taxNum;
+        this.shipping_cost = shippingNum;
+        // total = subtotal - discount + tax + shipping
+        this.total_amount = (subtotalNum || 0) - (discountAmount || 0) + (taxNum || 0) + (shippingNum || 0);
     }
 
     async reserveStock() {
@@ -41,34 +50,43 @@ class SalesOrder {
             await client.query('BEGIN');
             
             for (const item of this.items) {
-                // Check if there's enough stock
-                const inventoryCheck = await client.query(`
-                    SELECT i.id, i.quantity 
-                    FROM inventory i
-                    WHERE i.product_id = $1 AND i.warehouse_id = $2
-                `, [item.product_id, item.warehouse_id || 1]);
+                // Coerce item values to numbers
+                const productId = Number(item.product_id);
+                const quantity = Number(item.quantity);
+                const warehouseId = Number(item.warehouse_id) || 1;
                 
-                if (inventoryCheck.rows.length === 0) {
-                    throw new Error(`No inventory found for product ${item.product_id}`);
+                if (isNaN(productId) || isNaN(quantity)) {
+                    throw new Error(`Invalid product_id or quantity for item: ${JSON.stringify(item)}`);
                 }
                 
-                const availableQty = inventoryCheck.rows[0].quantity;
-                if (availableQty < item.quantity) {
-                    throw new Error(`Insufficient stock for product ${item.product_id}. Available: ${availableQty}, Requested: ${item.quantity}`);
+                // Check if there's enough stock
+                const inventoryCheck = await client.query(`
+                    SELECT i.id, i.quantity
+                    FROM inventory i
+                    WHERE i.product_id = $1 AND i.warehouse_id = $2
+                `, [productId, warehouseId]);
+                
+                if (inventoryCheck.rows.length === 0) {
+                    throw new Error(`No inventory found for product ${productId}`);
+                }
+                
+                const availableQty = Number(inventoryCheck.rows[0].quantity);
+                if (availableQty < quantity) {
+                    throw new Error(`Insufficient stock for product ${productId}. Available: ${availableQty}, Requested: ${quantity}`);
                 }
                 
                 // Reserve stock by reducing inventory
                 await client.query(`
-                    UPDATE inventory 
+                    UPDATE inventory
                     SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP
                     WHERE product_id = $2 AND warehouse_id = $3
-                `, [item.quantity, item.product_id, item.warehouse_id || 1]);
+                `, [quantity, productId, warehouseId]);
                 
                 // Record stock movement
                 await client.query(`
                     INSERT INTO stock_movements (product_id, warehouse_id, quantity_change, movement_type, reason, reference_number, performed_by)
                     VALUES ($1, $2, -$3, 'sold', 'Sales order reservation', $4, $5)
-                `, [item.product_id, item.warehouse_id || 1, item.quantity, this.order_number, this.created_by]);
+                `, [productId, warehouseId, quantity, this.order_number, this.created_by]);
             }
             
             await client.query('COMMIT');
@@ -83,9 +101,17 @@ class SalesOrder {
     async save() {
         const client = await pool.connect();
         try {
-            if (!this.total_amount) {
-                this.calculateTotal();
-            }
+            // Always recalculate totals to ensure consistency
+            this.calculateTotal();
+            
+            // Log calculated values for debugging
+            console.log('SalesOrder.save() - Calculated values:', {
+                subtotal: this.subtotal,
+                discount_amount: this.discount_amount,
+                tax: this.tax,
+                shipping_cost: this.shipping_cost,
+                total_amount: this.total_amount
+            });
             
             if (this.id) {
                 const query = `

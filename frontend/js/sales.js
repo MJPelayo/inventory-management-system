@@ -435,6 +435,21 @@ async function submitOrder() {
     const discountPercent = parseFloat(document.getElementById('discountAmount').value) || 0;
     const discountReason = document.getElementById('discountReason').value.trim();
     
+    // Calculate subtotal, tax, and shipping
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const taxRate = 10; // 10% tax
+    const tax = subtotal * (taxRate / 100);
+    const shippingCost = 0; // Default shipping cost
+    
+    // Log order data for debugging
+    console.log('submitOrder - Order Data:', {
+        subtotal: subtotal,
+        discount_amount: discountPercent,
+        tax: tax,
+        shipping_cost: shippingCost,
+        total: subtotal - (subtotal * (discountPercent / 100)) + tax + shippingCost
+    });
+    
     if (!customerName) {
         showToast('Customer name is required', 'error');
         return;
@@ -459,7 +474,9 @@ async function submitOrder() {
         shipping_address: shippingAddress || null,
         delivery_type: deliveryType,
         items: orderItems,
-        discount_amount: discountPercent
+        discount_amount: parseFloat(discountPercent) || 0,  // Force to number
+        tax: parseFloat(tax) || 0,                         // Force to number
+        shipping_cost: parseFloat(shippingCost) || 0       // Force to number
     };
     
     try {

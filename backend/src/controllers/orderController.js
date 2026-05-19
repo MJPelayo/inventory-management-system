@@ -8,8 +8,20 @@ const orderController = {
     
     async createSalesOrder(req, res) {
         try {
-            const { customer_name, customer_email, customer_phone, shipping_address, delivery_type, items } = req.body;
+            const { customer_name, customer_email, customer_phone, shipping_address, delivery_type, items, discount_amount, tax, shipping_cost } = req.body;
             const userId = req.user?.id || 1;
+            
+            // Log received data for debugging
+            console.log('createSalesOrder - Received data:', {
+                discount_amount,
+                tax,
+                shipping_cost,
+                types: {
+                    discount_amount: typeof discount_amount,
+                    tax: typeof tax,
+                    shipping_cost: typeof shipping_cost
+                }
+            });
             
             const order = new SalesOrder({
                 customer_name,
@@ -18,11 +30,22 @@ const orderController = {
                 shipping_address,
                 delivery_type,
                 items,
+                discount_amount: parseFloat(discount_amount) || 0,
+                tax: parseFloat(tax) || 0,
+                shipping_cost: parseFloat(shipping_cost) || 0,
                 created_by: userId
             });
             
             await order.reserveStock();
             const saved = await order.save();
+            
+            console.log('createSalesOrder - Saved order totals:', {
+                subtotal: saved.subtotal,
+                discount_amount: saved.discount_amount,
+                tax: saved.tax,
+                shipping_cost: saved.shipping_cost,
+                total_amount: saved.total_amount
+            });
             
             res.status(201).json({
                 success: true,
@@ -30,6 +53,7 @@ const orderController = {
                 message: 'Order created successfully'
             });
         } catch (error) {
+            console.error('createSalesOrder error:', error);
             res.status(400).json({ success: false, error: error.message });
         }
     },
