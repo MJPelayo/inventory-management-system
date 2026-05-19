@@ -20,6 +20,7 @@ class Sidebar {
                 { icon: '🏷️', text: 'Categories', href: 'categories.html', page: 'categories' },
                 { icon: '🏭', text: 'Suppliers', href: 'suppliers.html', page: 'suppliers' },
                 { icon: '🏢', text: 'Warehouses', href: 'warehouses.html', page: 'warehouses' },
+                { icon: '📋', text: 'Orders', href: 'orders.html', page: 'orders' },
                 { icon: '📈', text: 'Reports', href: 'reports.html', page: 'reports' },
                 { icon: '⚙️', text: 'Settings', href: 'settings.html', page: 'settings' }
             ],

@@ -85,8 +85,8 @@ class SalesOrder {
                 // Record stock movement
                 await client.query(`
                     INSERT INTO stock_movements (product_id, warehouse_id, quantity_change, movement_type, reason, reference_number, performed_by)
-                    VALUES ($1, $2, -$3, 'sold', 'Sales order reservation', $4, $5)
-                `, [productId, warehouseId, quantity, this.order_number, this.created_by]);
+                    VALUES ($1, $2, $3, 'sold', 'Sales order reservation', $4, $5)
+                `, [productId, warehouseId, -quantity, this.order_number, this.created_by]);
             }
             
             await client.query('COMMIT');

@@ -23,12 +23,15 @@ const orderController = {
                 }
             });
             
+            // Normalize delivery_type to lowercase to match DB check constraint
+            const normalizedDeliveryType = (delivery_type || 'delivery').toLowerCase();
+
             const order = new SalesOrder({
                 customer_name,
                 customer_email,
                 customer_phone,
                 shipping_address,
-                delivery_type,
+                delivery_type: normalizedDeliveryType,
                 items,
                 discount_amount: parseFloat(discount_amount) || 0,
                 tax: parseFloat(tax) || 0,
@@ -138,6 +141,141 @@ const orderController = {
             });
         } catch (error) {
             console.error('Failed to update order status:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
+    // ============ UPDATE PAYMENT STATUS ============
+    
+    async updatePaymentStatus(req, res) {
+        try {
+            const orderId = parseInt(req.params.id);
+            const { payment_status } = req.body;
+            
+            // Validate payment status
+            const validPaymentStatuses = ['pending', 'paid', 'failed', 'refunded'];
+            if (!validPaymentStatuses.includes(payment_status)) {
+                return res.status(400).json({ success: false, error: 'Invalid payment status' });
+            }
+            
+            // Find the order
+            const order = await SalesOrder.findById(orderId);
+            if (!order) {
+                return res.status(404).json({ success: false, error: 'Order not found' });
+            }
+            
+            // Prevent changing from paid to pending (prevent accidental reversal)
+            if (order.payment_status === 'paid' && payment_status === 'pending') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Cannot change payment status from paid back to pending'
+                });
+            }
+            
+            // Update payment status
+            await pool.query(
+                `UPDATE sales_orders SET payment_status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+                [payment_status, orderId]
+            );
+            
+            // Log audit entry
+            const userId = req.user?.id || null;
+            await pool.query(
+                `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_data)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [userId, 'payment_status_updated', 'sales_order', orderId, JSON.stringify({ payment_status })]
+            );
+            
+            res.status(200).json({
+                success: true,
+                message: `Payment status updated to ${payment_status}`
+            });
+        } catch (error) {
+            console.error('Failed to update payment status:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
+    // ============ CANCEL SALES ORDER ============
+    
+    async cancelSalesOrder(req, res) {
+        try {
+            const orderId = parseInt(req.params.id);
+            const userId = req.user?.id;
+            const userRole = req.user?.role;
+            
+            // Find the order
+            const order = await SalesOrder.findById(orderId);
+            if (!order) {
+                return res.status(404).json({ success: false, error: 'Order not found' });
+            }
+            
+            // Check if already cancelled
+            if (order.status === 'cancelled') {
+                return res.status(400).json({ success: false, error: 'Order is already cancelled' });
+            }
+            
+            // Sales can only cancel pending orders
+            if (userRole === 'sales' && order.status !== 'pending') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Sales users can only cancel pending orders'
+                });
+            }
+            
+            // Admin can cancel any order
+            if (userRole !== 'admin' && userRole !== 'sales') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Only admin and sales users can cancel orders'
+                });
+            }
+            
+            // Update order status to cancelled
+            const client = await pool.connect();
+            try {
+                await client.query(
+                    `UPDATE sales_orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+                    [orderId]
+                );
+                
+                // Restore inventory for cancelled order items
+                const items = order.items || [];
+                for (const item of items) {
+                    const productId = Number(item.product_id);
+                    const quantity = Number(item.quantity);
+                    const warehouseId = Number(item.warehouse_id) || 1;
+                    
+                    if (!isNaN(productId) && !isNaN(quantity)) {
+                        // Restore inventory
+                        await client.query(`
+                            UPDATE inventory
+                            SET quantity = quantity + $1, updated_at = CURRENT_TIMESTAMP
+                            WHERE product_id = $2 AND warehouse_id = $3
+                        `, [quantity, productId, warehouseId]);
+                        
+                        // Record stock movement for cancellation
+                        await client.query(`
+                            INSERT INTO stock_movements (product_id, warehouse_id, quantity_change, movement_type, reason, reference_number, performed_by)
+                            VALUES ($1, $2, $3, 'returned', 'Order cancellation - stock restored', $4, $5)
+                        `, [productId, warehouseId, quantity, order.order_number, userId]);
+                    }
+                }
+                
+                await client.query('COMMIT');
+            } catch (err) {
+                await client.query('ROLLBACK');
+                throw err;
+            } finally {
+                client.release();
+            }
+            
+            res.status(200).json({
+                success: true,
+                message: 'Order cancelled successfully'
+            });
+        } catch (error) {
+            console.error('Failed to cancel order:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     },

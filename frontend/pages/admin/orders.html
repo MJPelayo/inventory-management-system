@@ -1,0 +1,124 @@
+<!-- frontend/pages/admin/orders.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Orders - Inventory Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Base CSS (required for theme system) -->
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/theme-switcher.css">
+    <link rel="stylesheet" href="../../css/theme-layouts.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <!-- Page-specific CSS -->
+    <link rel="stylesheet" href="../../css/admin.css">
+    <link rel="stylesheet" href="../../css/sales-orders.css">
+    <!-- Chat CSS -->
+    <link rel="stylesheet" href="../../css/chat.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header will be injected here -->
+        <header id="appHeader"></header>
+        
+        <div class="app-body">
+            <!-- Sidebar will be injected here -->
+            <aside id="sidebar"></aside>
+            
+            <!-- Main Content with Unified Panel Container -->
+            <main class="main-content">
+                <div class="global-container">
+                    <div class="panel-container">
+                        <!-- Theme Header Widget -->
+                        <div class="theme-header-widget" id="themeHeaderWidget"></div>
+                    
+                        <!-- Page Header -->
+                        <div class="orders-header">
+                            <div>
+                                <h1 class="page-title">Sales Orders (Admin)</h1>
+                                <p class="page-subtitle">View and manage all customer orders with admin privileges</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter Bar -->
+                        <div class="filter-bar">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label>Order Status</label>
+                                    <select id="statusFilter">
+                                        <option value="">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="ready">Ready</option>
+                                        <option value="in_transit">In Transit</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label>Customer Name</label>
+                                    <input type="text" id="customerFilter" placeholder="Search by customer...">
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label>Date Range</label>
+                                    <input type="date" id="startDateFilter">
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label>to</label>
+                                    <input type="date" id="endDateFilter">
+                                </div>
+                                
+                                <div class="filter-actions">
+                                    <button class="btn btn-primary btn-sm" id="applyFilters">Apply</button>
+                                    <button class="btn btn-secondary btn-sm" id="resetFilters">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Orders Table -->
+                        <div class="orders-table-container">
+                            <div id="ordersTableContainer">
+                                <div class="loading-state">Loading orders...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div id="pagination" class="pagination"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- ORDER DETAILS MODAL -->
+    <!-- ============================================ -->
+    <div id="orderDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Order Details</h2>
+                <button class="close-btn" onclick="closeOrderDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent">
+                <div class="loading-state">Loading order details...</div>
+            </div>
+            <div class="modal-footer" id="orderDetailsFooter">
+                <button class="btn" onclick="closeOrderDetailsModal()">Close</button>
+                <button class="btn btn-secondary" onclick="printOrder()">🖨️ Print</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Dependencies -->
+    <script src="../../js/config.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script src="../../js/components.js"></script>
+    <script src="../../js/chat.js"></script>
+    <script src="../../js/admin-orders.js"></script>
+</body>
+</html>

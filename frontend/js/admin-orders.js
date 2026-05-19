@@ -1,4 +1,4 @@
-// frontend/js/sales-orders.js
+// frontend/js/admin-orders.js
 
 // ============================================
 // GLOBAL VARIABLES
@@ -17,7 +17,7 @@ let currentFilters = {
 // PAGE INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Sales Orders page loading...');
+    console.log('Admin Orders page loading...');
     
     // Check authentication and role
     if (!auth.isLoggedIn()) {
@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    if (!auth.hasRole(['sales', 'admin'])) {
-        alert('Access denied. Sales privileges required.');
+    if (!auth.hasRole('admin')) {
+        alert('Access denied. Admin privileges required.');
         auth.logout();
         return;
     }
@@ -103,7 +103,7 @@ function displayOrders() {
     const totalPages = Math.ceil(allOrders.length / itemsPerPage);
     
     if (pageOrders.length === 0) {
-        container.innerHTML = '<div class="empty-orders">No orders found. Create your first order from the dashboard.</div>';
+        container.innerHTML = '<div class="empty-orders">No orders found.</div>';
         updatePagination(0, 0);
         return;
     }
@@ -118,17 +118,22 @@ function displayOrders() {
                     <th>Total</th>
                     <th>Status</th>
                     <th>Payment</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 ${pageOrders.map(order => `
-                    <tr onclick="viewOrderDetails(${order.id})">
+                    <tr>
                         <td><strong>${escapeHtml(order.order_number)}</strong></td>
                         <td>${formatDate(order.created_at)}</td>
                         <td>${escapeHtml(order.customer_name)}</td>
                         <td>$${parseFloat(order.total_amount).toFixed(2)}</td>
                         <td><span class="status-badge status-${order.status}">${formatStatus(order.status)}</span></td>
                         <td><span class="payment-status payment-${order.payment_status}">${formatPaymentStatus(order.payment_status)}</span></td>
+                        <td class="actions-cell">
+                            <button class="btn btn-sm" onclick="viewOrderDetails(${order.id})">View</button>
+                            ${order.status !== 'cancelled' ? `<button class="btn btn-danger btn-sm" onclick="cancelOrder(${order.id})">Cancel</button>` : ''}
+                        </td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -223,19 +228,15 @@ async function viewOrderDetails(orderId) {
             </div>
         `;
         
-        // Update modal footer with Cancel, Pay buttons
+        // Update modal footer with Cancel and Pay buttons for admin
         if (footerContainer) {
-            const userRole = auth.getUser()?.role;
-
-            // Sales manager page (sales role) should also be able to cancel pending orders
-            const showCancel = (userRole === 'sales' && order.status === 'pending') || (userRole === 'admin');
-            const canMarkPayment = ['admin', 'sales', 'warehouse'].includes(userRole);
+            const canMarkPayment = ['admin'].includes(auth.getUser()?.role);
             const showPayButton = canMarkPayment && order.payment_status === 'pending';
-
+            
             footerContainer.innerHTML = `
                 <button class="btn" onclick="closeOrderDetailsModal()">Close</button>
                 ${showPayButton ? `<button class="btn btn-success" onclick="markPaymentPaid(${order.id})">💵 Mark as Paid</button>` : ''}
-                ${showCancel ? `<button class="btn btn-danger" onclick="cancelOrder(${order.id})">❌ Cancel Order</button>` : ''}
+                ${order.status !== 'cancelled' ? `<button class="btn btn-danger" onclick="cancelOrder(${order.id})">❌ Cancel Order</button>` : ''}
                 <button class="btn btn-secondary" onclick="printOrder()">🖨️ Print</button>
             `;
         }
@@ -247,36 +248,7 @@ async function viewOrderDetails(orderId) {
 }
 
 // ============================================
-// MARK PAYMENT AS PAID
-// ============================================
-async function markPaymentPaid(orderId) {
-    if (!confirm('Mark this order as paid? This will update the payment status to "paid".')) {
-        return;
-    }
-    
-    try {
-        const response = await apiCall(`/orders/sales/${orderId}/payment`, {
-            method: 'PUT',
-            body: JSON.stringify({ payment_status: 'paid' })
-        });
-        
-        if (response.success) {
-            showToast('Payment marked as paid', 'success');
-            // Refresh the modal view
-            await viewOrderDetails(orderId);
-            // Refresh the orders list
-            await loadOrders();
-        } else {
-            showToast(response.error || 'Failed to mark payment as paid', 'error');
-        }
-    } catch (error) {
-        console.error('Failed to mark payment as paid:', error);
-        showToast('Failed to mark payment as paid', 'error');
-    }
-}
-
-// ============================================
-// CANCEL ORDER
+// CANCEL ORDER (Admin can cancel any order)
 // ============================================
 async function cancelOrder(orderId) {
     if (!confirm('Are you sure you want to cancel this order? This will restore the inventory.')) {
@@ -301,6 +273,34 @@ async function cancelOrder(orderId) {
     }
 }
 
+// ============================================
+// MARK PAYMENT AS PAID
+// ============================================
+async function markPaymentPaid(orderId) {
+    if (!confirm('Mark this order as paid? This will update the payment status to "paid".')) {
+        return;
+    }
+    
+    try {
+        const response = await apiCall(`/orders/sales/${orderId}/payment`, {
+            method: 'PUT',
+            body: JSON.stringify({ payment_status: 'paid' })
+        });
+        
+        if (response.success) {
+            showToast('Payment marked as paid', 'success');
+            await viewOrderDetails(orderId);
+            await loadOrders();
+        } else {
+            showToast(response.error || 'Failed to mark payment as paid', 'error');
+        }
+    } catch (error) {
+        console.error('Failed to mark payment as paid:', error);
+        showToast('Failed to mark payment as paid', 'error');
+    }
+}
+
+// ============================================
 // ============================================
 // CLOSE ORDER DETAILS MODAL
 // ============================================
@@ -567,12 +567,17 @@ function formatPaymentStatus(status) {
 
 function escapeHtml(str) {
     if (!str) return '';
+    var amp = String.fromCharCode(38) + 'amp;';
+    var lt = String.fromCharCode(60) + 'lt;';
+    var gt = String.fromCharCode(62) + 'gt;';
+    var quot = String.fromCharCode(34) + 'quot;';
+    var apos = String.fromCharCode(39) + '#39;';
     return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/&/g, amp)
+        .replace(/</g, lt)
+        .replace(/>/g, gt)
+        .replace(/"/g, quot)
+        .replace(/'/g, apos);
 }
 
 function showToast(message, type = 'info') {
@@ -604,4 +609,4 @@ window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.goToPage = goToPage;
 
-console.log('✅ Sales Orders module loaded');
+console.log('✅ Admin Orders module loaded');

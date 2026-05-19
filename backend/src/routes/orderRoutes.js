@@ -10,6 +10,16 @@ router.get('/sales', orderController.getSalesOrders);
 router.get('/sales/:id', orderController.getSalesOrderById);
 router.put('/sales/:id/status', orderController.updateOrderStatus);
 
+// Mark payment status
+router.put(
+  '/sales/:id/payment',
+  authenticateToken,
+  authorize('sales', 'admin', 'warehouse'),
+  orderController.updatePaymentStatus
+);
+
+router.post('/sales/:id/cancel', authenticateToken, authorize('sales', 'admin'), orderController.cancelSalesOrder);
+
 // Discount Approval
 router.post('/sales/:id/discount-request', orderController.requestDiscountApproval);
 router.put('/sales/:id/discount-approve', authenticateToken, authorize('admin'), orderController.approveDiscount);
